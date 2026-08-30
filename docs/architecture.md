@@ -80,26 +80,27 @@ Dashed edges are planned future integrations, not MVP.
 
 ## 3. Proposed technical stack
 
-| Concern | Choice | Notes |
-| --- | --- | --- |
-| Framework | **Next.js, App Router** | Server Components for public pages and admin data loading; Server Actions or route handlers for writes |
-| Language | **TypeScript, strict mode** | `strict: true`, no implicit `any`; `any` and `Function` types disallowed |
-| UI | **React**, **Tailwind CSS**, **shadcn/ui** | shadcn/ui components are vendored into the repo and themed per venue via CSS custom properties |
-| Database | **PostgreSQL** | One database per environment, single logical schema set, RLS on every tenant table. **No enum types** — text + `CHECK` for workflow states, reference tables for commercial concepts |
-| Platform services | **Supabase** | Managed PostgreSQL, authentication, storage, realtime, Row Level Security. One project per environment, region **`ap-southeast-1` (AWS Singapore)** |
-| Migrations | **SQL migrations stored in the repository** | Forward-only, reviewed, applied through CI to every environment in the same order; RLS policies, `CHECK` constraints, reference-table contents and grants are part of migrations |
-| Auth (MVP) | **Supabase email authentication — password *and* magic link** | Both methods available; the user chooses per sign-in. **MFA supported architecturally, mandatory for platform accounts before production launch** |
-| Onboarding | **Invitation-based**, operator-led | Tokenised, expiring invitations tied to a target business/venue and role. **No public self-service signup in the MVP** |
-| i18n | **next-intl** for interface strings; **normalised translation tables** for venue content | English and Thai; locale-aware routing on the public site |
-| Validation | **Zod** | One schema per input boundary, reused for types and runtime validation |
-| Forms | **React Hook Form** | Used for complex forms; simple forms may use plain Server Actions |
-| Unit / integration tests | **Vitest** | Domain logic, permission resolution, entitlement resolution, Zod schemas |
-| End-to-end tests | **Playwright** | Public site, admin panel, platform panel, onboarding flow |
-| Security tests | **Automated tenant-isolation and permission tests** | First-class, non-optional suite — see [Testing strategy](#16-testing-strategy) |
-| Test data | **Deterministic seed dataset + fixed test identities** | Shared by local development, staging and the automated suites — see [Seed data](#171-seed-data-and-the-reset-workflow) |
-| Hosting | **Vercel** (proposed initial) | Separate deployments per environment; preview deployments must never hold production credentials |
-| Custom domains | **Manual configuration for MVP**, automated later | Operator adds the domain in `/platform` and in the hosting provider |
-| Billing | **Stripe, future** | Not required for the first scaffold; manual billing state in MVP |
+| Concern                  | Choice                                                                                   | Notes                                                                                                                                                                                |
+| ------------------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Package manager          | **npm** (current, not locked)                                                            | Used for the initial scaffold and `package-lock.json`. Revisit if a different installer is preferred; this is not an accepted ADR                                                    |
+| Framework                | **Next.js, App Router**                                                                  | Server Components for public pages and admin data loading; Server Actions or route handlers for writes                                                                               |
+| Language                 | **TypeScript, strict mode**                                                              | `strict: true`, no implicit `any`; `any` and `Function` types disallowed                                                                                                             |
+| UI                       | **React**, **Tailwind CSS**, **shadcn/ui**                                               | shadcn/ui components are vendored into the repo and themed per venue via CSS custom properties                                                                                       |
+| Database                 | **PostgreSQL**                                                                           | One database per environment, single logical schema set, RLS on every tenant table. **No enum types** — text + `CHECK` for workflow states, reference tables for commercial concepts |
+| Platform services        | **Supabase**                                                                             | Managed PostgreSQL, authentication, storage, realtime, Row Level Security. One project per environment, region **`ap-southeast-1` (AWS Singapore)**                                  |
+| Migrations               | **SQL migrations stored in the repository**                                              | Forward-only, reviewed, applied through CI to every environment in the same order; RLS policies, `CHECK` constraints, reference-table contents and grants are part of migrations     |
+| Auth (MVP)               | **Supabase email authentication — password _and_ magic link**                            | Both methods available; the user chooses per sign-in. **MFA supported architecturally, mandatory for platform accounts before production launch**                                    |
+| Onboarding               | **Invitation-based**, operator-led                                                       | Tokenised, expiring invitations tied to a target business/venue and role. **No public self-service signup in the MVP**                                                               |
+| i18n                     | **next-intl** for interface strings; **normalised translation tables** for venue content | English and Thai; locale-aware routing on the public site                                                                                                                            |
+| Validation               | **Zod**                                                                                  | One schema per input boundary, reused for types and runtime validation                                                                                                               |
+| Forms                    | **React Hook Form**                                                                      | Used for complex forms; simple forms may use plain Server Actions                                                                                                                    |
+| Unit / integration tests | **Vitest**                                                                               | Domain logic, permission resolution, entitlement resolution, Zod schemas                                                                                                             |
+| End-to-end tests         | **Playwright**                                                                           | Public site, admin panel, platform panel, onboarding flow                                                                                                                            |
+| Security tests           | **Automated tenant-isolation and permission tests**                                      | First-class, non-optional suite — see [Testing strategy](#16-testing-strategy)                                                                                                       |
+| Test data                | **Deterministic seed dataset + fixed test identities**                                   | Shared by local development, staging and the automated suites — see [Seed data](#171-seed-data-and-the-reset-workflow)                                                               |
+| Hosting                  | **Vercel** (proposed initial)                                                            | Separate deployments per environment; preview deployments must never hold production credentials                                                                                     |
+| Custom domains           | **Manual configuration for MVP**, automated later                                        | Operator adds the domain in `/platform` and in the hosting provider                                                                                                                  |
+| Billing                  | **Stripe, future**                                                                       | Not required for the first scaffold; manual billing state in MVP                                                                                                                     |
 
 ## 4. Application structure (modular monolith)
 
@@ -177,7 +178,7 @@ flowchart TD
     H -- yes --> J["Render enabled + entitled modules,<br/>published content only"]
 ```
 
-- Middleware resolves the tenant from the host (or the `/v/[slug]` fallback in local development and as a permanent fallback route) and attaches a **read-only public tenant context** to the request.
+- The request proxy (`src/proxy.ts`) currently negotiates the interface locale only. Tenant resolution from the host (or the `/v/[slug]` fallback in local development and as a permanent fallback route) will also live there later (ADR-020); it is not implemented in this scaffold.
 - The public site never receives an authenticated tenant session and never queries with an authenticated user's privileges.
 - Every venue always has a `venuboard.com` subdomain; a custom domain is additive and requires operator verification.
 
@@ -232,14 +233,14 @@ Tenant isolation is treated as the platform's most critical security property.
 
 ### 7.2 Enforcement layers
 
-| Layer | Enforces |
-| --- | --- |
-| Middleware / tenant context | Which venue this request may talk about at all |
-| Application authorisation (`can()`) | Whether this actor may perform this action in this scope |
-| Entitlement resolution | Whether this module exists for this venue |
-| PostgreSQL RLS | Backstop: rows outside the actor's tenants are invisible even if the query is wrong |
-| Storage policies | Media paths are venue-prefixed and access-controlled |
-| Audit log | Detection and forensics after the fact |
+| Layer                               | Enforces                                                                            |
+| ----------------------------------- | ----------------------------------------------------------------------------------- |
+| Request proxy / tenant context      | Which venue this request may talk about at all (locale only in this scaffold)       |
+| Application authorisation (`can()`) | Whether this actor may perform this action in this scope                            |
+| Entitlement resolution              | Whether this module exists for this venue                                           |
+| PostgreSQL RLS                      | Backstop: rows outside the actor's tenants are invisible even if the query is wrong |
+| Storage policies                    | Media paths are venue-prefixed and access-controlled                                |
+| Audit log                           | Detection and forensics after the fact                                              |
 
 ### 7.3 RLS approach
 
@@ -355,16 +356,16 @@ The policy is defined in [roles-and-permissions.md](./roles-and-permissions.md#7
 
 ## 16. Testing strategy
 
-| Layer | Tool | Focus |
-| --- | --- | --- |
-| Unit | Vitest | Permission resolution, entitlement resolution, state machines, Zod schemas, quota maths, translation fallback chain |
-| Integration | Vitest + ephemeral PostgreSQL | Migrations, RLS policies, `CHECK` constraints, repository functions, real SQL behaviour |
-| **Tenant isolation** | Vitest against real RLS | Dedicated suite: for every tenant table — translation tables included — a user of tenant A cannot read, insert, update or delete tenant B's rows, including via public read paths and storage. Also asserts that **cross-venue parent/child mismatches are rejected by database constraints** ([ADR-037](./decisions-and-open-questions.md#adr-037--duplicated-tenant-keys-are-protected-by-composite-foreign-keys)) |
-| **Permissions** | Vitest | Every (role × action × scope) cell in the matrix is asserted, positive and negative, using the fixed test identities |
-| **Vocabulary consistency** | Vitest | Generated TypeScript unions and Zod schemas match the database `CHECK` constraints in both directions |
-| **Moderation** | Vitest + Playwright | `moderate_content` is refused without a reason and refused to `platform_support`; quarantine removes content from the public site; a **venue cannot republish a quarantined record**; restore is audited like a takedown |
-| End-to-end | Playwright | Both sign-in methods, operator-led tenant creation, publish flow, booking request lifecycle, presence toggle, support session banner and audit, platform entitlement changes, trial expiry |
-| Accessibility / perf | Playwright + audits | Public site on a mobile viewport, contrast of venue palettes |
+| Layer                      | Tool                          | Focus                                                                                                                                                                                                                                                                                                                                                                                                                |
+| -------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit                       | Vitest                        | Permission resolution, entitlement resolution, state machines, Zod schemas, quota maths, translation fallback chain                                                                                                                                                                                                                                                                                                  |
+| Integration                | Vitest + ephemeral PostgreSQL | Migrations, RLS policies, `CHECK` constraints, repository functions, real SQL behaviour                                                                                                                                                                                                                                                                                                                              |
+| **Tenant isolation**       | Vitest against real RLS       | Dedicated suite: for every tenant table — translation tables included — a user of tenant A cannot read, insert, update or delete tenant B's rows, including via public read paths and storage. Also asserts that **cross-venue parent/child mismatches are rejected by database constraints** ([ADR-037](./decisions-and-open-questions.md#adr-037--duplicated-tenant-keys-are-protected-by-composite-foreign-keys)) |
+| **Permissions**            | Vitest                        | Every (role × action × scope) cell in the matrix is asserted, positive and negative, using the fixed test identities                                                                                                                                                                                                                                                                                                 |
+| **Vocabulary consistency** | Vitest                        | Generated TypeScript unions and Zod schemas match the database `CHECK` constraints in both directions                                                                                                                                                                                                                                                                                                                |
+| **Moderation**             | Vitest + Playwright           | `moderate_content` is refused without a reason and refused to `platform_support`; quarantine removes content from the public site; a **venue cannot republish a quarantined record**; restore is audited like a takedown                                                                                                                                                                                             |
+| End-to-end                 | Playwright                    | Both sign-in methods, operator-led tenant creation, publish flow, booking request lifecycle, presence toggle, support session banner and audit, platform entitlement changes, trial expiry                                                                                                                                                                                                                           |
+| Accessibility / perf       | Playwright + audits           | Public site on a mobile viewport, contrast of venue palettes                                                                                                                                                                                                                                                                                                                                                         |
 
 All suites run against the **deterministic seed dataset and fixed test identities** described in [section 17.1](#171-seed-data-and-the-reset-workflow), so a matrix cell maps to a real login against known data rather than to bespoke setup code.
 
@@ -381,11 +382,11 @@ Non-negotiable rules:
 
 **Three completely separate environments**, with nothing shared between them ([ADR-034](./decisions-and-open-questions.md#adr-034--three-fully-isolated-environments-local-staging-production)).
 
-| Environment | Application | Supabase | Data |
-| --- | --- | --- | --- |
-| **Local** | Developer machine | Local Supabase stack | Resettable deterministic seed data |
-| **Staging** | Dedicated staging deployment | Dedicated hosted Supabase project | Seed data only — **never production data** |
-| **Production** | Production deployment | Its own Supabase project | Real customer data |
+| Environment    | Application                  | Supabase                          | Data                                       |
+| -------------- | ---------------------------- | --------------------------------- | ------------------------------------------ |
+| **Local**      | Developer machine            | Local Supabase stack              | Resettable deterministic seed data         |
+| **Staging**    | Dedicated staging deployment | Dedicated hosted Supabase project | Seed data only — **never production data** |
+| **Production** | Production deployment        | Its own Supabase project          | Real customer data                         |
 
 Isolation rules:
 
@@ -404,7 +405,7 @@ Other operational points:
 - **CI:** typecheck → lint → unit → migrations on ephemeral database → integration → isolation, permission and vocabulary suites → Playwright → build. Deployment is blocked on all of it. Migrations reach staging before production, always in the same order.
 - **Custom domains (MVP):** manual. The operator records the domain in `/platform`, the customer points DNS, the operator adds it to the hosting provider, TLS is issued by the provider, and the domain is marked verified. Automation via the hosting provider's API is a later improvement.
 - **Secrets** live in each environment's own configuration; nothing tenant-identifying or secret is committed, and no secret is reused across environments.
-- **Backups:** managed PostgreSQL point-in-time recovery, with a documented and *actually rehearsed* restore procedure (cadence undecided — OQ-26). Restores are rehearsed into a scratch environment, **never by copying production data into staging**.
+- **Backups:** managed PostgreSQL point-in-time recovery, with a documented and _actually rehearsed_ restore procedure (cadence undecided — OQ-26). Restores are rehearsed into a scratch environment, **never by copying production data into staging**.
 
 ### 17.1 Seed data and the reset workflow
 
@@ -431,17 +432,17 @@ The scaffold must include a **safe reset-and-seed workflow for local and staging
 
 The design intentionally accepts these limits for MVP and documents the escape hatches:
 
-| Limit | MVP position | Escape hatch |
-| --- | --- | --- |
-| Single database per environment | Fine for hundreds of venues | Read replicas, then per-region sharding by business if ever needed |
-| Single deployment per environment | Fine; surfaces scale together | Route-level splitting is possible without a domain-model change |
-| Manual custom domains | Acceptable at low volume; operator toil | Provider API automation |
-| Manual billing state, one subscription per venue | Acceptable for the first cohort; bookkeeping grows with venue count | Stripe integration mapping plans to entitlements, then invoice consolidation per business (OQ-39) |
-| Operator-led onboarding only | Acceptable while the cohort is sold to in person | Add a public self-service signup path once billing is automated |
-| One join per translatable entity per locale | Negligible at MVP volume | Cache resolved public pages per venue and locale, which the rendering layer already does |
-| Moderation is a manual platform action | No report queue, no moderator role; `platform_admin` acts on what it is told about | Add a reports inbox and a dedicated moderator role once volume demands it — the audited action and the quarantine mechanism already exist |
-| Analytics in PostgreSQL | Fine at MVP event volume | Move raw events to an analytics store, keep rollups |
-| No recurrence engine for events | Manual duplication | Add a recurrence rule model without changing the event table's meaning |
+| Limit                                            | MVP position                                                                       | Escape hatch                                                                                                                              |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Single database per environment                  | Fine for hundreds of venues                                                        | Read replicas, then per-region sharding by business if ever needed                                                                        |
+| Single deployment per environment                | Fine; surfaces scale together                                                      | Route-level splitting is possible without a domain-model change                                                                           |
+| Manual custom domains                            | Acceptable at low volume; operator toil                                            | Provider API automation                                                                                                                   |
+| Manual billing state, one subscription per venue | Acceptable for the first cohort; bookkeeping grows with venue count                | Stripe integration mapping plans to entitlements, then invoice consolidation per business (OQ-39)                                         |
+| Operator-led onboarding only                     | Acceptable while the cohort is sold to in person                                   | Add a public self-service signup path once billing is automated                                                                           |
+| One join per translatable entity per locale      | Negligible at MVP volume                                                           | Cache resolved public pages per venue and locale, which the rendering layer already does                                                  |
+| Moderation is a manual platform action           | No report queue, no moderator role; `platform_admin` acts on what it is told about | Add a reports inbox and a dedicated moderator role once volume demands it — the audited action and the quarantine mechanism already exist |
+| Analytics in PostgreSQL                          | Fine at MVP event volume                                                           | Move raw events to an analytics store, keep rollups                                                                                       |
+| No recurrence engine for events                  | Manual duplication                                                                 | Add a recurrence rule model without changing the event table's meaning                                                                    |
 
 ## 20. Explicitly out of architectural scope
 

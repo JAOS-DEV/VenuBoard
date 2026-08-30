@@ -1,0 +1,12 @@
+.next
+node_modules
+coverage
+test-results
+playwright-report
+package-lock.json
+supabase/.temp
+
+# Product and architecture Markdown. Prettier wrapping would rewrite accepted
+# wording and break heading anchors. Source, config, tests, scripts and README
+# are still formatted. See README "Formatting".
+docs/**/*.md

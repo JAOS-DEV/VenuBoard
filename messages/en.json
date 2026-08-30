@@ -1,0 +1,49 @@
+{
+  "app": {
+    "name": "VenuBoard",
+    "tagline": "Modular websites and management for venues"
+  },
+  "shell": {
+    "skipToContent": "Skip to main content",
+    "scaffoldNotice": "Scaffold only — no business functionality is implemented yet",
+    "surfaces": "Surfaces",
+    "environment": "Environment",
+    "language": "Language",
+    "notImplemented": "Not implemented yet",
+    "documentation": "Documentation"
+  },
+  "nav": {
+    "home": "Overview",
+    "publicSite": "Public venue site",
+    "admin": "Venue administration",
+    "platform": "Platform administration"
+  },
+  "home": {
+    "title": "Application scaffold",
+    "description": "This is the VenuBoard application shell. It renders routing, layout, internationalisation and environment handling — and nothing else. There is no database schema, no authentication, no permissions, no Row Level Security and no modules.",
+    "surfacesDescription": "The three documented surfaces exist as labelled placeholders so the routing separation is real from the first commit.",
+    "nextStep": "The next phase is the first database migration. Before it is written, the decisions listed in the repository documentation must be reviewed.",
+    "exampleSlug": "Example venue slug"
+  },
+  "publicVenue": {
+    "title": "Public venue site",
+    "developmentFallback": "Development fallback route",
+    "slugLabel": "Venue slug from the URL",
+    "notImplemented": "Tenant lookup is not implemented. This page shows the slug taken from the URL and nothing more: no venue record is loaded, no modules are resolved, and no entitlement or publication state is checked.",
+    "routingNote": "Production will resolve a venue from its verified custom domain first, then its VenuBoard subdomain, and keep this path as a permanent fallback."
+  },
+  "admin": {
+    "title": "Venue administration",
+    "notImplemented": "Authentication and active-venue selection are not implemented. There is no sign-in, no membership loading, no venue switcher and no navigation generated from entitlements.",
+    "scopeNote": "Once built, this surface will only show modules that are both entitled by the platform and enabled by the venue."
+  },
+  "platform": {
+    "title": "VenuBoard platform administration",
+    "notImplemented": "Platform authentication and authorisation are not implemented. There is no platform role check, no multi-factor requirement, no audited support session and no tenant creation.",
+    "scopeNote": "Platform roles live separately from venue memberships and are never granted by tenant users."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "This address does not match a route in the scaffold."
+  }
+}
