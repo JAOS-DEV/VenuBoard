@@ -1,0 +1,13 @@
+# Keep working-tree line endings as LF so Prettier (`endOfLine: lf`) and
+# Linux CI agree. Windows Git would otherwise convert to CRLF and fail
+# `npm run format:check`.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
