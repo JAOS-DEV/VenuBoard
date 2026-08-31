@@ -2,7 +2,7 @@
   "name": "venuboard",
   "version": "0.1.0",
   "private": true,
-  "description": "Modular, multi-tenant, white-label website and management platform for venues. Application scaffold only.",
+  "description": "Modular, multi-tenant, white-label website and management platform for venues. Foundation schema and application scaffold.",
   "engines": {
     "node": ">=20.9.0"
   },
@@ -25,9 +25,13 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
-    "db:reset": "node scripts/db-reset.ts",
-    "db:seed": "node scripts/db-seed.ts",
-    "db:types": "supabase gen types typescript --local > src/core/db/types.ts"
+    "db:reset": "node scripts/db-reset.mts",
+    "db:seed": "node scripts/db-seed.mts",
+    "db:types": "supabase gen types typescript --local > src/core/db/types.ts",
+    "db:types:check": "node scripts/db-types-check.mts",
+    "db:test": "supabase test db",
+    "db:perf:seed": "node scripts/db-perf-seed.mts",
+    "db:perf": "node scripts/db-perf.mts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

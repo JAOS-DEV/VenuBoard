@@ -55,5 +55,7 @@ jobs:
         run: npm run build
 
 # End-to-end tests deliberately stay out of CI until the preview and
-# test-database strategy is accepted (OQ-38). Tenant-isolation and permission
-# suites become mandatory once the schema and RLS policies exist (ADR-017).
+# test-database strategy is accepted (OQ-38). Database security tests
+# (migrations, seed, pgTAP, generated types) run in
+# `.github/workflows/database.yml` against repository-local Docker Supabase.
+# That workflow never logs into or links a hosted project.

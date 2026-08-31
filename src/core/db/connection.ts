@@ -4,8 +4,8 @@ import { clientEnv } from "@/core/env/client";
  * The publishable connection details shared by the browser and server clients.
  *
  * Kept in one place so the "is Supabase configured at all?" question has a
- * single answer. In this scaffold phase the answer is normally "no", and the
- * placeholder surfaces say so rather than pretending to load data.
+ * single answer. Local and test may omit them; the placeholder surfaces then
+ * render without querying the database.
  */
 export interface SupabaseConnection {
   url: string;

@@ -1,0 +1,64 @@
+name: Database security
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/seed/**"
+      - "supabase/tests/**"
+      - "supabase/config.toml"
+      - "src/core/db/types.ts"
+      - "scripts/db-*.mts"
+      - "scripts/lib/local-supabase.mts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/database.yml"
+
+# Least privilege: the workflow only needs to read the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: database-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  database-security:
+    name: Local Supabase migrations, seed, pgTAP, types
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      # CI is local-class (ADR-034). No hosted project, no login, no link.
+      VENUBOARD_ENV: local
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start local Supabase
+        run: npx supabase start
+
+      - name: Reset from a clean database (migrations + seed)
+        run: npm run db:reset
+
+      - name: Run pgTAP / database tests
+        run: npm run db:test
+
+      - name: Generated types must match the committed file
+        run: npm run db:types:check
+
+      - name: Stop local Supabase
+        if: always()
+        run: npx supabase stop

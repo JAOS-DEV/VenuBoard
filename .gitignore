@@ -22,6 +22,9 @@ next-env.d.ts
 /blob-report
 /playwright/.cache
 
+# Local Supabase CLI state (never commit a hosted project-ref)
+/.supabase/
+
 # Local Supabase state (configuration, migrations and seed files ARE tracked)
 /supabase/.branches
 /supabase/.temp

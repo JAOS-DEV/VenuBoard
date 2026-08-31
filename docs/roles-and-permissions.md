@@ -1,8 +1,8 @@
 # VenuBoard — Roles and Permissions
 
-**Status:** Complete and accepted 2026-08-30 · **Stage:** Pre-scaffold documentation · **Last updated:** 2026-08-30
+**Status:** Complete and accepted 2026-08-30 · **Stage:** Pre-scaffold documentation · **Last updated:** 2026-08-31
 
-This document is the authoritative definition of **who may do what** in VenuBoard. It is the source of truth for the `can(actor, action, scope)` primitive described in [architecture.md](./architecture.md#6-request-lifecycle-and-authorisation) and for the automated permission tests.
+This document is the authoritative definition of **who may do what** in VenuBoard. It is the source of truth for the `can(actor, action, scope)` primitive described in [architecture.md](./architecture.md#6-request-lifecycle-and-authorisation) and for the automated permission tests. How each conditional cell is enforced in PostgreSQL vs the future `can()` layer is recorded in [conditional-permission-enforcement.md](./security/conditional-permission-enforcement.md).
 
 The action-based model and the **complete 33-action catalogue** were accepted on 2026-08-30 ([ADR-007](./decisions-and-open-questions.md#adr-007--action-based-permissions-with-fixed-mvp-roles)), the last of them — `moderate_content` — by [ADR-036](./decisions-and-open-questions.md#adr-036--moderate_content-as-a-platform-action). The support-access model this document depends on is also accepted ([ADR-022](./decisions-and-open-questions.md#adr-022--support-access-is-read-only-by-default-and-session-gated)). **Nothing in this document is pending approval**, so the permission test suite can be generated from it directly.
 
@@ -36,7 +36,9 @@ Roles exist only as a convenient bundle of actions. Adding a capability means ad
 
 ### 1.3 Enforcement layers
 
-Every action is checked in the application **and** constrained by PostgreSQL Row Level Security. See [architecture.md](./architecture.md#7-tenant-isolation). Neither layer is trusted alone.
+Every action is checked in the application **and** constrained by PostgreSQL Row Level Security, constraints and triggers. See [architecture.md](./architecture.md#7-tenant-isolation) and [conditional-permission-enforcement.md](./security/conditional-permission-enforcement.md).
+
+`can()` improves UX and fails early. **It is not the security boundary** for anyone who can call the Data API. Tenant isolation, private-data access, entitlements, platform authority, moderation quarantine, deactivation and privilege escalation are enforced in the database. Conditional matrix cells default to **deny** at RLS until the condition can be checked against data that exists.
 
 ### 1.4 MVP roles are fixed
 

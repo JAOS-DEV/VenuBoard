@@ -1,6 +1,6 @@
 # VenuBoard — Data Model
 
-**Status:** Reflects the decisions accepted on 2026-08-30 · **Stage:** Pre-scaffold documentation · **Last updated:** 2026-08-30
+**Status:** Reflects the decisions accepted on 2026-08-30 · **Stage:** Foundation schema implemented in `supabase/migrations/` · **Last updated:** 2026-08-31
 
 This document describes the conceptual data model: the tenant hierarchy, the entities each module needs, how multilingual content is stored, how public and private data are separated, and how Row Level Security is expected to scope every tenant-owned record.
 

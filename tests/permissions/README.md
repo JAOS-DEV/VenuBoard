@@ -1,14 +1,11 @@
 # Permissions tests
 
-**Not implemented yet.** The 33-action catalogue is accepted, but there is no authentication, no membership loading and no `can(actor, action, scope)` implementation, so there is nothing these tests can fail against.
+The 33-action catalogue and role mapping are asserted in SQL:
 
-Do not add placeholder permission tests here.
+```bash
+npm run db:test
+```
 
-## First-schema obligation
+Files: `supabase/tests/01_structure.sql` (exactly 33 keys, `moderate_content` held only by `platform_admin`) and `supabase/tests/04_permissions.sql` (helper results for each fixed seed identity).
 
-When authentication and the policy layer exist, this directory becomes the mandatory permissions suite ([ADR-017](../../docs/decisions-and-open-questions.md#adr-017--vitest-playwright-and-mandatory-isolation-and-permission-suites)):
-
-- Every cell in the [permissions matrix](../../docs/roles-and-permissions.md#4-permissions-matrix), positive and negative.
-- Every conditional rule in that document.
-- Fixed test identities from the deterministic seed dataset ([ADR-035](../../docs/decisions-and-open-questions.md#adr-035--deterministic-repeatable-seed-data-and-fixed-test-identities)).
-- `moderate_content` refused without a reason, refused to `platform_support`, and unable to create or edit content.
+This directory stays empty of Vitest placeholders. The application-level suite required by [ADR-017](../../docs/decisions-and-open-questions.md#adr-017--vitest-playwright-and-mandatory-isolation-and-permission-suites) still belongs here once `can(actor, action, scope)` exists. Those tests fail early for UX; they do not replace the SQL enforcement in `supabase/tests/` or [conditional-permission-enforcement.md](../../docs/security/conditional-permission-enforcement.md).
