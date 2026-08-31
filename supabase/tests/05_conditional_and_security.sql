@@ -125,8 +125,13 @@ SELECT ok(
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'public'
       AND p.prosecdef
+      AND p.proname NOT IN (
+        'inspect_invitation',
+        'accept_invitation',
+        'evaluate_permission'
+      )
   ),
-  'no SECURITY DEFINER helpers are exposed in public'
+  'no SECURITY DEFINER helpers are exposed in public except invitation and permission RPCs'
 );
 
 -- ---------------------------------------------------------------------------

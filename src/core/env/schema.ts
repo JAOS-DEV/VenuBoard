@@ -25,7 +25,7 @@ type RawEnv = Record<string, string | undefined>;
  * entirely, so leaking it into a client bundle would defeat tenant isolation.
  */
 const FORBIDDEN_PUBLIC_NAME_PATTERN =
-  /(SECRET|SERVICE_ROLE|PRIVATE_KEY|PASSWORD|TOKEN)/i;
+  /(SECRET|SERVICE_ROLE|PRIVATE_KEY|PASSWORD|TOKEN|TEST_IDENTITY)/i;
 
 /** Blank env values are treated as unset so `.env.example` copies can stay empty. */
 function emptyToUndefined(value: unknown): unknown {
@@ -46,13 +46,32 @@ const baseServerEnvShape = {
   VENUBOARD_ENV: venuboardEnvironmentSchema,
   NEXT_PUBLIC_SUPABASE_URL: optionalUrl,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: optionalNonEmpty,
+  /** Public application origin for Auth callback and invitation links. */
+  NEXT_PUBLIC_APP_ORIGIN: optionalUrl,
   /** Server-only. Bypasses RLS. Never referenced by browser code. */
   SUPABASE_SECRET_KEY: optionalNonEmpty,
+  /**
+   * Server-only Playwright seam. Must never be NEXT_PUBLIC_. Ignored unless
+   * VENUBOARD_ENV is test and NODE_ENV is not production.
+   */
+  VENUBOARD_ENABLE_TEST_IDENTITY: optionalNonEmpty,
 };
 
 export const serverEnvSchema = z
   .object(baseServerEnvShape)
   .superRefine((env, ctx) => {
+    if (
+      env.VENUBOARD_ENABLE_TEST_IDENTITY !== undefined &&
+      env.VENUBOARD_ENV !== "test"
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["VENUBOARD_ENABLE_TEST_IDENTITY"],
+        message:
+          "VENUBOARD_ENABLE_TEST_IDENTITY is only valid when VENUBOARD_ENV is test",
+      });
+    }
+
     const isHosted =
       env.VENUBOARD_ENV === "staging" || env.VENUBOARD_ENV === "production";
 
@@ -106,6 +125,7 @@ export const serverEnvSchema = z
 export const clientEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: optionalUrl,
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: optionalNonEmpty,
+  NEXT_PUBLIC_APP_ORIGIN: optionalUrl,
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

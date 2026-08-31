@@ -10,6 +10,16 @@ import messages from "../../messages/en.json";
  * not mounted in jsdom. Swapping them for plain anchors keeps this a test of the
  * shell rather than a test of Next.js routing.
  */
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock("@/components/auth/sign-out-button", () => ({
+  SignOutButton: function SignOutButton() {
+    return null;
+  },
+}));
+
 vi.mock("@/core/i18n/navigation", () => ({
   Link: ({
     href,
@@ -30,7 +40,7 @@ function renderShell(
 ): void {
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <AppShell environment={environment}>
+      <AppShell environment={environment} signedIn={false}>
         <p>surface content</p>
       </AppShell>
     </NextIntlClientProvider>,

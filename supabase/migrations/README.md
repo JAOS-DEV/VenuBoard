@@ -12,6 +12,10 @@ Current files:
   entitlements, translations, audit, moderation, support-session boundary.
 - `20260831120100_foundation_authorization.sql` — `app_private` helpers, RLS
   policies (per command), grants.
+- `20260831120200_foundation_security_hardening.sql` — C1–C19 default-deny, C19
+  tenant-content writes, GRANT tightening.
+- `20260831130000_auth_invitation_acceptance.sql` — `inspect_invitation`,
+  `accept_invitation`, `evaluate_permission`, execution grants.
 
 Obligations from [section 4.1 of the decision register](../../docs/decisions-and-open-questions.md#41-obligations-on-the-first-implementation):
 

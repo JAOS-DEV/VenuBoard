@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { EnvironmentBadge } from "@/components/environment-badge";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ import { Link } from "@/core/i18n/navigation";
 
 interface AppShellProps {
   environment: VenuBoardEnvironment;
+  signedIn: boolean;
   children: React.ReactNode;
 }
 
@@ -19,17 +21,19 @@ const SURFACES = [
 ] as const;
 
 /**
- * The shared shell for every scaffold surface: a header, the surface links, and
- * an honest banner saying nothing works yet. No fake dashboard, no fake
- * navigation generated from entitlements that do not exist.
+ * Shared shell: header, surface links, locale switcher, and session controls.
+ * Product modules are still absent; admin and platform routes are now
+ * authentication-gated.
  */
 export function AppShell({
   environment,
+  signedIn,
   children,
 }: AppShellProps): React.ReactElement {
   const t = useTranslations("shell");
   const tNav = useTranslations("nav");
   const tApp = useTranslations("app");
+  const tAuth = useTranslations("auth");
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -54,6 +58,16 @@ export function AppShell({
               environment={environment}
               label={t("environment")}
             />
+            {signedIn ? (
+              <SignOutButton />
+            ) : (
+              <Link
+                href="/sign-in"
+                className="inline-flex h-11 items-center px-3 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {tAuth("signIn")}
+              </Link>
+            )}
             <LocaleSwitcher />
           </div>
         </div>

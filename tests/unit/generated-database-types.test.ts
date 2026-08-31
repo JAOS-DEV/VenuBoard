@@ -23,5 +23,7 @@ describe("generated database types", () => {
     expect(source).toContain("businesses:");
     expect(source).toContain("venue_translations:");
     expect(source).toContain("permission_actions:");
+    expect(source).toContain("inspect_invitation");
+    expect(source).toContain("accept_invitation");
   });
 });

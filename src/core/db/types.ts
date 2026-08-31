@@ -1387,7 +1387,18 @@ export type Database = {
       };
     };
     Functions: {
-      [_ in never]: never;
+      accept_invitation: { Args: { p_token: string }; Returns: Json };
+      evaluate_permission: {
+        Args: {
+          p_action_key: string;
+          p_business_id?: string;
+          p_scope_type: string;
+          p_target_user_id?: string;
+          p_venue_id?: string;
+        };
+        Returns: boolean;
+      };
+      inspect_invitation: { Args: { p_token: string }; Returns: Json };
     };
     Enums: {
       [_ in never]: never;

@@ -12,7 +12,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 - Conditions that belong to tables that do not exist yet are **mandatory requirements on those future migrations**. This pass does not create feed, staff, events, bookings, offers, atmosphere, domain, analytics or notification tables just to close a cell.
 - Helper: `app_private.effective_tenant_grant`. Allow cells stay allow. Conditional cells call `app_private.conditional_tenant_grant_ok`, which currently returns true only for **C2** (`venue_manager` / `assign_roles`, with table WITH CHECK) and **C13** (`view_audit_log`, with SELECT filters). Every other conditional cell is false.
 
-`can()` tests will still live in `tests/permissions` once that layer exists. They are not a substitute for the SQL tests named below.
+`can()` tests live in `tests/permissions/can.test.ts`. They are not a substitute for the SQL tests named below.
 
 ## Catalogue
 
