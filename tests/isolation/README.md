@@ -1,17 +1,13 @@
 # Tenant-isolation tests
 
-**Not implemented yet.** There is no schema and no Row Level Security policy, so there is nothing these tests can fail against.
+Foundation isolation is asserted in SQL (pgTAP), not in this directory:
 
-Do not add placeholder isolation tests here. A suite that cannot fail is worse than none.
+```bash
+npm run db:test
+```
 
-## First-schema obligation
+Files: `supabase/tests/02_tenant_integrity.sql` (composite FKs reject mismatches) and `supabase/tests/03_rls_isolation.sql` (denied behaviour as `anon` and authenticated seed identities).
 
-When the first migrations land, this directory becomes the mandatory isolation suite ([ADR-017](../../docs/decisions-and-open-questions.md#adr-017--vitest-playwright-and-mandatory-isolation-and-permission-suites)):
+This directory stays empty of Vitest placeholders. The application-level suite required by [ADR-017](../../docs/decisions-and-open-questions.md#adr-017--vitest-playwright-and-mandatory-isolation-and-permission-suites) still belongs here once authentication and `can()` exist: every remaining tenant table (feed, staff, bookings, …), storage, and public module paths.
 
-- Every tenant table, translation tables included.
-- Every operation: read, insert, update, delete.
-- Public read paths and storage.
-- Cross-venue parent/child mismatches must be **attempted and rejected** by database constraints ([ADR-037](../../docs/decisions-and-open-questions.md#adr-037--duplicated-tenant-keys-are-protected-by-composite-foreign-keys)).
-- A venue must not be able to republish platform-quarantined content ([ADR-036](../../docs/decisions-and-open-questions.md#adr-036--moderate_content-as-a-platform-action)).
-
-Measure the main RLS-sensitive query paths against representative seed data **before the schema becomes expensive to change** (OQ-30). See [decisions-and-open-questions.md section 4.1](../../docs/decisions-and-open-questions.md#41-obligations-on-the-first-implementation).
+Measure RLS-sensitive query paths with `npm run db:perf:seed` then `npm run db:perf` (OQ-30). Ordinary reset stays small. Baseline: [docs/performance/foundation-rls-baseline.md](../../docs/performance/foundation-rls-baseline.md).

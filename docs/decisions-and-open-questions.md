@@ -511,6 +511,25 @@ OQ-18 and OQ-40 appear in [4.2](#42-launch-blockers--required-before-production-
 
 ## 6. Decision history
 
+### 2026-08-31 — Foundation schema implementation
+
+The first migrations, seed dataset, pgTAP tests and generated `Database` types landed on `feat/foundation-database-schema`. **No accepted product ADR was changed.** Working choices recorded, not new ADRs:
+
+- Authorisation helpers live in schema `app_private`, omitted from the Data API (`config.toml` exposes `public` and `graphql_public` only).
+- `venue_translations` cannot carry a composite `(parent_id, venue_id)` foreign key because the parent key *is* `venue_id`. Mismatch is structurally impossible. `venue_module_setting_translations`, `venue_billing_records` and `trial_extensions` use declarative composite FKs (ADR-037).
+- `venue_module_settings` and their translations shipped with this foundation so there is a parent/child pair to test. Feed, staff, events, bookings, offers, atmosphere, media and notification tables did not.
+- `support_sessions` is a boundary table (FK target for `audit_log`, session-gated platform reads/writes). There is no support-session UI or workflow.
+- Fixed roles remain `CHECK` constraints on membership tables. The 33 actions and allow/conditional matrix cells are migration-managed tables so tests can read them. Absence is deny. Tenants cannot write those tables.
+- `moderate_content` writes venue quarantine through `app_private.apply_venue_moderation` (reason required, `platform_admin` only). Quarantine column protection triggers are `SECURITY INVOKER` so `CURRENT_USER` is the Data API role, not the function owner.
+- SQL tests (`supabase test db` / pgTAP) impersonate via JWT `sub` claims. Auth seed users have random unusable password hashes; no passwords are committed.
+- `npm run db:seed` does not re-apply seed SQL. `npm run db:reset` is the local rebuild. Staging reset is not implemented.
+- Conditional matrix cells default to **deny** at RLS unless the condition can be checked against data that already exists (`app_private.effective_tenant_grant`). Treating `conditional` as allow was rejected. Map: [docs/security/conditional-permission-enforcement.md](./security/conditional-permission-enforcement.md).
+- `can(actor, action, scope)` remains fail-early UX (ADR-005 defence in depth). Direct Data API access never sees it; isolation, private data, entitlements, platform authority, moderation, deactivation and privilege escalation stay in PostgreSQL.
+- `apply_venue_moderation` is executable by `authenticated` only, not `anon` or PUBLIC.
+- Ordinary seed stays small. Local RLS volume lives in `supabase/perf/` (`npm run db:perf:seed` / `npm run db:perf`) and is not loaded by reset or CI.
+- Database security tests run in `.github/workflows/database.yml` against repository-local Docker. No hosted project.
+- Local `EXPLAIN (ANALYZE, BUFFERS)` for the main RLS-sensitive paths is in [docs/performance/foundation-rls-baseline.md](./performance/foundation-rls-baseline.md).
+
 ### 2026-08-30 — Initial application scaffold
 
 The repository now contains a Next.js App Router shell. No product module, schema or hosted Supabase project was added.

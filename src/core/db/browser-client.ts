@@ -5,10 +5,8 @@ import type { Database } from "./types";
 
 /**
  * Browser Supabase client. Uses the publishable key only, so every request is
- * subject to Row Level Security.
- *
- * No table is queried anywhere in this phase. RLS policies do not exist yet, so
- * there is nothing safe to read.
+ * subject to Row Level Security. The clients are typed against generated
+ * `Database` types; the UI still does not query tenant tables in this phase.
  */
 export function createSupabaseBrowserClient() {
   const { url, publishableKey } = requireSupabaseConnection();

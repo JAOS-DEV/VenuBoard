@@ -1,12 +1,17 @@
 # Seed data
 
-Empty on purpose. There is no schema to seed.
+Deterministic fictional dataset ([ADR-035](../../docs/decisions-and-open-questions.md#adr-035--deterministic-repeatable-seed-data-and-fixed-test-identities)).
 
-`supabase/config.toml` points `[db.seed].sql_paths` at `./seed/*.sql`, so a reset currently seeds nothing rather than failing.
+`supabase/config.toml` points `[db.seed].sql_paths` at `./seed/01_foundation.sql`. `npm run db:reset` applies it after migrations. `npm run db:seed` does **not** re-apply the file (duplicate primary keys); use reset.
 
-When this directory is filled it must follow [ADR-035](../../docs/decisions-and-open-questions.md#adr-035--deterministic-repeatable-seed-data-and-fixed-test-identities) and the coverage list in [docs/data-model.md section 14](../../docs/data-model.md#14-seed-data-for-local-and-staging):
+The large RLS performance fixture is **not** seed data. It lives in `supabase/perf/` and is loaded only by `npm run db:perf:seed`.
 
-- **Deterministic**: fixed UUIDs and timestamps relative to a seed epoch, so repeated runs produce identical databases.
-- **Fictional only**: no genuine customer or staff data, and no venue that resembles a real venue in the target cities.
+Rules:
+
+- **Deterministic**: fixed UUIDs and timestamps relative to 2026-08-01 00:00:00 UTC.
+- **Fictional only**: `example.com` addresses, invented venue names that do not resemble real venues in the target cities.
 - **Local and staging only**: `npm run db:reset` and `npm run db:seed` refuse to run when `VENUBOARD_ENV=production`.
-- Reference data (`modules`, `plans`, `plan_modules`, `entitlement_sources`) is **not** seed data — it ships in migrations so production gets it without demo content.
+- Auth users are created with **random unusable password hashes**. SQL tests impersonate via JWT `sub` claims (`request.jwt.claim.sub` / `request.jwt.claims`) and `SET ROLE`. They do not log in interactively.
+- Reference data (`modules`, `plans`, `plan_modules`, `entitlement_sources`, the 33 actions) is **not** seed data — it ships in migrations.
+
+SQL tests: `npm run db:test` (`supabase test db`, pgTAP under `supabase/tests/`). Database CI locally: `npx supabase start && npm run db:reset && npm run db:test && npm run db:types:check && npx supabase stop`.

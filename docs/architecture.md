@@ -1,8 +1,8 @@
 # VenuBoard — Architecture
 
-**Status:** Accepted 2026-08-30 — nothing here blocks scaffolding · **Stage:** Pre-scaffold documentation · **Last updated:** 2026-08-30
+**Status:** Accepted 2026-08-30 — nothing here blocks scaffolding · **Stage:** Foundation schema in repository · **Last updated:** 2026-08-31
 
-This document describes the technical architecture. Nothing here has been built. Product scope is in [product-brief.md](./product-brief.md), the schema in [data-model.md](./data-model.md), authorisation in [roles-and-permissions.md](./roles-and-permissions.md), and the reasoning and unresolved questions in [decisions-and-open-questions.md](./decisions-and-open-questions.md).
+This document describes the technical architecture. The foundation schema and RLS policies now exist in `supabase/migrations/`; product modules and the application `can()` layer are not built. Product scope is in [product-brief.md](./product-brief.md), the schema in [data-model.md](./data-model.md), authorisation in [roles-and-permissions.md](./roles-and-permissions.md), and the reasoning and unresolved questions in [decisions-and-open-questions.md](./decisions-and-open-questions.md).
 
 The foundational decisions — shared multi-tenancy, modular monolith, Next.js and Supabase, defence-in-depth isolation, direct tenant keys, action-based permissions, the entitlement split, staff data separation and the no-custom-code boundary — were **accepted on 2026-08-30** (ADR-001 to ADR-010), along with migrations, testing, routing, support access, deactivation, bookings and content classification (ADR-012, ADR-017, ADR-020, ADR-022 to ADR-025) and the newer records ADR-028 to ADR-038. **No decision in this document is outstanding**; the records still marked proposed are non-blocking preferences ([decisions-and-open-questions.md](./decisions-and-open-questions.md#4-decisions-needed-before-application-scaffolding)).
 
@@ -142,8 +142,10 @@ supabase/
   migrations/               # forward-only SQL: tables, RLS, CHECK constraints, reference data
   seed/                     # deterministic development + staging seed data (fictional only)
 scripts/
-  db-reset.ts               # refuses to run when the environment is production
-  db-seed.ts                # deterministic, idempotent
+  db-reset.mts              # refuses to run when the environment is production
+  db-seed.mts               # notice only; reset applies seed
+  db-perf-seed.mts          # local-only volume fixture
+  db-types-check.mts        # generated types must match committed file
 tests/
   unit/  integration/  e2e/  isolation/  permissions/  moderation/
 docs/
@@ -207,7 +209,7 @@ Every server-side entry point (Server Component data load, Server Action, route 
 3. **Validate input** with Zod at the boundary.
 4. **Check the action** against the permissions matrix in [roles-and-permissions.md](./roles-and-permissions.md) — a named action plus a scope (business or venue), never a role-name string comparison.
 5. **Check the entitlement** if the action touches a module.
-6. **Execute** against PostgreSQL with RLS active as a second gate.
+6. **Execute** against PostgreSQL. RLS, constraints and triggers are the **final security boundary** for direct Data API access — they must deny even if `can()` was skipped or wrong.
 7. **Audit** if the action is security-relevant.
 8. **Invalidate caches** for the affected venue.
 
@@ -217,7 +219,7 @@ Authorisation is expressed as a single primitive:
 can(actor, action, scope) -> boolean
 ```
 
-Implemented once in `core/authz`, used by UI rendering, Server Actions and tests. There is no second, divergent copy of the rules.
+Implemented once in `core/authz`, used by UI rendering, Server Actions and tests. There is no second, divergent copy of the rules. **`can()` is fail-early UX.** Isolation, private data, entitlements, platform authority, moderation quarantine, deactivation and privilege escalation are enforced in the database; see [conditional-permission-enforcement.md](./security/conditional-permission-enforcement.md).
 
 ## 7. Tenant isolation
 
@@ -236,9 +238,9 @@ Tenant isolation is treated as the platform's most critical security property.
 | Layer                               | Enforces                                                                            |
 | ----------------------------------- | ----------------------------------------------------------------------------------- |
 | Request proxy / tenant context      | Which venue this request may talk about at all (locale only in this scaffold)       |
-| Application authorisation (`can()`) | Whether this actor may perform this action in this scope                            |
+| Application authorisation (`can()`) | Fail-early UX: whether this actor may perform this action in this scope             |
 | Entitlement resolution              | Whether this module exists for this venue                                           |
-| PostgreSQL RLS                      | Backstop: rows outside the actor's tenants are invisible even if the query is wrong |
+| PostgreSQL RLS, constraints, triggers | Final boundary: rows and writes outside the actor's rights are denied even if the query or UI is wrong |
 | Storage policies                    | Media paths are venue-prefixed and access-controlled                                |
 | Audit log                           | Detection and forensics after the fact                                              |
 
@@ -249,7 +251,7 @@ Tenant isolation is treated as the platform's most critical security property.
 - Public visibility is expressed by explicit `SELECT` policies for the anonymous role, gated on content state, module enablement, entitlement validity and venue publication state.
 - **Translation tables get the same treatment as their parents.** A `*_translations` row is publicly readable only if the parent row is, so its policy tests the parent's visibility rather than only matching `venue_id`.
 - **The duplicated tenant key is protected by database constraints, not by careful code.** Every child table that carries its parent's `venue_id` is joined to the parent by a **composite foreign key** `(parent_id, venue_id)` → `(id, venue_id)`, so a child row cannot claim a venue its parent does not have. This is what makes a policy that only checks `venue_id` safe. See [ADR-037](./decisions-and-open-questions.md#adr-037--duplicated-tenant-keys-are-protected-by-composite-foreign-keys) and [data-model.md](./data-model.md#111-tenant-key-integrity-constraints); the isolation suite must attempt cross-venue mismatches and assert rejection.
-- **Performance is measured early, not eventually.** The first schema implementation loads representative tenant data from the seed dataset and measures the RLS-sensitive query paths — public venue page reads, translation joins, membership resolution, entitlement resolution, admin list views — **before the schema becomes expensive to change**. This is an obligation on the first implementation rather than a gate on starting it (OQ-30 in [decisions-and-open-questions.md](./decisions-and-open-questions.md#33-technical)).
+- **Performance is measured early, not eventually.** Ordinary reset stays small. A separate local fixture (`npm run db:perf:seed` / `npm run db:perf`) loads enough tenant-scoped rows for the planner to make index choices, then records plans in [docs/performance/foundation-rls-baseline.md](./performance/foundation-rls-baseline.md). CI does not load that fixture. This is an obligation on the first implementation rather than a gate on starting it (OQ-30 in [decisions-and-open-questions.md](./decisions-and-open-questions.md#33-technical)).
 
 ## 8. Module entitlement resolution
 
@@ -360,8 +362,8 @@ The policy is defined in [roles-and-permissions.md](./roles-and-permissions.md#7
 | -------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Unit                       | Vitest                        | Permission resolution, entitlement resolution, state machines, Zod schemas, quota maths, translation fallback chain                                                                                                                                                                                                                                                                                                  |
 | Integration                | Vitest + ephemeral PostgreSQL | Migrations, RLS policies, `CHECK` constraints, repository functions, real SQL behaviour                                                                                                                                                                                                                                                                                                                              |
-| **Tenant isolation**       | Vitest against real RLS       | Dedicated suite: for every tenant table — translation tables included — a user of tenant A cannot read, insert, update or delete tenant B's rows, including via public read paths and storage. Also asserts that **cross-venue parent/child mismatches are rejected by database constraints** ([ADR-037](./decisions-and-open-questions.md#adr-037--duplicated-tenant-keys-are-protected-by-composite-foreign-keys)) |
-| **Permissions**            | Vitest                        | Every (role × action × scope) cell in the matrix is asserted, positive and negative, using the fixed test identities                                                                                                                                                                                                                                                                                                 |
+| **Tenant isolation**       | pgTAP (`npm run db:test`) + later Vitest | Foundation tables: denied RLS behaviour and rejected composite-key mismatches in `supabase/tests/`. Vitest suite in `tests/isolation` remains for remaining modules once they exist. |
+| **Permissions**            | pgTAP (`npm run db:test`) + later Vitest | Catalogue of 33 actions, C1–C19 foundation enforcement, and helper results for seed identities. Application `can()` matrix coverage still belongs in `tests/permissions` once that layer exists; it must not replace SQL tests. |
 | **Vocabulary consistency** | Vitest                        | Generated TypeScript unions and Zod schemas match the database `CHECK` constraints in both directions                                                                                                                                                                                                                                                                                                                |
 | **Moderation**             | Vitest + Playwright           | `moderate_content` is refused without a reason and refused to `platform_support`; quarantine removes content from the public site; a **venue cannot republish a quarantined record**; restore is audited like a takedown                                                                                                                                                                                             |
 | End-to-end                 | Playwright                    | Both sign-in methods, operator-led tenant creation, publish flow, booking request lifecycle, presence toggle, support session banner and audit, platform entitlement changes, trial expiry                                                                                                                                                                                                                           |

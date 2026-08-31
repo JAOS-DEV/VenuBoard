@@ -2,7 +2,7 @@
 
 **A modular, multi-tenant, white-label website and management platform for venues.**
 
-> **Repository status: application scaffold.** The Next.js App Router shell, locale routing, environment validation, local Supabase configuration and test foundations exist. **No business functionality is implemented yet** — no schema, authentication, permissions, Row Level Security, modules, subscriptions or production integrations.
+> **Repository status: application scaffold plus foundation schema.** The Next.js App Router shell, locale routing, environment validation, local Supabase, the first PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS) and pgTAP tests exist. **Product modules are not implemented** — no feed, staff presence, events, bookings, offers, atmosphere, analytics UI, notifications, media uploads or support-session UI.
 >
 > **Decision status (2026-08-30):** all scaffolding ADRs are accepted. Remaining work is split into [launch blockers](./docs/decisions-and-open-questions.md#42-launch-blockers--required-before-production-not-before-code) and [feature-specific decisions](./docs/decisions-and-open-questions.md#43-feature-specific-decisions--required-before-the-feature-not-before-the-scaffold). The first-schema obligations are in [section 4.1](./docs/decisions-and-open-questions.md#41-obligations-on-the-first-implementation).
 
@@ -88,34 +88,50 @@ The repository has a local Supabase project configuration (`supabase/config.toml
 ```bash
 npm run supabase:start    # requires Docker
 npm run supabase:status
+npm run db:reset          # refused when VENUBOARD_ENV=production; local Docker only
+npm run db:test           # pgTAP against the local database
+npm run db:types          # regenerate src/core/db/types.ts from the local schema
+npm run db:types:check    # generate, format, fail if types.ts would change
+npm run db:seed           # same production guard; does not re-apply seed files
+npm run db:perf:seed      # large local-only fixture; not part of reset or CI
+npm run db:perf           # EXPLAIN (ANALYZE, BUFFERS) baseline; not production
 npm run supabase:stop
-npm run db:reset          # refused when VENUBOARD_ENV=production
-npm run db:seed           # same guard; no seed files exist yet
 ```
 
-`db:reset` and `db:seed` run the production guard first. There is no schema and no seed dataset, so they do not claim to populate a working database.
+`db:reset` runs the production guard, refuses a linked hosted project, drops the **local** database, replays `supabase/migrations/`, then loads `supabase/seed/01_foundation.sql`. That erases local data only. Staging reset is not implemented — there is no staging environment yet. The performance fixture is not loaded.
+
+`db:seed` does not run the SQL a second time (the UUIDs would collide). Use `db:reset` to reseed.
+
+SQL tests impersonate seed users via JWT `sub` claims. They do not sign in and do not use committed passwords (auth hashes are random and unusable).
+
+New migrations are timestamp-prefixed SQL under `supabase/migrations/`. Apply them with `db:reset` locally. Do not edit a hosted dashboard. After `npm run db:types`, run `npm run format` so the generated file matches Prettier.
+
+`db:reset`, `db:seed`, `db:perf:seed` and `db:types:check` are `.mts` wrappers so Node treats them as ES modules without setting `"type": "module"` on the Next.js package. Node may still print `MODULE_TYPELESS_PACKAGE_JSON` for imported `src/core/env/*.ts` files. That warning is documented rather than suppressed; adding `"type": "module"` is not done because it would change how Next.js and the rest of the repo resolve modules.
+
+Reproduce the RLS performance baseline with `npm run db:perf:seed` then `npm run db:perf` after an ordinary reset. Plans are recorded in [docs/performance/foundation-rls-baseline.md](./docs/performance/foundation-rls-baseline.md). CI does not load the large fixture.
 
 ## Available scripts
 
-| Script                            | What it does                                          |
-| --------------------------------- | ----------------------------------------------------- |
-| `npm run dev`                     | Next.js development server                            |
-| `npm run build`                   | Production build                                      |
-| `npm run start`                   | Serve the production build                            |
-| `npm run lint`                    | ESLint                                                |
-| `npm run typecheck`               | Strict TypeScript check                               |
-| `npm run format` / `format:check` | Prettier write / check (see Formatting)               |
-| `npm test` / `test:ci`            | Vitest watch / single run                             |
-| `npm run test:e2e`                | Playwright Chromium smoke tests                       |
-| `npm run test:e2e:install`        | Install Chromium only (not every browser)             |
-| `npm run verify`                  | Format, lint, typecheck, unit tests, production build |
-| `npm run supabase:*` / `db:*`     | Local Supabase helpers (see above)                    |
+| Script                            | What it does                                                                                                            |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                     | Next.js development server                                                                                              |
+| `npm run build`                   | Production build                                                                                                        |
+| `npm run start`                   | Serve the production build                                                                                              |
+| `npm run lint`                    | ESLint                                                                                                                  |
+| `npm run typecheck`               | Strict TypeScript check                                                                                                 |
+| `npm run format` / `format:check` | Prettier write / check (see Formatting)                                                                                 |
+| `npm test` / `test:ci`            | Vitest watch / single run                                                                                               |
+| `npm run test:e2e`                | Playwright Chromium smoke tests                                                                                         |
+| `npm run test:e2e:install`        | Install Chromium only (not every browser)                                                                               |
+| `npm run verify`                  | Format, lint, typecheck, unit tests, production build                                                                   |
+| `npm run supabase:*` / `db:*`     | Local Supabase: start/stop/status, guarded reset, seed notice, typegen, `db:test`, `db:types:check`, local perf fixture |
 
 ## Testing
 
-- **Unit:** Vitest + React Testing Library. Environment validation, the production destructive-operation guard, and the application shell.
+- **Unit:** Vitest + React Testing Library. Environment validation, the production destructive-operation guard, the application shell, and a check that generated database types are not the scaffold placeholder.
+- **SQL (local Docker and GitHub Actions):** `npm run db:test`. pgTAP: structural integrity, composite tenant keys, RLS denied behaviour, permission catalogue, C1–C19 foundation enforcement. `.github/workflows/database.yml` starts repository-local Supabase, resets, tests, and checks generated types. No hosted project. The large performance fixture is not part of CI.
 - **End-to-end:** Playwright, Chromium only. Smoke-tests the public placeholder. Not in CI until the preview and test-database strategy is accepted (OQ-38).
-- **Isolation and permissions:** not written. See `tests/isolation/README.md` and `tests/permissions/README.md`. They become mandatory with the first schema (ADR-017).
+- **Isolation and permissions (application):** still to be written in `tests/isolation` and `tests/permissions` once `can()` and auth exist. Those checks fail early; they do not replace `supabase/tests/`.
 
 ```bash
 npm run test:ci
@@ -132,21 +148,28 @@ Prettier formats source, configuration, tests, scripts and this README. Product 
 src/app/[locale]/          locale-aware routes: /, /admin, /platform, /v/[venueSlug]
 src/components/            shared shell, environment badge, shadcn/ui (Button, Card, Badge)
 src/core/env/              environment identifier, Zod validation, production guard
-src/core/db/               browser and server Supabase clients — no queries, no service-role client
+src/core/db/               browser and server clients; generated Database types
 src/core/i18n/             next-intl routing (en, th)
 src/proxy.ts               locale negotiation only (Next.js 16 proxy)
 messages/                  interface strings (en.json, th.json)
-supabase/                  local CLI config; empty migrations and seed
-scripts/                   guarded db:reset and db:seed wrappers
-tests/unit  tests/e2e      scaffold tests
-tests/isolation            TODO — first-schema obligation
-tests/permissions          TODO — first-schema obligation
+supabase/migrations        foundation schema, RLS, security hardening
+supabase/seed              deterministic fictional dataset (small)
+supabase/perf              optional local RLS volume fixture (not in reset or CI)
+supabase/tests             pgTAP structural, isolation, permission and C1–C19 tests
+scripts/                   guarded db:reset, db:seed, db:perf and types-check wrappers
+tests/unit  tests/e2e      scaffold tests plus generated-types check
+tests/isolation            TODO — application-level suite once can() exists
+tests/permissions          TODO — application-level suite once can() exists
 docs/                      product and architecture documentation (not auto-formatted)
+docs/security              conditional-permission enforcement map (C1–C19)
+docs/performance           local RLS EXPLAIN baseline (OQ-30)
 ```
 
 ## What is not implemented yet
 
-Authentication, memberships, permissions, the database schema, RLS policies, entitlements, staff presence, posts, events, bookings, offers, analytics, support impersonation, custom-domain tenant resolution, and any production integration. The three surfaces exist so the route separation is real; they do not pretend to be working product screens.
+Authentication UI, invitation acceptance, the `can()` application layer, feed posts, staff presence, events, bookings, offers, atmosphere, analytics dashboards, notifications, media uploads, support-session UI, custom-domain tenant resolution, and any production integration. The three surfaces exist so the route separation is real; they do not pretend to be working product screens.
+
+The database **does** implement the foundation: users, platform roles, businesses, venues, memberships, invitations, the 33-action catalogue, modules/plans/entitlements, venue translations, audit, moderation and RLS. See `supabase/migrations/`.
 
 ## Core architecture principles
 
@@ -206,8 +229,8 @@ All of them are tracked in [docs/decisions-and-open-questions.md](./docs/decisio
 
 ## Next steps
 
-1. Review the decisions listed under [section 4.1](./docs/decisions-and-open-questions.md#41-obligations-on-the-first-implementation) and write the **first database migrations**, including RLS, composite tenant-key constraints, the quarantine precondition and the seed dataset.
-2. While the schema is still cheap to change: **measure the RLS-sensitive query paths** against representative seed data (OQ-30).
+1. Keep measuring the RLS-sensitive query paths as tables grow ([docs/performance/foundation-rls-baseline.md](./docs/performance/foundation-rls-baseline.md), OQ-30).
+2. Implement authentication and `can(actor, action, scope)` against this schema, then the first product module.
 3. Before production launch: legal documentation, retention policy, a written moderation and takedown process, MFA enrolment and recovery, a live email provider, monitoring, a rehearsed backup restore, and a permanent staging environment.
 
 ## Licence and ownership
