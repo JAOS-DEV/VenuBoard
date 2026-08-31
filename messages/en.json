@@ -5,7 +5,7 @@
   },
   "shell": {
     "skipToContent": "Skip to main content",
-    "scaffoldNotice": "Scaffold only — no business functionality is implemented yet",
+    "scaffoldNotice": "Foundation only — product modules are not implemented yet",
     "surfaces": "Surfaces",
     "environment": "Environment",
     "language": "Language",
@@ -20,9 +20,9 @@
   },
   "home": {
     "title": "Application scaffold",
-    "description": "This is the VenuBoard application shell. It renders routing, layout, internationalisation and environment handling — and nothing else. There is no database schema, no authentication, no permissions, no Row Level Security and no modules.",
-    "surfacesDescription": "The three documented surfaces exist as labelled placeholders so the routing separation is real from the first commit.",
-    "nextStep": "The next phase is the first database migration. Before it is written, the decisions listed in the repository documentation must be reviewed.",
+    "description": "This is the VenuBoard application shell. Routing, layout, internationalisation, environment handling, authentication and invitation acceptance are in place. Product modules are not implemented.",
+    "surfacesDescription": "The three documented surfaces exist as labelled routes. Venue administration and platform administration require a signed-in identity with the right membership or platform role.",
+    "nextStep": "Feed, staff, events, bookings, offers and atmosphere remain later work. Review the repository documentation before adding a module.",
     "exampleSlug": "Example venue slug"
   },
   "publicVenue": {
@@ -34,16 +34,68 @@
   },
   "admin": {
     "title": "Venue administration",
-    "notImplemented": "Authentication and active-venue selection are not implemented. There is no sign-in, no membership loading, no venue switcher and no navigation generated from entitlements.",
+    "notImplemented": "You are signed in with an applicable membership. Module navigation, entitlements and the venue switcher are not implemented yet.",
     "scopeNote": "Once built, this surface will only show modules that are both entitled by the platform and enabled by the venue."
   },
   "platform": {
     "title": "VenuBoard platform administration",
-    "notImplemented": "Platform authentication and authorisation are not implemented. There is no platform role check, no multi-factor requirement, no audited support session and no tenant creation.",
+    "notImplemented": "You hold a platform role. Tenant creation, support sessions and MFA enrolment are not implemented. MFA is represented on the account but not enforced yet (OQ-40).",
     "scopeNote": "Platform roles live separately from venue memberships and are never granted by tenant users."
   },
   "notFound": {
     "title": "Page not found",
     "description": "This address does not match a route in the scaffold."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signInTitle": "Sign in",
+    "signInDescription": "Use your email and password, or request a magic link. New accounts are created only from an invitation.",
+    "email": "Email address",
+    "password": "Password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "signInPassword": "Sign in with password",
+    "signInMagicLink": "Email me a magic link",
+    "forgotPassword": "Forgot password?",
+    "forgotTitle": "Reset your password",
+    "forgotDescription": "If an account exists for that address, we will send a reset link. We do not confirm whether the address is registered.",
+    "sendReset": "Send reset link",
+    "resetRequested": "If an account exists for that address, a reset link has been sent.",
+    "magicLinkSent": "If an account exists for that address, a sign-in link has been sent.",
+    "updatePasswordTitle": "Set a new password",
+    "updatePasswordDescription": "Choose a new password for this account.",
+    "updatePassword": "Update password",
+    "backToSignIn": "Back to sign in",
+    "working": "Please wait",
+    "genericError": "Something went wrong. Check your details and try again.",
+    "validationFailed": "Check the highlighted fields and try again.",
+    "rateLimited": "Too many attempts. Please wait and try again.",
+    "unavailable": "Sign-in is not available right now."
+  },
+  "invite": {
+    "title": "Accept your invitation",
+    "description": "You were invited as {role} at {venue}. Sign in or set a password for {email}.",
+    "accept": "Accept invitation",
+    "createPassword": "Create password and accept",
+    "invalidTitle": "Invitation not found",
+    "invalidBody": "This invitation link is not valid.",
+    "expiredTitle": "Invitation expired",
+    "expiredBody": "This invitation has expired. Ask the venue to send a new one.",
+    "revokedTitle": "Invitation withdrawn",
+    "revokedBody": "This invitation is no longer active.",
+    "acceptedTitle": "Invitation already used",
+    "acceptedBody": "This invitation has already been accepted.",
+    "goSignIn": "Go to sign in",
+    "emailMismatch": "This invitation is for a different email address than the one you are signed in with.",
+    "accountInactive": "This account cannot accept invitations.",
+    "membershipConflict": "You already have a different role in this venue.",
+    "needSignIn": "Sign in to accept this invitation.",
+    "unavailable": "This invitation cannot be accepted."
+  },
+  "unauthorized": {
+    "title": "Access denied",
+    "description": "You are signed in, but you do not have access to this part of VenuBoard.",
+    "home": "Back to overview"
   }
 }

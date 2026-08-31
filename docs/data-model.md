@@ -101,6 +101,7 @@ A user may belong to **multiple businesses and multiple venues with a different 
 
 - Tokens are stored hashed, single-use, and expiring.
 - Constraint: exactly one of `business_id` / `venue_id` is set, consistent with `scope_type`.
+- Acceptance is `public.accept_invitation(p_token)` — one transaction, tenant identifiers from the stored row. See [authentication.md](./authentication.md).
 - There is **no public self-service signup** in the MVP; the first business owner of a new business is created by the platform operator ([ADR-033](./decisions-and-open-questions.md#adr-033--operator-led-onboarding-no-self-service-signup-in-the-mvp)).
 
 ```mermaid

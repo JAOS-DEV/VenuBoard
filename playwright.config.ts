@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = 3000;
+const PORT = 3100;
 const BASE_URL = `http://127.0.0.1:${String(PORT)}`;
 
 /**
@@ -15,7 +15,8 @@ const BASE_URL = `http://127.0.0.1:${String(PORT)}`;
  */
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: true,
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
@@ -30,14 +31,17 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
+    command: `npx next dev --hostname 127.0.0.1 --port ${String(PORT)}`,
     url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
     env: {
-      // The dev server needs an explicit environment identifier; there is no
-      // fallback by design.
+      ...process.env,
       VENUBOARD_ENV: "test",
+      VENUBOARD_ENABLE_TEST_IDENTITY: "1",
+      VENUBOARD_PLAYWRIGHT_DIST_DIR: ".next-playwright",
+      PORT: String(PORT),
+      NEXT_PUBLIC_APP_ORIGIN: BASE_URL,
     },
   },
 });

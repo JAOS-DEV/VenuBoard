@@ -120,6 +120,36 @@ describe("server environment validation", () => {
       }),
     ).toThrow(EnvValidationError);
   });
+
+  it("accepts the test-identity flag only in the test environment", () => {
+    const env = parseServerEnv({
+      VENUBOARD_ENV: "test",
+      VENUBOARD_ENABLE_TEST_IDENTITY: "1",
+    });
+
+    expect(env.VENUBOARD_ENABLE_TEST_IDENTITY).toBe("1");
+  });
+
+  it.each(["local", "staging", "production"])(
+    "rejects the test-identity flag when VENUBOARD_ENV is %s",
+    (environment) => {
+      const raw =
+        environment === "local"
+          ? {
+              VENUBOARD_ENV: environment,
+              VENUBOARD_ENABLE_TEST_IDENTITY: "1",
+            }
+          : {
+              VENUBOARD_ENV: environment,
+              ...HOSTED_SUPABASE,
+              VENUBOARD_ENABLE_TEST_IDENTITY: "1",
+            };
+
+      expect(() => parseServerEnv(raw)).toThrow(
+        /VENUBOARD_ENABLE_TEST_IDENTITY is only valid/,
+      );
+    },
+  );
 });
 
 describe("browser exposure guard", () => {
@@ -129,6 +159,7 @@ describe("browser exposure guard", () => {
       "NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY",
       "NEXT_PUBLIC_DB_PASSWORD",
       "NEXT_PUBLIC_ACCESS_TOKEN",
+      "NEXT_PUBLIC_VENUBOARD_ENABLE_TEST_IDENTITY",
     ]) {
       expect(() => assertNoSecretsExposedToBrowser({ [key]: "value" })).toThrow(
         EnvValidationError,

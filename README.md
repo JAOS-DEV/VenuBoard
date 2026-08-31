@@ -2,7 +2,7 @@
 
 **A modular, multi-tenant, white-label website and management platform for venues.**
 
-> **Repository status: application scaffold plus foundation schema.** The Next.js App Router shell, locale routing, environment validation, local Supabase, the first PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS) and pgTAP tests exist. **Product modules are not implemented** — no feed, staff presence, events, bookings, offers, atmosphere, analytics UI, notifications, media uploads or support-session UI.
+> **Repository status: application scaffold plus foundation schema, authentication and invitations.** The Next.js App Router shell, locale routing, environment validation, local Supabase, PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS), invitation acceptance, actor resolution, `can()`, and pgTAP tests exist. **Product modules are not implemented** — no feed, staff presence, events, bookings, offers, atmosphere, analytics UI, notifications, media uploads or support-session UI.
 >
 > **Decision status (2026-08-30):** all scaffolding ADRs are accepted. Remaining work is split into [launch blockers](./docs/decisions-and-open-questions.md#42-launch-blockers--required-before-production-not-before-code) and [feature-specific decisions](./docs/decisions-and-open-questions.md#43-feature-specific-decisions--required-before-the-feature-not-before-the-scaffold). The first-schema obligations are in [section 4.1](./docs/decisions-and-open-questions.md#41-obligations-on-the-first-implementation).
 
@@ -28,6 +28,7 @@ The VenuBoard operator runs a separate **platform administration panel** (`/plat
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [docs/product-brief.md](./docs/product-brief.md)                               | Product scope: market, surfaces, MVP modules, entitlements, lifecycle policies, analytics, onboarding, non-goals, data ownership                                                                                   |
 | [docs/architecture.md](./docs/architecture.md)                                 | Technical architecture, system context diagram, stack, module structure, routing, tenant isolation, internationalisation, testing, environments and hosting                                                        |
+| [docs/authentication.md](./docs/authentication.md)                             | Sign-in, magic links, invitation acceptance, actor resolution, `can()` versus RLS, route protection, MFA representation, local testing                                                                             |
 | [docs/roles-and-permissions.md](./docs/roles-and-permissions.md)               | Role catalogue, the 33 actions, the permissions matrix, support and impersonation model, content moderation rules, public/private data access                                                                      |
 | [docs/data-model.md](./docs/data-model.md)                                     | Tenant hierarchy, entity relationships, module tables, translation tables, tenant-key integrity constraints, controlled vocabularies, Row Level Security patterns, moderation and quarantine, seed data, retention |
 | [docs/decisions-and-open-questions.md](./docs/decisions-and-open-questions.md) | Architecture decision records, the dated decision history, and every unresolved legal, policy, pricing, retention and technical question                                                                           |
@@ -64,11 +65,12 @@ Open:
 | --------------------------- | ---------------------------------------- |
 | Overview                    | http://localhost:3000/en                 |
 | Public development fallback | http://localhost:3000/en/v/example-venue |
+| Sign in                     | http://localhost:3000/en/sign-in         |
 | Venue administration        | http://localhost:3000/en/admin           |
 | Platform administration     | http://localhost:3000/en/platform        |
 | Thai locale                 | replace `/en` with `/th`                 |
 
-Each page is a labelled placeholder. Tenant lookup, authentication and modules are not implemented.
+`/admin` and `/platform` require a signed-in identity. Seed users have unusable password hashes; see [docs/authentication.md](./docs/authentication.md) for invitation-based local sign-in and the test identity cookie.
 
 ## Environment files
 
@@ -79,7 +81,7 @@ Each page is a labelled placeholder. Tenant lookup, authentication and modules a
 
 `VENUBOARD_ENV` is required and has no default. Valid values: `local`, `staging`, `production`, `test`. A misspelled or missing value fails validation at boot. Production cannot point at localhost and cannot use placeholder values.
 
-`NEXT_PUBLIC_*` variables are the only values inlined into the browser. `SUPABASE_SECRET_KEY` is server-only and unused in this phase. Do not prefix it with `NEXT_PUBLIC_`.
+`SUPABASE_SECRET_KEY` is server-only and is not used on tenant request paths. Do not prefix it with `NEXT_PUBLIC_`. `NEXT_PUBLIC_APP_ORIGIN` is optional in local and test; it is the public origin for Auth callbacks and invitation links.
 
 ## Local Supabase
 

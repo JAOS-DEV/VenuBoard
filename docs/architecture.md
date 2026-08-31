@@ -1,8 +1,8 @@
 # VenuBoard — Architecture
 
-**Status:** Accepted 2026-08-30 — nothing here blocks scaffolding · **Stage:** Foundation schema in repository · **Last updated:** 2026-08-31
+**Status:** Accepted 2026-08-30 — nothing here blocks scaffolding · **Stage:** Authentication and invitation foundation · **Last updated:** 2026-08-31
 
-This document describes the technical architecture. The foundation schema and RLS policies now exist in `supabase/migrations/`; product modules and the application `can()` layer are not built. Product scope is in [product-brief.md](./product-brief.md), the schema in [data-model.md](./data-model.md), authorisation in [roles-and-permissions.md](./roles-and-permissions.md), and the reasoning and unresolved questions in [decisions-and-open-questions.md](./decisions-and-open-questions.md).
+This document describes the technical architecture. The foundation schema, RLS, authentication, invitation acceptance, actor resolution and application `can()` now exist. Product modules are not built. Product scope is in [product-brief.md](./product-brief.md), the schema in [data-model.md](./data-model.md), authorisation in [roles-and-permissions.md](./roles-and-permissions.md), authentication in [authentication.md](./authentication.md), and the reasoning and unresolved questions in [decisions-and-open-questions.md](./decisions-and-open-questions.md).
 
 The foundational decisions — shared multi-tenancy, modular monolith, Next.js and Supabase, defence-in-depth isolation, direct tenant keys, action-based permissions, the entitlement split, staff data separation and the no-custom-code boundary — were **accepted on 2026-08-30** (ADR-001 to ADR-010), along with migrations, testing, routing, support access, deactivation, bookings and content classification (ADR-012, ADR-017, ADR-020, ADR-022 to ADR-025) and the newer records ADR-028 to ADR-038. **No decision in this document is outstanding**; the records still marked proposed are non-blocking preferences ([decisions-and-open-questions.md](./decisions-and-open-questions.md#4-decisions-needed-before-application-scaffolding)).
 
@@ -180,21 +180,21 @@ flowchart TD
     H -- yes --> J["Render enabled + entitled modules,<br/>published content only"]
 ```
 
-- The request proxy (`src/proxy.ts`) currently negotiates the interface locale only. Tenant resolution from the host (or the `/v/[slug]` fallback in local development and as a permanent fallback route) will also live there later (ADR-020); it is not implemented in this scaffold.
+- The request proxy (`src/proxy.ts`) negotiates the interface locale and refreshes the Supabase Auth session cookies. It does **not** authorise. Tenant resolution from the host (or the `/v/[slug]` fallback) will also live there later (ADR-020); it is not implemented yet.
 - The public site never receives an authenticated tenant session and never queries with an authenticated user's privileges.
 - Every venue always has a `venuboard.com` subdomain; a custom domain is additive and requires operator verification.
 
 ### 5.2 `/admin`
 
-- Requires an authenticated user with at least one active membership.
-- Sign-in accepts **either an email and password or an email magic link**; both paths land in the same session handling.
+- Requires an authenticated user with at least one active membership. Enforcement is in `src/app/[locale]/admin/layout.tsx`, not in the proxy.
+- Sign-in accepts **either an email and password or an email magic link**; both paths land in the same session handling. See [authentication.md](./authentication.md).
 - The user selects an **active business** and **active venue**; the selection is stored server-side in the session and validated against memberships on every request.
 - Navigation is generated from `(entitled modules) ∩ (enabled modules) ∩ (actions the user may perform)`.
 - Because each venue carries its own subscription, the venue switcher also surfaces per-venue trial and billing state, and a business owner gets a combined overview across their venues.
 
 ### 5.3 `/platform`
 
-- Requires an authenticated user holding a **platform role**. Platform roles live in a separate table from business/venue memberships and are never granted by tenant users.
+- Requires an authenticated user holding a **platform role**. Platform roles live in a separate table from business/venue memberships and are never granted by tenant users. Enforcement is in `src/app/[locale]/platform/layout.tsx`.
 - **MFA is mandatory for `platform_admin` and `platform_support` accounts before production launch**, and **MFA is represented in the architecture and the schema from the first build** (`users.mfa_enrolled_at`, an enforcement check on the platform sign-in path). Enrolment and recovery mechanics remain a **pre-production security decision** (OQ-40), so the first scaffold carries the representation without a half-designed recovery flow ([ADR-038](./decisions-and-open-questions.md#adr-038--provisional-boundaries-for-the-four-non-blocking-feature-questions)).
 - Additional protections: IP/allow-list consideration, and every read of tenant data inside an active support session is audited where practical.
 - `/platform` also owns **tenant creation**: because there is no public self-service signup, this is the only route by which a business, its first owner and its venues come into existence, so it must be a genuinely good flow rather than an internal afterthought.
@@ -219,7 +219,7 @@ Authorisation is expressed as a single primitive:
 can(actor, action, scope) -> boolean
 ```
 
-Implemented once in `core/authz`, used by UI rendering, Server Actions and tests. There is no second, divergent copy of the rules. **`can()` is fail-early UX.** Isolation, private data, entitlements, platform authority, moderation quarantine, deactivation and privilege escalation are enforced in the database; see [conditional-permission-enforcement.md](./security/conditional-permission-enforcement.md).
+Implemented once in `src/core/authz`, used by UI rendering, Server Actions and tests. Grant rows are read from `role_action_grants`; there is no second handwritten copy of the 33×7 matrix. **`can()` is fail-early UX.** Isolation, private data, entitlements, platform authority, moderation quarantine, deactivation and privilege escalation are enforced in the database; see [conditional-permission-enforcement.md](./security/conditional-permission-enforcement.md) and [authentication.md](./authentication.md).
 
 ## 7. Tenant isolation
 

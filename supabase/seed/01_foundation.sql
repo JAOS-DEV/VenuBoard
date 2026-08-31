@@ -327,9 +327,9 @@ BEGIN
       'venue',
       night_orchid,
       'content_editor',
-      'seed-invitation-hash-not-a-secret',
+      encode(extensions.digest(convert_to('local-invite-atlas-editor-v1', 'UTF8'), 'sha256'), 'hex'),
       atlas_owner_id,
-      epoch + interval '14 days',
+      epoch + interval '730 days',
       'pending',
       epoch,
       epoch
