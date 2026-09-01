@@ -1,6 +1,6 @@
 # VenuBoard — Data Model
 
-**Status:** Reflects the decisions accepted on 2026-08-30 · **Stage:** Foundation schema implemented in `supabase/migrations/` · **Last updated:** 2026-08-31
+**Status:** Reflects the decisions accepted on 2026-08-30 · **Stage:** Foundation schema plus platform-led onboarding · **Last updated:** 2026-09-01
 
 This document describes the conceptual data model: the tenant hierarchy, the entities each module needs, how multilingual content is stored, how public and private data are separated, and how Row Level Security is expected to scope every tenant-owned record.
 
@@ -66,7 +66,7 @@ A user may belong to **multiple businesses and multiple venues with a different 
 
 `id`, `business_id`, `name`, `slug` (globally unique — used for the `venuboard.com` subdomain), `timezone`, `default_locale`, address fields, `latitude`, `longitude`, `directions_url`, `content_classification`, `classification_locked_by_platform` (boolean), `publication_state`, `status`, `created_at`, `updated_at`, `archived_at`
 
-- Translated fields: **`venue_translations`** (description and tagline).
+- Translated fields: **`venue_translations`** (optional localized `name`, description and tagline). The English operational name also lives on `venues.name`.
 - `content_classification` is `text CHECK (... IN ('general','nightlife_18_plus'))`; `publication_state` is `text CHECK (... IN ('draft','published','unpublished_by_platform'))`.
 - `slug` uniqueness is platform-wide because it maps to a public subdomain; a reserved-word list prevents collisions with platform routes.
 - `classification_locked_by_platform` is how the operator **forces** an 18+ notice that the venue cannot lower.
@@ -275,10 +275,15 @@ erDiagram
 
 ### 6.1 Venue profile, branding and navigation
 
-**`venue_branding`** — `venue_id`, `logo_media_id`, `background_media_id`, `primary_color`, `secondary_color`, `accent_color`, `text_on_primary`, `font_key` (**must reference the approved font list**), `theme_key`, `updated_by`, `updated_at`.
+**`venue_branding`** — `venue_id`, `primary_color`, `secondary_color`, `accent_color`, `background_color`, `text_color`, `theme_key`, `font_key`, `logo_media_id`, `background_media_id`, `updated_by`, `created_at`, `updated_at`.
 
-- Colours are validated for contrast; the font is chosen from a platform-approved list with Thai coverage (list undecided — OQ-27).
+- Colours are canonical `#RRGGBB` hex only (`CHECK` on each colour column). Theme keys reference `branding_themes`; font keys reference `branding_fonts`. The only seeded font is `system` (OQ-27).
+- Logo and background media ids are **deferred placeholders**. Uploads are not implemented.
 - There is **no** column for custom CSS, custom JavaScript, custom HTML or arbitrary code. This is a permanent structural constraint, not a missing feature.
+
+**`branding_themes`** / **`branding_fonts`** — platform vocabulary tables (`key`, `name`, `sort_order`). Not tenant-writable.
+
+**`platform_onboarding_runs`** — `idempotency_key` (UUID text), `payload_hash` (SHA-256 hex of the RPC payload text), `actor_user_id`, `business_id`, `venue_id`, `invitation_id`, `result_summary` (jsonb **without** raw invitation tokens), `created_at`. Platform-admin readable; not tenant-writable. Used so a retry after a timeout cannot create a second business, venue or invitation.
 
 **`venue_navigation`** — `venue_id`, `item_key`, `sort_order`, `is_visible`. Translated fields: **`venue_navigation_translations`** (label).
 
@@ -571,7 +576,7 @@ Constraints:
 
 | Table | Parent | Translated fields |
 | --- | --- | --- |
-| `venue_translations` | `venues` | description, tagline |
+| `venue_translations` | `venues` | name, description, tagline |
 | `venue_contact_translations` | `venue_contacts` | label |
 | `venue_navigation_translations` | `venue_navigation` | label |
 | `venue_text_block_translations` | `venue_text_blocks` | title, body |

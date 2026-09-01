@@ -1,6 +1,6 @@
 # VenuBoard — Architecture
 
-**Status:** Accepted 2026-08-30 — nothing here blocks scaffolding · **Stage:** Authentication and invitation foundation · **Last updated:** 2026-08-31
+**Status:** Accepted 2026-08-30 — nothing here blocks scaffolding · **Stage:** Authentication, invitations and platform-led onboarding · **Last updated:** 2026-09-01
 
 This document describes the technical architecture. The foundation schema, RLS, authentication, invitation acceptance, actor resolution and application `can()` now exist. Product modules are not built. Product scope is in [product-brief.md](./product-brief.md), the schema in [data-model.md](./data-model.md), authorisation in [roles-and-permissions.md](./roles-and-permissions.md), authentication in [authentication.md](./authentication.md), and the reasoning and unresolved questions in [decisions-and-open-questions.md](./decisions-and-open-questions.md).
 
@@ -198,7 +198,17 @@ flowchart TD
 - **MFA is mandatory for `platform_admin` and `platform_support` accounts before production launch**, and **MFA is represented in the architecture and the schema from the first build** (`users.mfa_enrolled_at`, an enforcement check on the platform sign-in path). Enrolment and recovery mechanics remain a **pre-production security decision** (OQ-40), so the first scaffold carries the representation without a half-designed recovery flow ([ADR-038](./decisions-and-open-questions.md#adr-038--provisional-boundaries-for-the-four-non-blocking-feature-questions)).
 - Additional protections: IP/allow-list consideration, and every read of tenant data inside an active support session is audited where practical.
 - `/platform` also owns **tenant creation**: because there is no public self-service signup, this is the only route by which a business, its first owner and its venues come into existence, so it must be a genuinely good flow rather than an internal afterthought.
+- Platform-led onboarding is a **single transactional RPC** (`public.onboard_platform_venue`). It creates the business, first venue (publication state `draft`), English translation, optional Thai translation, venue-scoped trial subscription, foundation billing row without amounts, storage quota, entitlements, module settings, controlled branding, first `business_owner` invitation, and an audit row. If any required write fails, none of those rows remain.
+- Callers supply an idempotency UUID. The same key and payload returns the committed identifiers with `invitation_token` set to null. The same key with a different payload is rejected (`idempotency_conflict`). The raw invitation token is returned once on first success only and is never stored in `platform_onboarding_runs.result_summary` or audit metadata.
+- Only an active `platform_admin` with `manage_platform_tenants` may execute the RPC. `platform_support` is denied. A support session cannot substitute. The UI also fail-early checks `canOnboardTenants`; RLS and the RPC remain the authority.
+- New venues stay unpublished. Content classification is chosen by the operator (`general` or `adult_nightlife`, stored as `general` or `nightlife_18_plus`). Branding stores canonical hex colours and allowlisted theme/font keys only — no CSS, JavaScript or HTML. Logo and background media ids are deferred placeholders.
 - `/platform` owns the **moderation surface** too: `platform_admin` may quarantine or unpublish public content without opening a support session, under the stricter conditions in [section 15.1](#151-content-moderation-enforcement). `platform_support` does not hold that action.
+
+Routes:
+
+- `/{locale}/platform` — bounded recent-venue list for administrators; support sees a denial of tenant creation
+- `/{locale}/platform/onboard` — multi-step wizard
+- `/{locale}/platform/venues/[venueId]` — overview after creation (no raw invitation token)
 
 ## 6. Request lifecycle and authorisation
 

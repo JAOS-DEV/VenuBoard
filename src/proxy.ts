@@ -11,6 +11,7 @@ const handleI18n = createMiddleware(routing);
  * protected server layouts, not here.
  */
 export default async function proxy(request: NextRequest) {
+  request.headers.set("x-venuboard-pathname", request.nextUrl.pathname);
   const response = handleI18n(request);
   return refreshAuthSession(request, response);
 }

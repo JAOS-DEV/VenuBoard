@@ -1,6 +1,6 @@
 # Authentication, invitations and application authorisation
 
-**Status:** Implemented on `feat/authentication-and-invitations` · **Last updated:** 2026-08-31
+**Status:** Implemented on `feat/platform-venue-onboarding` · **Last updated:** 2026-09-01
 
 This is the application foundation for identity, invitation acceptance, protected `/admin` and `/platform` routes, actor resolution and `can()`. Product modules are still absent. Unresolved questions (OQ-18, OQ-38, OQ-40) are preserved.
 
@@ -18,6 +18,8 @@ VenuBoard uses **Supabase Auth**. Both **email/password** and **email magic link
 | `/{locale}/unauthorized` | Authenticated caller without access |
 | `/{locale}/admin` | Venue administration (membership required) |
 | `/{locale}/platform` | Platform administration (platform role required) |
+| `/{locale}/platform/onboard` | Platform-admin onboarding wizard (`manage_platform_tenants`) |
+| `/{locale}/platform/venues/[venueId]` | Platform-admin venue overview after onboarding |
 
 There is **no public self-service registration**. `signInWithOtp` on the sign-in page sets `shouldCreateUser: false`. An auth user is created only from a **pending invitation** (password on the invite page, or a magic link sent for that invitation email).
 
@@ -83,7 +85,7 @@ Local seed invitation (not a login password): token `local-invite-atlas-editor-v
 
 Deactivated users with a live Auth session do not pass `canAccessVenueAdmin` or `canAccessPlatform`.
 
-A Playwright-only allowlisted cookie (`vb_test_identity`) exists so browser tests can render the authenticated-unauthorized page without committed passwords. It is honoured only when `VENUBOARD_ENV=test`, `NODE_ENV` is not `production`, and `VENUBOARD_ENABLE_TEST_IDENTITY` is `1` or `true`. Local, staging, preview and production ignore the cookie. Values are `authenticated-no-access` and `authenticated-deactivated` only — not client-supplied roles. Playwright starts its own server on port 3100 with those variables and does not reuse a local `next dev` process.
+A Playwright-only allowlisted cookie (`vb_test_identity`) exists so browser tests can render authenticated surfaces without committed passwords. It is honoured only when `VENUBOARD_ENV=test`, `NODE_ENV` is not `production`, and `VENUBOARD_ENABLE_TEST_IDENTITY` is `1` or `true`. Local, staging, preview and production ignore the cookie. Values are `authenticated-no-access`, `authenticated-deactivated`, `platform-admin` and `platform-support` only — not client-supplied roles. The cookie never creates a Supabase JWT; RPC success tests sign in through Auth after a runtime password is set in the Playwright Node process with `SUPABASE_SECRET_KEY`. Playwright starts its own server on port 3100 with those variables and does not reuse a local `next dev` process.
 
 ## `can()` versus RLS
 
@@ -107,6 +109,7 @@ Implemented in `src/core/authz/can.ts`. The 33 action keys live in `src/core/aut
 | --- | --- | --- | --- |
 | `/admin` | Redirect to sign-in with `next=/admin` | `/unauthorized` | Active business or venue membership |
 | `/platform` | Redirect to sign-in with `next=/platform` | `/unauthorized` | Active `platform_admin` or `platform_support` |
+| `/platform/onboard` | Redirect to sign-in with `next=/platform/onboard` | `/unauthorized` | Active `platform_admin` with `manage_platform_tenants` |
 | Public `/v/[slug]` | Allowed | Allowed | No tenant session is used |
 
 A valid venue slug in a URL never grants `/admin`. Platform administrators are not granted tenant `/admin` by role alone.
@@ -120,11 +123,11 @@ A valid venue slug in a URL never grants `/admin`. Platform administrators are n
 ```bash
 npm run supabase:start    # Docker
 npm run db:reset
-npm run db:test           # includes supabase/tests/06_invitation_acceptance.sql
+npm run db:test           # includes supabase/tests/07_platform_onboarding.sql
 npm run test:ci
 npm run test:e2e
 ```
 
 Interactive password sign-in against seed users is not possible: hashes are random. Create a user through a pending invitation, or use the Auth admin API locally. Magic links appear in the local mail catcher (see `npx supabase status`).
 
-Playwright Chromium covers sign-in pages (en/th), the `/admin` anonymous redirect, the authenticated unauthorized cookie, invalid invitations, and rejected external `next` values. It is still not in CI (OQ-38).
+Playwright Chromium covers sign-in pages (en/th), the `/admin` anonymous redirect, the authenticated unauthorized cookie, invalid invitations, rejected external `next` values, and the platform onboarding wizard (admin access, support denial, EN/TH, validation, review, and an optional RPC success path when local Supabase keys are present). It is still not in CI (OQ-38).

@@ -2,7 +2,7 @@
 
 **A modular, multi-tenant, white-label website and management platform for venues.**
 
-> **Repository status: application scaffold plus foundation schema, authentication and invitations.** The Next.js App Router shell, locale routing, environment validation, local Supabase, PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS), invitation acceptance, actor resolution, `can()`, and pgTAP tests exist. **Product modules are not implemented** — no feed, staff presence, events, bookings, offers, atmosphere, analytics UI, notifications, media uploads or support-session UI.
+> **Repository status: application scaffold plus foundation schema, authentication, invitations and platform-led onboarding.** The Next.js App Router shell, locale routing, environment validation, local Supabase, PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS), invitation acceptance, actor resolution, `can()`, the platform onboarding wizard/RPC, and pgTAP tests exist. **Product modules are not implemented** — no feed, staff presence, events, bookings, offers, atmosphere, analytics UI, notifications, media uploads or support-session UI.
 >
 > **Decision status (2026-08-30):** all scaffolding ADRs are accepted. Remaining work is split into [launch blockers](./docs/decisions-and-open-questions.md#42-launch-blockers--required-before-production-not-before-code) and [feature-specific decisions](./docs/decisions-and-open-questions.md#43-feature-specific-decisions--required-before-the-feature-not-before-the-scaffold). The first-schema obligations are in [section 4.1](./docs/decisions-and-open-questions.md#41-obligations-on-the-first-implementation).
 
@@ -61,14 +61,15 @@ npm run dev
 
 Open:
 
-| Surface                     | URL                                      |
-| --------------------------- | ---------------------------------------- |
-| Overview                    | http://localhost:3000/en                 |
-| Public development fallback | http://localhost:3000/en/v/example-venue |
-| Sign in                     | http://localhost:3000/en/sign-in         |
-| Venue administration        | http://localhost:3000/en/admin           |
-| Platform administration     | http://localhost:3000/en/platform        |
-| Thai locale                 | replace `/en` with `/th`                 |
+| Surface                     | URL                                       |
+| --------------------------- | ----------------------------------------- |
+| Overview                    | http://localhost:3000/en                  |
+| Public development fallback | http://localhost:3000/en/v/example-venue  |
+| Sign in                     | http://localhost:3000/en/sign-in          |
+| Venue administration        | http://localhost:3000/en/admin            |
+| Platform administration     | http://localhost:3000/en/platform         |
+| Platform onboarding         | http://localhost:3000/en/platform/onboard |
+| Thai locale                 | replace `/en` with `/th`                  |
 
 `/admin` and `/platform` require a signed-in identity. Seed users have unusable password hashes; see [docs/authentication.md](./docs/authentication.md) for invitation-based local sign-in and the test identity cookie.
 

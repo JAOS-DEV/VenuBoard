@@ -219,7 +219,7 @@ Each conditional cell resolves through an explicit, testable rule.
 ## 6. Invitations and role assignment
 
 - Onboarding is **invitation-based**. An invitation carries: target scope (business or venue), the role to be granted, the invited email address, the inviter's identity, an expiry, and a single-use token.
-- **There is no public self-service signup in the MVP.** Businesses, their venues and the **first business owner** are created by the platform operator via `manage_platform_tenants` ([ADR-033](./decisions-and-open-questions.md#adr-033--operator-led-onboarding-no-self-service-signup-in-the-mvp)). Every other user arrives by invitation from inside the tenant.
+- **There is no public self-service signup in the MVP.** Businesses, their venues and the **first business owner** are created by the platform operator via `manage_platform_tenants` ([ADR-033](./decisions-and-open-questions.md#adr-033--operator-led-onboarding-no-self-service-signup-in-the-mvp)). The atomic RPC is `public.onboard_platform_venue`. Every other user arrives by invitation from inside the tenant.
 - **Business owners may invite managers** and any lower role, into their business or any of its venues.
 - **Venue managers may invite users only where explicitly allowed** (C1), only into their own venues, and only at or below their own level.
 - **Nobody may grant a role higher than their own**, and nobody may grant themselves a role.

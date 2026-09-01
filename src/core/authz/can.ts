@@ -240,3 +240,7 @@ export function canAccessPlatform(actor: Actor): boolean {
 
   return !platformMfaBlocksAccess(actor.mfa);
 }
+
+export function canOnboardTenants(actor: Actor): boolean {
+  return can(actor, "manage_platform_tenants", { type: "platform" });
+}

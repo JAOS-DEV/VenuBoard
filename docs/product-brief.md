@@ -349,6 +349,8 @@ Analytics collection must be privacy-conscious: no cross-site tracking, aggregat
 
 A new venue should be fully configurable in roughly **10–15 minutes**. In the MVP the whole flow is **operator-led**: the platform operator creates the business, its first owner and its venues, then the customer takes over.
 
+The platform wizard now covers business + first venue + classification + controlled branding + trial modules + first-owner invitation, in one unpublished draft. Logo upload, opening hours, staff, first content and publish remain later work.
+
 1. Create business *(platform operator)*
 2. Create venue *(platform operator)*
 3. Enter venue details

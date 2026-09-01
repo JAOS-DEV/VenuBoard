@@ -3,6 +3,8 @@ export const TEST_IDENTITY_COOKIE = "vb_test_identity";
 export const TEST_IDENTITY_TOKENS = [
   "authenticated-no-access",
   "authenticated-deactivated",
+  "platform-admin",
+  "platform-support",
 ] as const;
 
 export type TestIdentityToken = (typeof TEST_IDENTITY_TOKENS)[number];

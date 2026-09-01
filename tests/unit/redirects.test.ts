@@ -11,6 +11,8 @@ describe("parseSafeApplicationPath", () => {
     "/",
     "/admin",
     "/platform",
+    "/platform/onboard",
+    "/platform/venues/00000000-0000-4000-8000-000000000201",
     "/en/admin",
     "/th/sign-in",
     "/invite/local-invite-atlas-editor-v1",
