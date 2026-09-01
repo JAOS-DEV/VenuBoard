@@ -128,7 +128,9 @@ SELECT ok(
       AND p.proname NOT IN (
         'inspect_invitation',
         'accept_invitation',
-        'evaluate_permission'
+        'evaluate_permission',
+        'onboard_platform_venue',
+        'venue_slug_is_available'
       )
   ),
   'no SECURITY DEFINER helpers are exposed in public except invitation and permission RPCs'

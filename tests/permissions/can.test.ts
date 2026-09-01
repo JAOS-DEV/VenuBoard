@@ -7,7 +7,12 @@ import {
   type AuthenticatedActor,
 } from "@/core/actors/types";
 import { PERMISSION_ACTIONS, isPermissionAction } from "@/core/authz/actions";
-import { can, canAccessPlatform, canAccessVenueAdmin } from "@/core/authz/can";
+import {
+  can,
+  canAccessPlatform,
+  canAccessVenueAdmin,
+  canOnboardTenants,
+} from "@/core/authz/can";
 import type { RoleActionGrant } from "@/core/authz/grants";
 
 const NIGHT_ORCHID = "00000000-0000-4000-8000-000000000201";
@@ -341,6 +346,13 @@ describe("can()", () => {
     ).toBe(false);
     expect(canAccessPlatform(actor())).toBe(false);
     expect(canAccessPlatform(actor({ platformRole: "platform_support" }))).toBe(
+      true,
+    );
+    expect(canOnboardTenants(ANONYMOUS_ACTOR)).toBe(false);
+    expect(canOnboardTenants(actor({ platformRole: "platform_support" }))).toBe(
+      false,
+    );
+    expect(canOnboardTenants(actor({ platformRole: "platform_admin" }))).toBe(
       true,
     );
   });

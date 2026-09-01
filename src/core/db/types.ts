@@ -133,6 +133,42 @@ export type Database = {
           },
         ];
       };
+      branding_fonts: {
+        Row: {
+          key: string;
+          name: string;
+          sort_order: number;
+        };
+        Insert: {
+          key: string;
+          name: string;
+          sort_order: number;
+        };
+        Update: {
+          key?: string;
+          name?: string;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      branding_themes: {
+        Row: {
+          key: string;
+          name: string;
+          sort_order: number;
+        };
+        Insert: {
+          key: string;
+          name: string;
+          sort_order: number;
+        };
+        Update: {
+          key?: string;
+          name?: string;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
       business_memberships: {
         Row: {
           accepted_at: string | null;
@@ -537,6 +573,75 @@ export type Database = {
         };
         Relationships: [];
       };
+      platform_onboarding_runs: {
+        Row: {
+          actor_user_id: string;
+          business_id: string;
+          created_at: string;
+          idempotency_key: string;
+          invitation_id: string;
+          payload_hash: string;
+          result_summary: Json;
+          venue_id: string;
+        };
+        Insert: {
+          actor_user_id: string;
+          business_id: string;
+          created_at?: string;
+          idempotency_key: string;
+          invitation_id: string;
+          payload_hash: string;
+          result_summary: Json;
+          venue_id: string;
+        };
+        Update: {
+          actor_user_id?: string;
+          business_id?: string;
+          created_at?: string;
+          idempotency_key?: string;
+          invitation_id?: string;
+          payload_hash?: string;
+          result_summary?: Json;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "platform_onboarding_runs_actor_user_id_fkey";
+            columns: ["actor_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "platform_onboarding_runs_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "business_subscription_overview";
+            referencedColumns: ["business_id"];
+          },
+          {
+            foreignKeyName: "platform_onboarding_runs_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "platform_onboarding_runs_invitation_id_fkey";
+            columns: ["invitation_id"];
+            isOneToOne: false;
+            referencedRelation: "invitations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "platform_onboarding_runs_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       platform_roles: {
         Row: {
           granted_at: string;
@@ -935,6 +1040,83 @@ export type Database = {
           },
         ];
       };
+      venue_branding: {
+        Row: {
+          accent_color: string;
+          background_color: string;
+          background_media_id: string | null;
+          created_at: string;
+          font_key: string;
+          logo_media_id: string | null;
+          primary_color: string;
+          secondary_color: string;
+          text_color: string;
+          theme_key: string;
+          updated_at: string;
+          updated_by: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          accent_color: string;
+          background_color: string;
+          background_media_id?: string | null;
+          created_at?: string;
+          font_key: string;
+          logo_media_id?: string | null;
+          primary_color: string;
+          secondary_color: string;
+          text_color: string;
+          theme_key: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          accent_color?: string;
+          background_color?: string;
+          background_media_id?: string | null;
+          created_at?: string;
+          font_key?: string;
+          logo_media_id?: string | null;
+          primary_color?: string;
+          secondary_color?: string;
+          text_color?: string;
+          theme_key?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "venue_branding_font_key_fkey";
+            columns: ["font_key"];
+            isOneToOne: false;
+            referencedRelation: "branding_fonts";
+            referencedColumns: ["key"];
+          },
+          {
+            foreignKeyName: "venue_branding_theme_key_fkey";
+            columns: ["theme_key"];
+            isOneToOne: false;
+            referencedRelation: "branding_themes";
+            referencedColumns: ["key"];
+          },
+          {
+            foreignKeyName: "venue_branding_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "venue_branding_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: true;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       venue_memberships: {
         Row: {
           accepted_at: string | null;
@@ -1217,6 +1399,7 @@ export type Database = {
           description: string | null;
           id: string;
           locale: string;
+          name: string | null;
           tagline: string | null;
           updated_at: string;
           updated_by: string | null;
@@ -1227,6 +1410,7 @@ export type Database = {
           description?: string | null;
           id?: string;
           locale: string;
+          name?: string | null;
           tagline?: string | null;
           updated_at?: string;
           updated_by?: string | null;
@@ -1237,6 +1421,7 @@ export type Database = {
           description?: string | null;
           id?: string;
           locale?: string;
+          name?: string | null;
           tagline?: string | null;
           updated_at?: string;
           updated_by?: string | null;
@@ -1399,6 +1584,11 @@ export type Database = {
         Returns: boolean;
       };
       inspect_invitation: { Args: { p_token: string }; Returns: Json };
+      onboard_platform_venue: {
+        Args: { p_idempotency_key: string; p_payload: Json };
+        Returns: Json;
+      };
+      venue_slug_is_available: { Args: { p_slug: string }; Returns: boolean };
     };
     Enums: {
       [_ in never]: never;

@@ -93,6 +93,61 @@ function testActor(token: TestIdentityToken): AuthenticatedActor {
     };
   }
 
+  if (token === "platform-admin") {
+    return {
+      kind: "authenticated",
+      userId: "00000000-0000-4000-8000-000000000001",
+      email: "platform.admin@example.com",
+      displayName: "Platform Admin",
+      accountStatus: "active",
+      deactivatedAt: null,
+      platformRole: "platform_admin",
+      businessMemberships: [],
+      venueMemberships: [],
+      currentBusinessId: null,
+      currentVenueId: null,
+      mfa: inactiveMfa(),
+      supportSessions: [],
+      grants: [
+        {
+          roleKey: "platform_admin",
+          actionKey: "manage_platform_tenants",
+          grantKind: "allow",
+        },
+        {
+          roleKey: "platform_admin",
+          actionKey: "view_audit_log",
+          grantKind: "allow",
+        },
+      ],
+    };
+  }
+
+  if (token === "platform-support") {
+    return {
+      kind: "authenticated",
+      userId: "00000000-0000-4000-8000-000000000002",
+      email: "platform.support@example.com",
+      displayName: "Platform Support",
+      accountStatus: "active",
+      deactivatedAt: null,
+      platformRole: "platform_support",
+      businessMemberships: [],
+      venueMemberships: [],
+      currentBusinessId: null,
+      currentVenueId: null,
+      mfa: inactiveMfa(),
+      supportSessions: [],
+      grants: [
+        {
+          roleKey: "platform_support",
+          actionKey: "view_audit_log",
+          grantKind: "allow",
+        },
+      ],
+    };
+  }
+
   return {
     kind: "authenticated",
     userId: "00000000-0000-4000-8000-00000000ffff",

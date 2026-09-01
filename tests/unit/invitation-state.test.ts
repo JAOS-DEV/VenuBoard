@@ -75,7 +75,8 @@ describe("test identity cookie", () => {
   it("accepts only the allowlisted tokens", () => {
     expect(isTestIdentityToken("authenticated-no-access")).toBe(true);
     expect(isTestIdentityToken("authenticated-deactivated")).toBe(true);
-    expect(isTestIdentityToken("platform-admin")).toBe(false);
+    expect(isTestIdentityToken("platform-admin")).toBe(true);
+    expect(isTestIdentityToken("platform-support")).toBe(true);
     expect(isTestIdentityToken('{"role":"platform_admin"}')).toBe(false);
   });
 

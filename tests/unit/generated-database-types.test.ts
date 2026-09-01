@@ -25,5 +25,9 @@ describe("generated database types", () => {
     expect(source).toContain("permission_actions:");
     expect(source).toContain("inspect_invitation");
     expect(source).toContain("accept_invitation");
+    expect(source).toContain("onboard_platform_venue");
+    expect(source).toContain("venue_slug_is_available");
+    expect(source).toContain("venue_branding:");
+    expect(source).toContain("platform_onboarding_runs:");
   });
 });
