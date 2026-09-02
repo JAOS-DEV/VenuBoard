@@ -37,10 +37,15 @@ const { AppShell } = await import("@/components/app-shell");
 
 function renderShell(
   environment: ComponentProps<typeof AppShell>["environment"],
+  developerHubEnabled = environment === "local",
 ): void {
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <AppShell environment={environment} signedIn={false}>
+      <AppShell
+        environment={environment}
+        signedIn={false}
+        developerHubEnabled={developerHubEnabled}
+      >
         <p>surface content</p>
       </AppShell>
     </NextIntlClientProvider>,
@@ -59,12 +64,37 @@ describe("AppShell", () => {
     expect(screen.getByRole("main")).toBeInTheDocument();
   });
 
-  it("states plainly that nothing is implemented yet", () => {
+  it("states that local development is under active development", () => {
     renderShell("local");
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      messages.shell.scaffoldNotice,
+      messages.shell.localNotice,
     );
+    expect(screen.getByRole("status")).not.toHaveTextContent(
+      "product modules are not implemented",
+    );
+  });
+
+  it("exposes the developer hub only for ordinary local development", () => {
+    renderShell("local", true);
+    expect(
+      screen.getByRole("link", { name: messages.shell.developerHub }),
+    ).toHaveAttribute("href", "/dev");
+  });
+
+  it("hides the developer hub outside local development", () => {
+    renderShell("staging", false);
+    expect(
+      screen.queryByRole("link", { name: messages.shell.developerHub }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      messages.shell.stagingNotice,
+    );
+  });
+
+  it("does not show a development-warning banner in production", () => {
+    renderShell("production", false);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   it("links to each documented surface", () => {

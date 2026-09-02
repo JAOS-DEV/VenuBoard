@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Suspense } from "react";
 
 import { parseSafeApplicationPath } from "@/core/auth/redirects";
+import { resolveDeveloperPersona } from "@/core/dev/personas";
 import { Link, usePathname } from "@/core/i18n/navigation";
 import { routing } from "@/core/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -20,12 +21,17 @@ function LocaleSwitcherLinks(): React.ReactElement {
   const searchParams = useSearchParams();
   const t = useTranslations("shell");
   const next = parseSafeApplicationPath(searchParams.get("next"));
+  const persona = resolveDeveloperPersona(searchParams.get("persona"));
+  const query = {
+    ...(next === null ? {} : { next }),
+    ...(persona === null ? {} : { persona: persona.id }),
+  };
+  const href = Object.keys(query).length === 0 ? pathname : { pathname, query };
 
   return (
     <nav aria-label={t("language")} className="flex items-center gap-1">
       {routing.locales.map((locale) => {
         const isActive = locale === activeLocale;
-        const href = next === null ? pathname : { pathname, query: { next } };
 
         return (
           <Link
@@ -51,8 +57,9 @@ function LocaleSwitcherLinks(): React.ReactElement {
 }
 
 /**
- * Locale switcher. Preserves the current path and a validated `next` query
- * parameter. Unsafe return paths are dropped rather than copied.
+ * Locale switcher. Preserves the current path, a validated `next` query
+ * parameter, and an allowlisted developer-persona identifier. Unsafe return
+ * paths and unknown persona values are dropped rather than copied.
  */
 export function LocaleSwitcher(): React.ReactElement {
   return (

@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 
 import { AppShell } from "@/components/app-shell";
 import { headerIdentity, resolveRequestActor } from "@/core/actors/resolve";
+import { isOrdinaryLocalDevelopment } from "@/core/dev/guard";
 import { serverEnv } from "@/core/env/server";
 import { routing } from "@/core/i18n/routing";
 import { resolveRequestLocale } from "@/core/i18n/server";
@@ -12,10 +13,9 @@ import "../globals.css";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "VenuBoard — application scaffold",
+  title: "VenuBoard",
   description:
-    "Scaffold for the VenuBoard venue platform. No business functionality is implemented yet.",
-  // The scaffold must never be indexed; it is not a product.
+    "VenuBoard venue platform. Remaining product modules are later work.",
   robots: { index: false, follow: false },
 };
 
@@ -43,6 +43,10 @@ export default async function LocaleLayout({
           <AppShell
             environment={serverEnv.VENUBOARD_ENV}
             signedIn={session.signedIn}
+            developerHubEnabled={isOrdinaryLocalDevelopment(
+              serverEnv.VENUBOARD_ENV,
+              process.env.NODE_ENV,
+            )}
           >
             {children}
           </AppShell>

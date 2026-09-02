@@ -17,6 +17,9 @@ import { Link } from "@/core/i18n/navigation";
 
 interface SignInFormProps {
   nextPath: string | null;
+  initialEmail?: string | null;
+  localDevelopmentAssistance?: boolean;
+  mailboxUrl?: string;
 }
 
 function messageFor(
@@ -38,11 +41,17 @@ function messageFor(
   return t("genericError");
 }
 
-export function SignInForm({ nextPath }: SignInFormProps): ReactElement {
+export function SignInForm({
+  nextPath,
+  initialEmail = null,
+  localDevelopmentAssistance = false,
+  mailboxUrl,
+}: SignInFormProps): ReactElement {
   const t = useTranslations("auth");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail ?? "");
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showLocalMailbox, setShowLocalMailbox] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function run(
@@ -51,10 +60,14 @@ export function SignInForm({ nextPath }: SignInFormProps): ReactElement {
   ): void {
     setError(null);
     setNotice(null);
+    setShowLocalMailbox(false);
     startTransition(async () => {
       const result = await action(formData);
       if (result.info !== undefined) {
         setNotice(messageFor(t, result));
+        setShowLocalMailbox(
+          localDevelopmentAssistance && result.info === "magic_link_sent",
+        );
         return;
       }
       if (!result.ok) {
@@ -142,11 +155,31 @@ export function SignInForm({ nextPath }: SignInFormProps): ReactElement {
         </Button>
       </form>
 
+      {showLocalMailbox && mailboxUrl !== undefined ? (
+        <div className="space-y-3">
+          <p role="status" className="text-sm text-muted-foreground">
+            {t("magicLinkLocalFollowUp")}
+          </p>
+          <Button asChild variant="secondary" className="w-full">
+            <a href={mailboxUrl} target="_blank" rel="noreferrer">
+              {t("openLocalMailbox")}
+            </a>
+          </Button>
+        </div>
+      ) : null}
+
       <p className="text-sm text-muted-foreground">
         <Link href="/forgot-password" className="underline underline-offset-4">
           {t("forgotPassword")}
         </Link>
       </p>
+      {localDevelopmentAssistance ? (
+        <p className="text-sm text-muted-foreground">
+          <Link href="/dev" className="underline underline-offset-4">
+            {t("openDeveloperHub")}
+          </Link>
+        </p>
+      ) : null}
     </div>
   );
 }
