@@ -10,6 +10,7 @@ import { Link } from "@/core/i18n/navigation";
 interface AppShellProps {
   environment: VenuBoardEnvironment;
   signedIn: boolean;
+  developerHubEnabled: boolean;
   children: React.ReactNode;
 }
 
@@ -22,12 +23,12 @@ const SURFACES = [
 
 /**
  * Shared shell: header, surface links, locale switcher, and session controls.
- * Product modules are still absent; admin and platform routes are now
- * authentication-gated.
+ * Admin and platform routes are authentication-gated.
  */
 export function AppShell({
   environment,
   signedIn,
+  developerHubEnabled,
   children,
 }: AppShellProps): React.ReactElement {
   const t = useTranslations("shell");
@@ -58,6 +59,14 @@ export function AppShell({
               environment={environment}
               label={t("environment")}
             />
+            {developerHubEnabled ? (
+              <Link
+                href="/dev"
+                className="inline-flex h-11 items-center px-3 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {t("developerHub")}
+              </Link>
+            ) : null}
             {signedIn ? (
               <SignOutButton />
             ) : (
@@ -91,12 +100,14 @@ export function AppShell({
         </nav>
       </header>
 
-      <div
-        role="status"
-        className="border-b border-border bg-secondary px-4 py-2 text-center text-xs text-secondary-foreground sm:px-6"
-      >
-        {t("scaffoldNotice")}
-      </div>
+      {developerHubEnabled || environment === "staging" ? (
+        <div
+          role="status"
+          className="border-b border-border bg-secondary px-4 py-2 text-center text-xs text-secondary-foreground sm:px-6"
+        >
+          {developerHubEnabled ? t("localNotice") : t("stagingNotice")}
+        </div>
+      ) : null}
 
       <main
         id="main"
@@ -107,7 +118,9 @@ export function AppShell({
 
       <footer className="border-t border-border px-4 py-6 sm:px-6">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <Badge variant="outline">{t("notImplemented")}</Badge>
+          {developerHubEnabled || environment === "staging" ? (
+            <Badge variant="outline">{t("developmentBadge")}</Badge>
+          ) : null}
           <span>{t("documentation")}: docs/</span>
         </div>
       </footer>

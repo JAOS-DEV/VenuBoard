@@ -16,9 +16,19 @@ export const LIVE_VENUE_NAME_TH = "ท่าดอกบัวอีทูอี
 export const LIVE_DESCRIPTION_EN = "A fictional riverside bar.";
 export const LIVE_DESCRIPTION_TH = "บาร์ริมน้ำสมมติ";
 
+export interface LiveOnboardingIdentity {
+  slug: string;
+  ownerEmail: string;
+  businessName: string;
+  legalName: string;
+}
+
 export interface LiveOnboardingFacts {
+  businessId: string | null;
+  venueId: string | null;
   businessCount: number;
   venueCount: number;
+  onboardingRunCount: number;
   publicationState: string | null;
   classification: string | null;
   timezone: string | null;
@@ -44,6 +54,46 @@ export interface LiveOnboardingFacts {
   summaryHasToken: boolean;
   auditHasToken: boolean;
 }
+
+export interface LiveOnboardingRetryResult {
+  ok: boolean;
+  idempotent: boolean;
+  hasToken: boolean;
+  businessId: string | null;
+  venueId: string | null;
+}
+
+const EMPTY_FACTS: LiveOnboardingFacts = {
+  businessId: null,
+  venueId: null,
+  businessCount: 0,
+  venueCount: 0,
+  onboardingRunCount: 0,
+  publicationState: null,
+  classification: null,
+  timezone: null,
+  subscriptionVenueId: null,
+  subscriptionState: null,
+  trialEndsAt: null,
+  entitledModules: [],
+  deniedModules: [],
+  quotaBytes: null,
+  usedBytes: null,
+  planQuotaBytes: null,
+  primaryColor: null,
+  themeKey: null,
+  englishName: null,
+  thaiName: null,
+  invitationScope: null,
+  invitationRole: null,
+  invitationVenueId: null,
+  tokenHash: null,
+  tokenHashLooksHashed: false,
+  tokenHashMatches: false,
+  rawTokenStored: false,
+  summaryHasToken: false,
+  auditHasToken: false,
+};
 
 function loadLocalKeys(): {
   url: string;
@@ -85,16 +135,24 @@ export function invitationTokenHash(token: string): string {
   return createHash("sha256").update(token.trim(), "utf8").digest("hex");
 }
 
+export function liveOnboardingIdentity(suffix: string): LiveOnboardingIdentity {
+  return {
+    slug: `e2e-pier-${suffix}`,
+    ownerEmail: `owner.${suffix}@example.com`,
+    businessName: `E2E Lotus Holdings ${suffix}`,
+    legalName: `E2E Lotus Holdings ${suffix} Co.`,
+  };
+}
+
 export function liveOnboardingPayload(
-  slug: string,
-  ownerEmail: string,
+  identity: LiveOnboardingIdentity,
   idempotencyKey: string,
 ): Record<string, unknown> {
   const parsed = onboardingWizardSchema.parse({
     idempotencyKey,
     business: {
-      name: LIVE_BUSINESS_NAME,
-      legalName: LIVE_LEGAL_NAME,
+      name: identity.businessName,
+      legalName: identity.legalName,
       country: "TH",
       defaultLocale: "en",
     },
@@ -103,7 +161,7 @@ export function liveOnboardingPayload(
       nameTh: LIVE_VENUE_NAME_TH,
       descriptionEn: LIVE_DESCRIPTION_EN,
       descriptionTh: LIVE_DESCRIPTION_TH,
-      slug,
+      slug: identity.slug,
       timezone: "Asia/Bangkok",
       defaultLocale: "en",
       supportedLocales: ["en", "th"],
@@ -119,14 +177,17 @@ export function liveOnboardingPayload(
       quotaBytes: null,
     },
     overrides: [],
-    owner: { email: ownerEmail },
+    owner: { email: identity.ownerEmail },
   });
   return toOnboardingPayload(parsed);
 }
 
 export async function loadLiveOnboardingFacts(
-  slug: string,
-  rawToken: string,
+  input: {
+    slug: string;
+    rawToken: string;
+    idempotencyKey: string;
+  },
   credentials: { email: string; password: string },
 ): Promise<LiveOnboardingFacts | null> {
   const supabase = await signedInAdminClient(
@@ -137,49 +198,56 @@ export async function loadLiveOnboardingFacts(
     return null;
   }
 
-  const venues = await supabase
-    .from("venues")
-    .select(
-      "id, business_id, publication_state, content_classification, timezone, name",
-    )
-    .eq("slug", slug);
-  if (venues.error !== null) {
+  const [runs, venuesBySlug] = await Promise.all([
+    supabase
+      .from("platform_onboarding_runs")
+      .select(
+        "idempotency_key, business_id, venue_id, invitation_id, result_summary",
+      )
+      .eq("idempotency_key", input.idempotencyKey),
+    supabase
+      .from("venues")
+      .select(
+        "id, business_id, publication_state, content_classification, timezone, name",
+      )
+      .eq("slug", input.slug),
+  ]);
+
+  if (runs.error !== null || venuesBySlug.error !== null) {
     return null;
   }
-  const venue = venues.data?.[0] ?? null;
-  const businesses = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("name", LIVE_BUSINESS_NAME);
 
-  if (venue === null) {
+  const runCount = runs.data?.length ?? 0;
+  const run = runs.data?.[0] ?? null;
+  const slugVenueCount = venuesBySlug.data?.length ?? 0;
+  const slugVenue = venuesBySlug.data?.[0] ?? null;
+
+  if (run === null || slugVenue === null) {
     return {
+      ...EMPTY_FACTS,
+      onboardingRunCount: runCount,
+      venueCount: slugVenueCount,
+    };
+  }
+
+  const [businesses, venuesForBusiness] = await Promise.all([
+    supabase.from("businesses").select("id").eq("id", run.business_id),
+    supabase.from("venues").select("id").eq("business_id", run.business_id),
+  ]);
+
+  if (
+    businesses.error !== null ||
+    venuesForBusiness.error !== null ||
+    slugVenue.id !== run.venue_id ||
+    slugVenue.business_id !== run.business_id
+  ) {
+    return {
+      ...EMPTY_FACTS,
+      businessId: run.business_id,
+      venueId: run.venue_id,
+      onboardingRunCount: runCount,
       businessCount: businesses.data?.length ?? 0,
-      venueCount: venues.data?.length ?? 0,
-      publicationState: null,
-      classification: null,
-      timezone: null,
-      subscriptionVenueId: null,
-      subscriptionState: null,
-      trialEndsAt: null,
-      entitledModules: [],
-      deniedModules: [],
-      quotaBytes: null,
-      usedBytes: null,
-      planQuotaBytes: null,
-      primaryColor: null,
-      themeKey: null,
-      englishName: null,
-      thaiName: null,
-      invitationScope: null,
-      invitationRole: null,
-      invitationVenueId: null,
-      tokenHash: null,
-      tokenHashLooksHashed: false,
-      tokenHashMatches: false,
-      rawTokenStored: false,
-      summaryHasToken: false,
-      auditHasToken: false,
+      venueCount: venuesForBusiness.data?.length ?? 0,
     };
   }
 
@@ -191,23 +259,22 @@ export async function loadLiveOnboardingFacts(
     branding,
     translations,
     invitations,
-    runs,
     audits,
   ] = await Promise.all([
     supabase
       .from("subscriptions")
       .select("venue_id, state, trial_ends_at, plan_id")
-      .eq("venue_id", venue.id)
+      .eq("venue_id", run.venue_id)
       .maybeSingle(),
     supabase
       .from("venue_module_entitlements")
       .select("module_key, grant_type")
-      .eq("venue_id", venue.id)
+      .eq("venue_id", run.venue_id)
       .is("revoked_at", null),
     supabase
       .from("venue_storage_usage")
       .select("quota_bytes, used_bytes")
-      .eq("venue_id", venue.id)
+      .eq("venue_id", run.venue_id)
       .maybeSingle(),
     supabase
       .from("plans")
@@ -217,39 +284,37 @@ export async function loadLiveOnboardingFacts(
     supabase
       .from("venue_branding")
       .select("primary_color, theme_key")
-      .eq("venue_id", venue.id)
+      .eq("venue_id", run.venue_id)
       .maybeSingle(),
     supabase
       .from("venue_translations")
       .select("locale, name")
-      .eq("venue_id", venue.id),
+      .eq("venue_id", run.venue_id),
     supabase
       .from("invitations")
       .select("scope_type, role, venue_id, token_hash")
-      .eq("business_id", venue.business_id)
-      .eq("scope_type", "business"),
-    supabase
-      .from("platform_onboarding_runs")
-      .select("result_summary")
-      .eq("venue_id", venue.id),
+      .eq("id", run.invitation_id),
     supabase
       .from("audit_log")
       .select("summary, metadata")
-      .eq("venue_id", venue.id),
+      .eq("venue_id", run.venue_id),
   ]);
 
   const invitation = invitations.data?.[0] ?? null;
-  const expectedHash = invitationTokenHash(rawToken);
+  const expectedHash = invitationTokenHash(input.rawToken);
   const summaryText = JSON.stringify(runs.data ?? []);
   const auditText = JSON.stringify(audits.data ?? []);
   const hash = invitation?.token_hash ?? null;
 
   return {
+    businessId: run.business_id,
+    venueId: run.venue_id,
     businessCount: businesses.data?.length ?? 0,
-    venueCount: venues.data?.length ?? 0,
-    publicationState: venue.publication_state,
-    classification: venue.content_classification,
-    timezone: venue.timezone,
+    venueCount: venuesForBusiness.data?.length ?? 0,
+    onboardingRunCount: runCount,
+    publicationState: slugVenue.publication_state,
+    classification: slugVenue.content_classification,
+    timezone: slugVenue.timezone,
     subscriptionVenueId: subscription.data?.venue_id ?? null,
     subscriptionState: subscription.data?.state ?? null,
     trialEndsAt: subscription.data?.trial_ends_at ?? null,
@@ -274,11 +339,11 @@ export async function loadLiveOnboardingFacts(
     tokenHash: hash,
     tokenHashLooksHashed: hash !== null && /^[0-9a-f]{64}$/.test(hash),
     tokenHashMatches: hash === expectedHash,
-    rawTokenStored: hash === rawToken,
+    rawTokenStored: hash === input.rawToken,
     summaryHasToken:
-      summaryText.includes(rawToken) ||
+      summaryText.includes(input.rawToken) ||
       summaryText.includes("invitation_token"),
-    auditHasToken: auditText.includes(rawToken),
+    auditHasToken: auditText.includes(input.rawToken),
   };
 }
 
@@ -286,9 +351,8 @@ export async function retryLiveOnboarding(input: {
   email: string;
   password: string;
   idempotencyKey: string;
-  slug: string;
-  ownerEmail: string;
-}): Promise<{ ok: boolean; idempotent: boolean; hasToken: boolean } | null> {
+  identity: LiveOnboardingIdentity;
+}): Promise<LiveOnboardingRetryResult | null> {
   const keys = loadLocalKeys();
   if (keys === null) {
     return null;
@@ -307,11 +371,7 @@ export async function retryLiveOnboarding(input: {
 
   const { data, error } = await client.rpc("onboard_platform_venue", {
     p_idempotency_key: input.idempotencyKey,
-    p_payload: liveOnboardingPayload(
-      input.slug,
-      input.ownerEmail,
-      input.idempotencyKey,
-    ),
+    p_payload: liveOnboardingPayload(input.identity, input.idempotencyKey),
   });
   if (error !== null || data === null || typeof data !== "object") {
     return null;
@@ -322,6 +382,9 @@ export async function retryLiveOnboarding(input: {
     ok: record.ok === true,
     idempotent: record.idempotent === true,
     hasToken: typeof record.invitation_token === "string",
+    businessId:
+      typeof record.business_id === "string" ? record.business_id : null,
+    venueId: typeof record.venue_id === "string" ? record.venue_id : null,
   };
 }
 

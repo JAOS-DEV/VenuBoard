@@ -40,7 +40,9 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     ".next-playwright/types/**/*.ts",
-    ".next-playwright/dev/types/**/*.ts"
+    ".next-playwright/dev/types/**/*.ts",
+    ".next-playwright-local/types/**/*.ts",
+    ".next-playwright-local/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules", ".next", "playwright-report", "test-results"]
 }

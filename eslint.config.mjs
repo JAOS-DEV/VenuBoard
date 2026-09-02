@@ -11,6 +11,7 @@ const eslintConfig = defineConfig([
   globalIgnores([
     ".next/**",
     ".next-playwright/**",
+    ".next-playwright-local/**",
     "out/**",
     "build/**",
     "coverage/**",

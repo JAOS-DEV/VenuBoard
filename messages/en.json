@@ -5,11 +5,13 @@
   },
   "shell": {
     "skipToContent": "Skip to main content",
-    "scaffoldNotice": "Foundation only — product modules are not implemented yet",
+    "localNotice": "Local development environment — features are under active development.",
+    "stagingNotice": "Staging environment — this is not production.",
+    "developerHub": "Developer hub",
     "surfaces": "Surfaces",
     "environment": "Environment",
     "language": "Language",
-    "notImplemented": "Not implemented yet",
+    "developmentBadge": "Features are under development",
     "documentation": "Documentation"
   },
   "nav": {
@@ -20,7 +22,7 @@
   },
   "home": {
     "title": "Application scaffold",
-    "description": "This is the VenuBoard application shell. Routing, layout, internationalisation, environment handling, authentication and invitation acceptance are in place. Product modules are not implemented.",
+    "description": "This is the VenuBoard application shell. Routing, layout, internationalisation, environment handling, authentication, invitations, onboarding and the staff presence module are in place. Remaining product modules are later work.",
     "surfacesDescription": "The three documented surfaces exist as labelled routes. Venue administration and platform administration require a signed-in identity with the right membership or platform role.",
     "nextStep": "The staff presence module is the first product module. Feed, events, bookings, offers and atmosphere remain later work.",
     "exampleSlug": "Example published venue"
@@ -276,7 +278,91 @@
     "genericError": "Something went wrong. Check your details and try again.",
     "validationFailed": "Check the highlighted fields and try again.",
     "rateLimited": "Too many attempts. Please wait and try again.",
-    "unavailable": "Sign-in is not available right now."
+    "unavailable": "Sign-in is not available right now.",
+    "openDeveloperHub": "Local developer hub",
+    "magicLinkLocalFollowUp": "Magic link requested. Open the local email inbox.",
+    "openLocalMailbox": "Open the local email inbox"
+  },
+  "dev": {
+    "title": "Local developer hub",
+    "description": "Local development tools only. This page is unavailable in test, staging and production. It does not sign anyone in, mint tokens or bypass authorisation.",
+    "services": "Local services",
+    "servicesHelp": "These are local development links, not production configuration.",
+    "openLocalTool": "Open local tool",
+    "signInEnglish": "English sign-in",
+    "signInEnglishHelp": "Opens the English sign-in page in this application.",
+    "signInThai": "Thai sign-in",
+    "signInThaiHelp": "Opens the Thai sign-in page in this application.",
+    "personas": "Seeded test identities",
+    "personasHelp": "Fictional example.com accounts from the deterministic seed. There are no committed passwords. Request a magic link, then open the local email inbox.",
+    "copyEmail": "Copy email",
+    "emailCopied": "Email copied",
+    "openSignIn": "Open sign-in",
+    "role": "Role and context",
+    "destination": "Intended destination",
+    "serviceLabels": {
+      "application": "VenuBoard application",
+      "studio": "Supabase Studio",
+      "mailbox": "Local email inbox",
+      "authHealth": "Supabase Auth health"
+    },
+    "groups": {
+      "platform": "Platform",
+      "venue": "Venue",
+      "denied": "Denied access"
+    },
+    "catalog": {
+      "platform-admin": {
+        "label": "Platform administrator",
+        "role": "platform_admin — platform surface",
+        "purpose": "Platform administration, onboarding and tenant operations."
+      },
+      "platform-support": {
+        "label": "Platform support",
+        "role": "platform_support — platform surface",
+        "purpose": "Read-oriented platform support. Cannot run tenant onboarding."
+      },
+      "harbor-owner": {
+        "label": "Independent venue owner",
+        "role": "business_owner at Harbor Light; also staff at Night Orchid",
+        "purpose": "Single-venue owner administration, plus a second-venue staff membership."
+      },
+      "atlas-owner": {
+        "label": "Multi-venue business owner",
+        "role": "business_owner at Atlas Hospitality",
+        "purpose": "Owner access across Atlas venues such as Night Orchid and Draft Room."
+      },
+      "atlas-manager": {
+        "label": "Venue manager",
+        "role": "venue_manager at Night Orchid and Draft Room",
+        "purpose": "Manager actions across two Atlas venues."
+      },
+      "atlas-editor": {
+        "label": "Content editor",
+        "role": "content_editor at Night Orchid",
+        "purpose": "Content-editor actions in a single venue."
+      },
+      "atlas-bookings": {
+        "label": "Bookings role",
+        "role": "booking_manager at Night Orchid",
+        "purpose": "Booking-manager actions in a single venue."
+      },
+      "atlas-staff": {
+        "label": "Staff role",
+        "role": "staff at Night Orchid",
+        "purpose": "Staff-level venue actions."
+      },
+      "deactivated-user": {
+        "label": "Deactivated user",
+        "role": "Account and membership deactivated",
+        "purpose": "Intentionally demonstrates access denial after sign-in."
+      },
+      "dual-staff": {
+        "label": "Multi-venue staff",
+        "role": "staff at Night Orchid and Trial Garden",
+        "purpose": "The same staff identity in two venues."
+      }
+    }
   },
   "invite": {
     "title": "Accept your invitation",

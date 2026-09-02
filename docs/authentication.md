@@ -120,6 +120,8 @@ A valid venue slug in a URL never grants `/admin`. Platform administrators are n
 
 ## Local testing
 
+Canonical local workflow, including Studio, the local inbox and fictional personas: `npm run local:start` then http://localhost:3000/en/dev. That hub is a real 404 outside ordinary local development. It does not create sessions or bypass actor resolution. See the README local-development section.
+
 ```bash
 npm run supabase:start    # Docker
 npm run db:reset
@@ -128,6 +130,6 @@ npm run test:ci
 npm run test:e2e
 ```
 
-Interactive password sign-in against seed users is not possible: hashes are random. Create a user through a pending invitation, or use the Auth admin API locally. Magic links appear in the local mail catcher (see `npx supabase status`).
+Interactive password sign-in against seed users is not possible: hashes are random. Create a user through a pending invitation, or use the Auth admin API locally. Magic links appear in the local mail catcher (http://127.0.0.1:54324). The Playwright `vb_test_identity` cookie remains available only when `VENUBOARD_ENV=test`, `NODE_ENV` is not `production`, and the explicit enable flag is set.
 
 Playwright Chromium covers sign-in pages (en/th), the `/admin` anonymous redirect, the authenticated unauthorized cookie, invalid invitations, rejected external `next` values, and the platform onboarding wizard (admin access, support denial, EN/TH, validation, review, and an optional RPC success path when local Supabase keys are present). It is still not in CI (OQ-38).

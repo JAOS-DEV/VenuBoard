@@ -11,6 +11,7 @@
 # Next.js
 /.next/
 /.next-playwright/
+/.next-playwright-local/
 /out/
 /build
 next-env.d.ts

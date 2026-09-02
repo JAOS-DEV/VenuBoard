@@ -429,6 +429,7 @@ The scaffold must include a **safe reset-and-seed workflow for local and staging
 - **Fictional only:** all names, images, email addresses and contact details are invented, and must not resemble real venues in the target cities (OQ-37). Genuine customer or staff information never appears.
 - **Comprehensive:** the dataset covers every role, subscription and trial state, quota boundary, content workflow state, translation-coverage combination, staff lifecycle transition, support session and deliberate permission-denied scenario. The full coverage list is in [data-model.md](./data-model.md#14-seed-data-for-local-and-staging).
 - **Fixed test identities:** one account per role, referenced by name from the permission and isolation suites. Their credentials come from **environment variables or secure test configuration and are never committed**.
+- **Local developer hub:** `/{locale}/dev` lists fictional seed emails and local Studio/mailbox URLs when `VENUBOARD_ENV=local` and `NODE_ENV` is not `production`. It is a real 404 everywhere else and does not sign anyone in.
 - Reference data (`modules`, `plans`, `plan_modules`, `entitlement_sources`) is **not** seed data — it ships in migrations, so production gets it without any demo content.
 
 ## 18. Observability and security posture

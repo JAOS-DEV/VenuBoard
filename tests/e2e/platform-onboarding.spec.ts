@@ -10,9 +10,11 @@ import {
   LIVE_LEGAL_NAME,
   LIVE_VENUE_NAME_EN,
   LIVE_VENUE_NAME_TH,
+  liveOnboardingIdentity,
   loadLiveOnboardingFacts,
   retryLiveOnboarding,
   trialWindowLooksStandard,
+  type LiveOnboardingIdentity,
 } from "./helpers/onboarding-live";
 import {
   openWithTestIdentity,
@@ -21,11 +23,13 @@ import {
 
 async function fillWizard(
   page: Page,
-  slug: string,
-  ownerEmail: string,
+  identity: Pick<
+    LiveOnboardingIdentity,
+    "slug" | "ownerEmail" | "businessName" | "legalName"
+  >,
 ): Promise<void> {
-  await page.getByLabel("Business display name").fill(LIVE_BUSINESS_NAME);
-  await page.getByLabel("Legal business name").fill(LIVE_LEGAL_NAME);
+  await page.getByLabel("Business display name").fill(identity.businessName);
+  await page.getByLabel("Legal business name").fill(identity.legalName);
   await page.getByRole("button", { name: "Next", exact: true }).click();
 
   await page.getByLabel("English venue name").fill(LIVE_VENUE_NAME_EN);
@@ -36,7 +40,7 @@ async function fillWizard(
   await page
     .getByLabel("Thai description (optional)")
     .fill(LIVE_DESCRIPTION_TH);
-  await page.getByLabel("Venue slug").fill(slug);
+  await page.getByLabel("Venue slug").fill(identity.slug);
   await page.getByRole("button", { name: "Next", exact: true }).click();
 
   await page.getByRole("radio", { name: /General/ }).check();
@@ -50,7 +54,7 @@ async function fillWizard(
   await page.getByRole("checkbox", { name: /^Offers/ }).uncheck();
   await page.getByRole("button", { name: "Next", exact: true }).click();
 
-  await page.getByLabel("First business-owner email").fill(ownerEmail);
+  await page.getByLabel("First business-owner email").fill(identity.ownerEmail);
   await page.getByRole("button", { name: "Next", exact: true }).click();
 }
 
@@ -154,7 +158,12 @@ test.describe("platform onboarding access", () => {
       "platform-admin",
     );
     await page.goto("/en/platform/onboard");
-    await fillWizard(page, "e2e-review-lotus", "review.owner@example.com");
+    await fillWizard(page, {
+      slug: "e2e-review-lotus",
+      ownerEmail: "review.owner@example.com",
+      businessName: LIVE_BUSINESS_NAME,
+      legalName: LIVE_LEGAL_NAME,
+    });
     await expect(
       page.getByText(/This venue will be created unpublished/),
     ).toBeVisible();
@@ -178,11 +187,9 @@ test.describe("platform onboarding RPC result", () => {
       "local Supabase URL and SUPABASE_SECRET_KEY are required",
     );
 
-    const suffix = randomBytes(4).toString("hex");
-    const slug = `e2e-pier-${suffix}`;
-    const ownerEmail = `owner.${suffix}@example.com`;
+    const identity = liveOnboardingIdentity(randomBytes(4).toString("hex"));
     await page.goto("/en/platform/onboard");
-    await fillWizard(page, slug, ownerEmail);
+    await fillWizard(page, identity);
     await expect(
       page.getByRole("button", { name: "Create unpublished venue" }),
     ).toBeVisible();
@@ -229,13 +236,27 @@ test.describe("platform onboarding RPC result", () => {
     expect(overviewHref).toBeTruthy();
     expect(overviewHref ?? "").not.toContain(token);
 
-    const facts = await loadLiveOnboardingFacts(slug, token, {
-      email: session.email,
-      password: session.password,
-    });
+    const facts = await loadLiveOnboardingFacts(
+      {
+        slug: identity.slug,
+        rawToken: token,
+        idempotencyKey: idempotencyKey ?? "",
+      },
+      {
+        email: session.email,
+        password: session.password,
+      },
+    );
     expect(facts).not.toBeNull();
+    expect(facts?.businessId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
+    expect(facts?.venueId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
     expect(facts?.businessCount).toBe(1);
     expect(facts?.venueCount).toBe(1);
+    expect(facts?.onboardingRunCount).toBe(1);
     expect(facts?.publicationState).toBe("draft");
     expect(facts?.classification).toBe("general");
     expect(facts?.timezone).toBe("Asia/Bangkok");
@@ -265,24 +286,39 @@ test.describe("platform onboarding RPC result", () => {
       email: session.email,
       password: session.password,
       idempotencyKey: idempotencyKey ?? "",
-      slug,
-      ownerEmail,
+      identity,
     });
-    expect(retry).toEqual({ ok: true, idempotent: true, hasToken: false });
+    expect(retry).toEqual({
+      ok: true,
+      idempotent: true,
+      hasToken: false,
+      businessId: facts?.businessId ?? null,
+      venueId: facts?.venueId ?? null,
+    });
 
-    const afterRetry = await loadLiveOnboardingFacts(slug, token, {
-      email: session.email,
-      password: session.password,
-    });
+    const afterRetry = await loadLiveOnboardingFacts(
+      {
+        slug: identity.slug,
+        rawToken: token,
+        idempotencyKey: idempotencyKey ?? "",
+      },
+      {
+        email: session.email,
+        password: session.password,
+      },
+    );
+    expect(afterRetry?.businessId).toBe(facts?.businessId);
+    expect(afterRetry?.venueId).toBe(facts?.venueId);
     expect(afterRetry?.businessCount).toBe(1);
     expect(afterRetry?.venueCount).toBe(1);
+    expect(afterRetry?.onboardingRunCount).toBe(1);
 
     await page.goto(tokenPath);
     await expect(
       page.getByRole("heading", { name: "Accept your invitation" }),
     ).toBeVisible();
     await expect(page.getByText(/business_owner/)).toBeVisible();
-    await expect(page.getByText(ownerEmail)).toBeVisible();
+    await expect(page.getByText(identity.ownerEmail)).toBeVisible();
 
     await page.goto(overviewHref ?? "/en/platform");
     await expect(

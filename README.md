@@ -56,22 +56,33 @@ copy .env.example .env.local   # Windows: Copy-Item .env.example .env.local
 ## Local development
 
 ```bash
-npm run dev
+npm run local:start
 ```
 
-Open:
+Then open http://localhost:3000/en/dev.
 
-| Surface                     | URL                                       |
-| --------------------------- | ----------------------------------------- |
-| Overview                    | http://localhost:3000/en                  |
-| Public development fallback | http://localhost:3000/en/v/harbor-light   |
-| Sign in                     | http://localhost:3000/en/sign-in          |
-| Venue administration        | http://localhost:3000/en/admin            |
-| Platform administration     | http://localhost:3000/en/platform         |
-| Platform onboarding         | http://localhost:3000/en/platform/onboard |
-| Thai locale                 | replace `/en` with `/th`                  |
+That local-only developer hub lists:
 
-`/admin` and `/platform` require a signed-in identity. Seed users have unusable password hashes; see [docs/authentication.md](./docs/authentication.md) for invitation-based local sign-in and the test identity cookie.
+| Service                | URL                                   |
+| ---------------------- | ------------------------------------- |
+| Application            | http://localhost:3000                 |
+| Developer hub          | http://localhost:3000/en/dev          |
+| English / Thai sign-in | `/en/sign-in` and `/th/sign-in`       |
+| Supabase Studio        | http://127.0.0.1:54323                |
+| Local email inbox      | http://127.0.0.1:54324                |
+| Auth health            | http://127.0.0.1:54321/auth/v1/health |
+
+Seeded personas are fictional `example.com` identities. There are **no committed passwords**. Request a magic link from the normal sign-in page, then open the local inbox. The hub can prefill an allowlisted persona email; it does not sign anyone in.
+
+```bash
+npm run local:status    # URLs and commands only — no keys
+npm run local:reset     # local Docker database only; same guards as db:reset
+npm run supabase:stop
+```
+
+The developer hub is a real 404 outside ordinary local development (`VENUBOARD_ENV=local` and `NODE_ENV` is not `production`). The Playwright `vb_test_identity` cookie remains test-only. `.env.local` stays git-ignored.
+
+`/admin` and `/platform` still require a signed-in identity. See [docs/authentication.md](./docs/authentication.md) for invitation-based local sign-in and the test identity cookie.
 
 ## Environment files
 
@@ -89,8 +100,10 @@ Open:
 The repository has a local Supabase project configuration (`supabase/config.toml`, `project_id = "venuboard"`). **No hosted Supabase project is created or linked.**
 
 ```bash
-npm run supabase:start    # requires Docker
+npm run local:start       # local Supabase, then Next.js; no database reset
+npm run supabase:start    # requires Docker; also used by local:start
 npm run supabase:status
+npm run local:reset       # same guarded local reset-and-seed as db:reset
 npm run db:reset          # refused when VENUBOARD_ENV=production; local Docker only
 npm run db:test           # pgTAP against the local database
 npm run db:types          # regenerate src/core/db/types.ts from the local schema
@@ -127,6 +140,9 @@ Reproduce the RLS performance baseline with `npm run db:perf:seed` then `npm run
 | `npm run test:e2e`                | Playwright Chromium smoke tests                                                                                         |
 | `npm run test:e2e:install`        | Install Chromium only (not every browser)                                                                               |
 | `npm run verify`                  | Format, lint, typecheck, unit tests, production build                                                                   |
+| `npm run local:start`             | Start local Supabase, then Next.js. No database reset, no hosted link                                                   |
+| `npm run local:reset`             | Guarded local Docker reset-and-seed (same as `db:reset`)                                                                |
+| `npm run local:status`            | Print local URLs and commands. No keys or passwords                                                                     |
 | `npm run supabase:*` / `db:*`     | Local Supabase: start/stop/status, guarded reset, seed notice, typegen, `db:test`, `db:types:check`, local perf fixture |
 
 ## Testing
@@ -148,8 +164,9 @@ Prettier formats source, configuration, tests, scripts and this README. Product 
 ## Project structure
 
 ```
-src/app/[locale]/          locale-aware routes: /, /admin, /platform, /v/[venueSlug]
+src/app/[locale]/          locale-aware routes: /, /admin, /platform, /dev, /v/[venueSlug]
 src/components/            shared shell, environment badge, shadcn/ui (Button, Card, Badge)
+src/core/dev/              local-only developer hub guard and fictional persona catalogue
 src/core/env/              environment identifier, Zod validation, production guard
 src/core/db/               browser and server clients; generated Database types
 src/core/i18n/             next-intl routing (en, th)
@@ -159,7 +176,7 @@ supabase/migrations        foundation schema, RLS, security hardening
 supabase/seed              deterministic fictional dataset (small)
 supabase/perf              optional local RLS volume fixture (not in reset or CI)
 supabase/tests             pgTAP structural, isolation, permission and C1–C19 tests
-scripts/                   guarded db:reset, db:seed, db:perf and types-check wrappers
+scripts/                   guarded local start/status, db:reset, db:seed, db:perf and types-check wrappers
 tests/unit  tests/e2e      scaffold tests plus generated-types check
 tests/isolation            TODO — application-level suite once can() exists
 tests/permissions          TODO — application-level suite once can() exists
@@ -170,9 +187,9 @@ docs/performance           local RLS EXPLAIN baseline (OQ-30)
 
 ## What is not implemented yet
 
-Authentication UI, invitation acceptance, the `can()` application layer, feed posts, staff presence, events, bookings, offers, atmosphere, analytics dashboards, notifications, media uploads, support-session UI, custom-domain tenant resolution, and any production integration. The three surfaces exist so the route separation is real; they do not pretend to be working product screens.
+Remaining product work includes feed posts, events, bookings, offers, atmosphere, analytics dashboards, notifications, media uploads, support-session UI, custom-domain tenant resolution, and production integrations. Authentication, invitations, `can()`, platform onboarding and staff presence are implemented.
 
-The database **does** implement the foundation: users, platform roles, businesses, venues, memberships, invitations, the 33-action catalogue, modules/plans/entitlements, venue translations, audit, moderation and RLS. See `supabase/migrations/`.
+The database **does** implement the foundation: users, platform roles, businesses, venues, memberships, invitations, the 33-action catalogue, modules/plans/entitlements, venue translations, audit, moderation, RLS and staff presence. See `supabase/migrations/`.
 
 ## Core architecture principles
 
