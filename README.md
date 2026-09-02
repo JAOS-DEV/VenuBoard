@@ -61,6 +61,8 @@ npm run local:start
 
 Then open http://localhost:3000/en/dev.
 
+`npm run local:start` loads the git-ignored `.env.local` automatically, so PowerShell does not need `VENUBOARD_ENV` exported. Docker Desktop’s Linux engine must be running first; the command fails with a short message rather than a named-pipe error if it is not.
+
 That local-only developer hub lists:
 
 | Service                | URL                                   |
@@ -140,7 +142,7 @@ Reproduce the RLS performance baseline with `npm run db:perf:seed` then `npm run
 | `npm run test:e2e`                | Playwright Chromium smoke tests                                                                                         |
 | `npm run test:e2e:install`        | Install Chromium only (not every browser)                                                                               |
 | `npm run verify`                  | Format, lint, typecheck, unit tests, production build                                                                   |
-| `npm run local:start`             | Start local Supabase, then Next.js. No database reset, no hosted link                                                   |
+| `npm run local:start`             | Load `.env.local`, start local Supabase, then Next.js. No database reset, no hosted link                                |
 | `npm run local:reset`             | Guarded local Docker reset-and-seed (same as `db:reset`)                                                                |
 | `npm run local:status`            | Print local URLs and commands. No keys or passwords                                                                     |
 | `npm run supabase:*` / `db:*`     | Local Supabase: start/stop/status, guarded reset, seed notice, typegen, `db:test`, `db:types:check`, local perf fixture |
