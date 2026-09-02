@@ -126,14 +126,15 @@ Explicitly **not allowed**: custom CSS, arbitrary JavaScript, embedded `<script>
 The signature module for the initial market.
 
 - Public staff display name
-- Public profile image / avatar
+- Initials placeholder (avatar upload deferred)
 - Optional short public bio
-- "In today" / "not currently in" state
+- "In now" / "not currently in" state (`present` / `not_present`)
 - Fast, mobile-friendly toggle
-- Timestamp of the latest status change
-- Public carousel or grid of staff currently present
+- Public carousel of eligible staff with a live-status indicator
 - Configurable public heading, for example "Staff in today"
 - A staff member may belong to **more than one venue**; presence state is **per venue**
+
+See [staff-presence.md](./staff-presence.md). Public pages do **not** show exact attendance timestamps.
 
 Boundaries that must be respected:
 

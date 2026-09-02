@@ -279,6 +279,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      current_staff_presence: {
+        Row: {
+          changed_at: string;
+          changed_by: string | null;
+          id: string;
+          presence_expires_at: string | null;
+          source: string;
+          staff_public_profile_id: string;
+          state: string;
+          venue_id: string;
+        };
+        Insert: {
+          changed_at?: string;
+          changed_by?: string | null;
+          id?: string;
+          presence_expires_at?: string | null;
+          source?: string;
+          staff_public_profile_id: string;
+          state?: string;
+          venue_id: string;
+        };
+        Update: {
+          changed_at?: string;
+          changed_by?: string | null;
+          id?: string;
+          presence_expires_at?: string | null;
+          source?: string;
+          staff_public_profile_id?: string;
+          state?: string;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "current_staff_presence_changed_by_fkey";
+            columns: ["changed_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "current_staff_presence_profile_venue_fkey";
+            columns: ["staff_public_profile_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "staff_public_profiles";
+            referencedColumns: ["id", "venue_id"];
+          },
+        ];
+      };
       entitlement_sources: {
         Row: {
           key: string;
@@ -729,6 +777,364 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "fixed_roles";
             referencedColumns: ["key"];
+          },
+        ];
+      };
+      staff_consent_events: {
+        Row: {
+          consent_state: string;
+          id: string;
+          recorded_at: string;
+          recorded_by: string | null;
+          source: string;
+          staff_public_profile_id: string;
+          venue_id: string;
+        };
+        Insert: {
+          consent_state: string;
+          id?: string;
+          recorded_at?: string;
+          recorded_by?: string | null;
+          source: string;
+          staff_public_profile_id: string;
+          venue_id: string;
+        };
+        Update: {
+          consent_state?: string;
+          id?: string;
+          recorded_at?: string;
+          recorded_by?: string | null;
+          source?: string;
+          staff_public_profile_id?: string;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_consent_events_profile_venue_fkey";
+            columns: ["staff_public_profile_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "staff_public_profiles";
+            referencedColumns: ["id", "venue_id"];
+          },
+          {
+            foreignKeyName: "staff_consent_events_recorded_by_fkey";
+            columns: ["recorded_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      staff_members: {
+        Row: {
+          business_id: string;
+          created_at: string;
+          created_by: string | null;
+          deactivated_at: string | null;
+          deactivated_by: string | null;
+          id: string;
+          internal_display_name: string;
+          restored_at: string | null;
+          restored_by: string | null;
+          status: string;
+          updated_at: string;
+          updated_by: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          business_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deactivated_at?: string | null;
+          deactivated_by?: string | null;
+          id?: string;
+          internal_display_name: string;
+          restored_at?: string | null;
+          restored_by?: string | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          business_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deactivated_at?: string | null;
+          deactivated_by?: string | null;
+          id?: string;
+          internal_display_name?: string;
+          restored_at?: string | null;
+          restored_by?: string | null;
+          status?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_members_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "business_subscription_overview";
+            referencedColumns: ["business_id"];
+          },
+          {
+            foreignKeyName: "staff_members_business_id_fkey";
+            columns: ["business_id"];
+            isOneToOne: false;
+            referencedRelation: "businesses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_members_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_members_deactivated_by_fkey";
+            columns: ["deactivated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_members_restored_by_fkey";
+            columns: ["restored_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_members_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      staff_presence_events: {
+        Row: {
+          changed_at: string;
+          changed_by: string | null;
+          id: string;
+          presence_expires_at: string | null;
+          source: string;
+          staff_public_profile_id: string;
+          state: string;
+          venue_id: string;
+        };
+        Insert: {
+          changed_at?: string;
+          changed_by?: string | null;
+          id?: string;
+          presence_expires_at?: string | null;
+          source: string;
+          staff_public_profile_id: string;
+          state: string;
+          venue_id: string;
+        };
+        Update: {
+          changed_at?: string;
+          changed_by?: string | null;
+          id?: string;
+          presence_expires_at?: string | null;
+          source?: string;
+          staff_public_profile_id?: string;
+          state?: string;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_presence_events_changed_by_fkey";
+            columns: ["changed_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_presence_events_profile_venue_fkey";
+            columns: ["staff_public_profile_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "staff_public_profiles";
+            referencedColumns: ["id", "venue_id"];
+          },
+        ];
+      };
+      staff_public_profile_translations: {
+        Row: {
+          created_at: string;
+          id: string;
+          locale: string;
+          public_bio: string | null;
+          staff_public_profile_id: string;
+          updated_at: string;
+          updated_by: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          locale: string;
+          public_bio?: string | null;
+          staff_public_profile_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          locale?: string;
+          public_bio?: string | null;
+          staff_public_profile_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_public_profile_translations_parent_venue_fkey";
+            columns: ["staff_public_profile_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "staff_public_profiles";
+            referencedColumns: ["id", "venue_id"];
+          },
+          {
+            foreignKeyName: "staff_public_profile_translations_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      staff_public_profiles: {
+        Row: {
+          assignment_status: string;
+          avatar_storage_path: string | null;
+          business_id: string;
+          consent_recorded_at: string | null;
+          consent_recorded_by: string | null;
+          consent_state: string;
+          created_at: string;
+          created_by: string | null;
+          display_order: number;
+          id: string;
+          platform_quarantine_reason: string | null;
+          platform_quarantined_at: string | null;
+          platform_quarantined_by: string | null;
+          public_display_name: string;
+          public_title: string | null;
+          publication_state: string;
+          staff_member_id: string;
+          updated_at: string;
+          updated_by: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          assignment_status?: string;
+          avatar_storage_path?: string | null;
+          business_id: string;
+          consent_recorded_at?: string | null;
+          consent_recorded_by?: string | null;
+          consent_state?: string;
+          created_at?: string;
+          created_by?: string | null;
+          display_order?: number;
+          id?: string;
+          platform_quarantine_reason?: string | null;
+          platform_quarantined_at?: string | null;
+          platform_quarantined_by?: string | null;
+          public_display_name: string;
+          public_title?: string | null;
+          publication_state?: string;
+          staff_member_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          assignment_status?: string;
+          avatar_storage_path?: string | null;
+          business_id?: string;
+          consent_recorded_at?: string | null;
+          consent_recorded_by?: string | null;
+          consent_state?: string;
+          created_at?: string;
+          created_by?: string | null;
+          display_order?: number;
+          id?: string;
+          platform_quarantine_reason?: string | null;
+          platform_quarantined_at?: string | null;
+          platform_quarantined_by?: string | null;
+          public_display_name?: string;
+          public_title?: string | null;
+          publication_state?: string;
+          staff_member_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_public_profiles_consent_recorded_by_fkey";
+            columns: ["consent_recorded_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_public_profiles_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_public_profiles_platform_quarantined_by_fkey";
+            columns: ["platform_quarantined_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_public_profiles_staff_business_fkey";
+            columns: ["staff_member_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "staff_members";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "staff_public_profiles_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "staff_public_profiles_venue_business_fkey";
+            columns: ["venue_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "staff_public_profiles_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -1573,6 +1979,26 @@ export type Database = {
     };
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: Json };
+      assign_staff_to_venue: {
+        Args: {
+          p_payload: Json;
+          p_staff_member_id: string;
+          p_venue_id: string;
+        };
+        Returns: Json;
+      };
+      bulk_mark_staff_not_present: {
+        Args: { p_venue_id: string };
+        Returns: Json;
+      };
+      create_staff_member_with_profile: {
+        Args: { p_payload: Json; p_venue_id: string };
+        Returns: Json;
+      };
+      deactivate_staff_member: {
+        Args: { p_staff_member_id: string };
+        Returns: Json;
+      };
       evaluate_permission: {
         Args: {
           p_action_key: string;
@@ -1584,8 +2010,33 @@ export type Database = {
         Returns: boolean;
       };
       inspect_invitation: { Args: { p_token: string }; Returns: Json };
+      list_public_staff_presence: {
+        Args: {
+          p_limit?: number;
+          p_locale?: string;
+          p_offset?: number;
+          p_venue_slug: string;
+        };
+        Returns: Json;
+      };
       onboard_platform_venue: {
         Args: { p_idempotency_key: string; p_payload: Json };
+        Returns: Json;
+      };
+      restore_staff_member: {
+        Args: { p_staff_member_id: string };
+        Returns: Json;
+      };
+      set_staff_presence: {
+        Args: { p_profile_id: string; p_state: string };
+        Returns: Json;
+      };
+      set_staff_public_consent: {
+        Args: { p_consent_state: string; p_profile_id: string };
+        Returns: Json;
+      };
+      update_staff_public_profile: {
+        Args: { p_payload: Json; p_profile_id: string };
         Returns: Json;
       };
       venue_slug_is_available: { Args: { p_slug: string }; Returns: boolean };

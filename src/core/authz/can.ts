@@ -5,7 +5,12 @@ import {
   type PermissionAction,
 } from "./actions";
 import { effectiveGrant } from "./grants";
-import { scopeIsComplete, type AuthzContext, type AuthzScope } from "./scope";
+import {
+  scopeIsComplete,
+  staffOwnPresenceProvenConditions,
+  type AuthzContext,
+  type AuthzScope,
+} from "./scope";
 import {
   isActiveAuthenticatedActor,
   type Actor,
@@ -20,6 +25,8 @@ import { platformMfaBlocksAccess } from "@/core/auth/mfa";
  *
  * Unknown actions deny. Missing scopes deny. Conditional grants deny unless
  * the condition is already modelled (C2, C13) or proven in context.
+ * C3 and C14 are proven via `ownConsentedStaffProfile` / provenConditions;
+ * the database `may_set_staff_presence` helper remains the security boundary.
  */
 export function can(
   actor: Actor,
@@ -116,9 +123,12 @@ function tenantAllows(
     return false;
   }
 
-  if (
-    !effectiveGrant(actor.grants, role, action, context.provenConditions ?? [])
-  ) {
+  const proven = [...(context.provenConditions ?? [])];
+  if (context.ownConsentedStaffProfile === true) {
+    proven.push(...staffOwnPresenceProvenConditions(role, true));
+  }
+
+  if (!effectiveGrant(actor.grants, role, action, proven)) {
     return false;
   }
 

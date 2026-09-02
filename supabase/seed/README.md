@@ -2,13 +2,13 @@
 
 Deterministic fictional dataset ([ADR-035](../../docs/decisions-and-open-questions.md#adr-035--deterministic-repeatable-seed-data-and-fixed-test-identities)).
 
-`supabase/config.toml` points `[db.seed].sql_paths` at `./seed/01_foundation.sql`. `npm run db:reset` applies it after migrations. `npm run db:seed` does **not** re-apply the file (duplicate primary keys); use reset.
+`supabase/config.toml` points `[db.seed].sql_paths` at `./seed/01_foundation.sql` then `./seed/02_staff_presence.sql`.
 
 The large RLS performance fixture is **not** seed data. It lives in `supabase/perf/` and is loaded only by `npm run db:perf:seed`.
 
 Rules:
 
-- **Deterministic**: fixed UUIDs and timestamps relative to 2026-08-01 00:00:00 UTC.
+- **Deterministic**: fixed UUIDs and timestamps relative to 2026-08-01 00:00:00 UTC. `02_staff_presence.sql` extends Trial Garden entitlement `ends_at` to `now() + 30 days` so the “active full trial” fixture remains entitled after that epoch window.
 - **Fictional only**: `example.com` addresses, invented venue names that do not resemble real venues in the target cities.
 - **Local and staging only**: `npm run db:reset` and `npm run db:seed` refuse to run when `VENUBOARD_ENV=production`.
 - Auth users are created with **random unusable password hashes**. SQL tests impersonate via JWT `sub` claims (`request.jwt.claim.sub` / `request.jwt.claims`) and `SET ROLE`. They do not log in interactively.

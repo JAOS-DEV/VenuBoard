@@ -15,7 +15,7 @@ interface AppShellProps {
 
 const SURFACES = [
   { href: "/", key: "home" },
-  { href: "/v/example-venue", key: "publicSite" },
+  { href: "/v/harbor-light", key: "publicSite" },
   { href: "/admin", key: "admin" },
   { href: "/platform", key: "platform" },
 ] as const;

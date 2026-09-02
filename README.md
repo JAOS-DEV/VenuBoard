@@ -2,7 +2,7 @@
 
 **A modular, multi-tenant, white-label website and management platform for venues.**
 
-> **Repository status: application scaffold plus foundation schema, authentication, invitations and platform-led onboarding.** The Next.js App Router shell, locale routing, environment validation, local Supabase, PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS), invitation acceptance, actor resolution, `can()`, the platform onboarding wizard/RPC, and pgTAP tests exist. **Product modules are not implemented** — no feed, staff presence, events, bookings, offers, atmosphere, analytics UI, notifications, media uploads or support-session UI.
+> **Repository status: application scaffold plus foundation schema, authentication, invitations, platform-led onboarding and the staff presence module.** The Next.js App Router shell, locale routing, environment validation, local Supabase, PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS, staff presence), invitation acceptance, actor resolution, `can()`, the platform onboarding wizard/RPC, venue-admin staff management, the public staff carousel, and pgTAP tests exist. **Remaining product modules are not implemented** — no feed, events, bookings, offers, atmosphere, analytics UI, notifications, media uploads or support-session UI.
 >
 > **Decision status (2026-08-30):** all scaffolding ADRs are accepted. Remaining work is split into [launch blockers](./docs/decisions-and-open-questions.md#42-launch-blockers--required-before-production-not-before-code) and [feature-specific decisions](./docs/decisions-and-open-questions.md#43-feature-specific-decisions--required-before-the-feature-not-before-the-scaffold). The first-schema obligations are in [section 4.1](./docs/decisions-and-open-questions.md#41-obligations-on-the-first-implementation).
 
@@ -26,7 +26,7 @@ The VenuBoard operator runs a separate **platform administration panel** (`/plat
 
 | Document                                                                       | What it covers                                                                                                                                                                                                     |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [docs/product-brief.md](./docs/product-brief.md)                               | Product scope: market, surfaces, MVP modules, entitlements, lifecycle policies, analytics, onboarding, non-goals, data ownership                                                                                   |
+| [docs/staff-presence.md](./docs/staff-presence.md)                             | Staff directory and live presence: public vs private, consent, expiry, authorisation                                                                                                                               |
 | [docs/architecture.md](./docs/architecture.md)                                 | Technical architecture, system context diagram, stack, module structure, routing, tenant isolation, internationalisation, testing, environments and hosting                                                        |
 | [docs/authentication.md](./docs/authentication.md)                             | Sign-in, magic links, invitation acceptance, actor resolution, `can()` versus RLS, route protection, MFA representation, local testing                                                                             |
 | [docs/roles-and-permissions.md](./docs/roles-and-permissions.md)               | Role catalogue, the 33 actions, the permissions matrix, support and impersonation model, content moderation rules, public/private data access                                                                      |
@@ -64,7 +64,7 @@ Open:
 | Surface                     | URL                                       |
 | --------------------------- | ----------------------------------------- |
 | Overview                    | http://localhost:3000/en                  |
-| Public development fallback | http://localhost:3000/en/v/example-venue  |
+| Public development fallback | http://localhost:3000/en/v/harbor-light   |
 | Sign in                     | http://localhost:3000/en/sign-in          |
 | Venue administration        | http://localhost:3000/en/admin            |
 | Platform administration     | http://localhost:3000/en/platform         |
