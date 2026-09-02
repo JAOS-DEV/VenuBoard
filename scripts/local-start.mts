@@ -1,45 +1,42 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
 
-import { parseServerEnv } from "../src/core/env/schema.ts";
+import { decideLocalStart } from "../src/core/dev/local-start-plan.ts";
+import { runSupabase } from "./lib/local-supabase.mts";
 import {
-  refuseLinkedHostedProject,
-  runSupabase,
-} from "./lib/local-supabase.mts";
+  applyRootEnvLocalToProcess,
+  isHostedProjectLinked,
+  readRootEnvLocal,
+  runDockerPreflight,
+} from "./lib/local-runtime.mts";
 
 /**
  * Start local Supabase, then the Next.js development server.
  *
- * Does not reset the database, print keys, or link a hosted project.
+ * Loads `.env.local` automatically. Does not reset the database, print keys,
+ * or link a hosted project.
  */
 const OPERATION = "local:start";
 
-refuseLinkedHostedProject(OPERATION);
+const envDecision = decideLocalStart({
+  env: process.env,
+  envFile: readRootEnvLocal(),
+  hostedProjectLinked: isHostedProjectLinked(),
+  docker: { ok: true },
+});
 
-let environment: string;
-try {
-  environment = parseServerEnv(process.env).VENUBOARD_ENV;
-} catch (error) {
-  console.error(
-    `[${OPERATION}] refusing to start: the environment configuration is invalid.`,
-  );
-  if (error instanceof Error) {
-    console.error(error.message);
-  }
+if (envDecision.action === "refuse") {
+  console.error(`[${OPERATION}] refusing to start: ${envDecision.message}`);
   process.exit(1);
 }
 
-if (environment !== "local") {
-  console.error(
-    `[${OPERATION}] refusing to start: VENUBOARD_ENV must be "local".`,
-  );
+const docker = runDockerPreflight();
+if (!docker.ok) {
+  console.error(`[${OPERATION}] refusing to start: ${docker.message}`);
   process.exit(1);
 }
 
-if (process.env.NODE_ENV === "production") {
-  console.error(`[${OPERATION}] refusing to start: NODE_ENV is production.`);
-  process.exit(1);
-}
+applyRootEnvLocalToProcess({ required: true });
 
 console.log(
   `[${OPERATION}] starting local Supabase. This does not reset the database.`,

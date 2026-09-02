@@ -4,13 +4,18 @@ import {
   refuseLinkedHostedProject,
   runSupabase,
 } from "./lib/local-supabase.mts";
+import { applyRootEnvLocalToProcess } from "./lib/local-runtime.mts";
 
 /**
  * Guarded wrapper around `supabase db reset`.
  *
- * The guard runs *before* anything else, so a missing, misspelled or production
- * `VENUBOARD_ENV` stops the command instead of being treated as "probably
- * local" (ADR-034).
+ * Loads `.env.local` when present so local developers do not need to export
+ * `VENUBOARD_ENV` in PowerShell. Explicit process environment values still
+ * win, which is how CI supplies `VENUBOARD_ENV=local` without that file.
+ *
+ * After that optional load, the destructive-operation guard still runs before
+ * any database work, so a missing, misspelled or production `VENUBOARD_ENV`
+ * stops the command instead of being treated as "probably local" (ADR-034).
  *
  * This rebuilds the *local* Docker database: it drops local schemas, replays
  * repository migrations and loads `supabase/seed/01_foundation.sql`. It does not
@@ -18,6 +23,8 @@ import {
  * staging environment yet. The large performance fixture is not loaded.
  */
 const OPERATION = "db:reset";
+
+applyRootEnvLocalToProcess({ required: false });
 
 const environment = guardDestructiveOperation(OPERATION);
 refuseLinkedHostedProject(OPERATION);
