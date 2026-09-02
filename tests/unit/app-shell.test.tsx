@@ -74,7 +74,7 @@ describe("AppShell", () => {
       name: messages.shell.surfaces,
     });
 
-    for (const href of ["/", "/v/example-venue", "/admin", "/platform"]) {
+    for (const href of ["/", "/v/harbor-light", "/admin", "/platform"]) {
       expect(
         surfaces.querySelector(`a[href="${href}"]`),
         `expected a link to ${href}`,

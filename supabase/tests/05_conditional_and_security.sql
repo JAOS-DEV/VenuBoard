@@ -130,7 +130,16 @@ SELECT ok(
         'accept_invitation',
         'evaluate_permission',
         'onboard_platform_venue',
-        'venue_slug_is_available'
+        'venue_slug_is_available',
+        'list_public_staff_presence',
+        'create_staff_member_with_profile',
+        'assign_staff_to_venue',
+        'update_staff_public_profile',
+        'set_staff_public_consent',
+        'set_staff_presence',
+        'bulk_mark_staff_not_present',
+        'deactivate_staff_member',
+        'restore_staff_member'
       )
   ),
   'no SECURITY DEFINER helpers are exposed in public except invitation and permission RPCs'
@@ -432,7 +441,7 @@ SELECT ok(
     'toggle_staff_presence',
     '00000000-0000-4000-8000-000000000201'
   ),
-  'C3: staff toggle_staff_presence is default-denied until staff profile tables exist'
+  'C3: staff toggle_staff_presence grant helper stays false; own-only writes are in 08_staff_presence.sql'
 );
 
 -- Staff create_content is conditional (C4).

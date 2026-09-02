@@ -356,4 +356,82 @@ describe("can()", () => {
       true,
     );
   });
+
+  it("proves C3 and C14 only with an own consented staff profile", () => {
+    const staffGrants: RoleActionGrant[] = [
+      ...GRANTS,
+      {
+        roleKey: "staff",
+        actionKey: "toggle_staff_presence",
+        grantKind: "conditional",
+      },
+      {
+        roleKey: "staff",
+        actionKey: "toggle_own_presence",
+        grantKind: "allow",
+      },
+      {
+        roleKey: "content_editor",
+        actionKey: "toggle_own_presence",
+        grantKind: "conditional",
+      },
+    ];
+    const staff = actor({
+      userId: "00000000-0000-4000-8000-000000000024",
+      businessMemberships: [],
+      venueMemberships: [
+        {
+          venueId: NIGHT_ORCHID,
+          businessId: ATLAS_BIZ,
+          role: "staff",
+          status: "active",
+        },
+      ],
+      grants: staffGrants,
+    });
+    expect(
+      can(staff, "toggle_staff_presence", {
+        type: "venue",
+        venueId: NIGHT_ORCHID,
+        businessId: ATLAS_BIZ,
+      }),
+    ).toBe(false);
+    expect(
+      can(
+        staff,
+        "toggle_staff_presence",
+        { type: "venue", venueId: NIGHT_ORCHID, businessId: ATLAS_BIZ },
+        { ownConsentedStaffProfile: true },
+      ),
+    ).toBe(true);
+
+    const editor = actor({
+      userId: "00000000-0000-4000-8000-000000000022",
+      businessMemberships: [],
+      venueMemberships: [
+        {
+          venueId: NIGHT_ORCHID,
+          businessId: ATLAS_BIZ,
+          role: "content_editor",
+          status: "active",
+        },
+      ],
+      grants: staffGrants,
+    });
+    expect(
+      can(editor, "toggle_own_presence", {
+        type: "self",
+        venueId: NIGHT_ORCHID,
+        userId: editor.userId,
+      }),
+    ).toBe(false);
+    expect(
+      can(
+        editor,
+        "toggle_own_presence",
+        { type: "self", venueId: NIGHT_ORCHID, userId: editor.userId },
+        { ownConsentedStaffProfile: true },
+      ),
+    ).toBe(true);
+  });
 });

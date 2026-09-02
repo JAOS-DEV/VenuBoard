@@ -327,12 +327,14 @@ export async function resolveRequestActor(
     cookieStore.get("vb_admin_scope")?.value,
   );
 
+  const hintedVenueAllowed =
+    hinted !== null &&
+    (venueMemberships.some((row) => row.venueId === hinted.venueId) ||
+      businessMemberships.some((row) => row.businessId === hinted.businessId));
+
   const currentVenueId =
     options.venueId ??
-    (hinted !== null &&
-    venueMemberships.some((row) => row.venueId === hinted.venueId)
-      ? hinted.venueId
-      : (venueMemberships[0]?.venueId ?? null));
+    (hinted !== null && hintedVenueAllowed ? hinted.venueId : null);
 
   const currentBusinessId =
     options.businessId ??

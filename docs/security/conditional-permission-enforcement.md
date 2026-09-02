@@ -1,6 +1,6 @@
 # Conditional permission enforcement (C1–C19)
 
-**Status:** Foundation schema on `feat/foundation-database-schema` · **Last updated:** 2026-08-31
+**Status:** Staff presence module on `feat/staff-presence-module` · **Last updated:** 2026-09-01
 
 This is the enforcement map for the conditional cells in [roles-and-permissions.md §5](../roles-and-permissions.md#5-conditional-rules). It records what the database already enforces, what a future product-module migration must add, and what the application `can(actor, action, scope)` layer will do for UX.
 
@@ -9,7 +9,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 - **The database is the final security boundary** for anyone who can call the Supabase Data API (`anon` / `authenticated`). Browser checks, hidden buttons and Server Action `can()` results must not be the only control for tenant isolation, private-data access, entitlements, platform authority, moderation quarantine, deactivation or privilege escalation.
 - Application `can()` **fails early and improves UX**. It must not replace RLS, `CHECK` constraints, composite foreign keys or invoker triggers.
 - A **conditional** matrix cell is **deny** at RLS until the condition can be evaluated against data that already exists. Treating `grant_kind = 'conditional'` as allow was rejected.
-- Conditions that belong to tables that do not exist yet are **mandatory requirements on those future migrations**. This pass does not create feed, staff, events, bookings, offers, atmosphere, domain, analytics or notification tables just to close a cell.
+- Conditions that belong to tables that do not exist yet are **mandatory requirements on those future migrations**. Feed, events, bookings, offers, atmosphere, domain, analytics and notification tables are still future. Staff presence tables exist and close C3, C11 (staff half), C14, and the staff parts of C16–C19.
 - Helper: `app_private.effective_tenant_grant`. Allow cells stay allow. Conditional cells call `app_private.conditional_tenant_grant_ok`, which currently returns true only for **C2** (`venue_manager` / `assign_roles`, with table WITH CHECK) and **C13** (`view_audit_log`, with SELECT filters). Every other conditional cell is false.
 
 `can()` tests live in `tests/permissions/can.test.ts`. They are not a substitute for the SQL tests named below.
@@ -43,11 +43,10 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | | |
 | --- | --- |
 | **Purpose** | Staff may toggle only their own presence, at a venue where they are active and have consented. |
-| **Tables / actions** | Future `staff_profiles` / presence rows; `toggle_staff_presence` |
-| **Enforced now** | Default **deny** (`conditional` → false). No presence table. |
-| **Future migration** | RLS WITH CHECK: `user_id = current_user_id()`, active membership, consent. |
-| **Application `can()`** | Hide the control when there is no public profile. |
-| **Negative tests** | Present: helper is false for seed staff. Row-level tests required when the table ships. |
+| **Tables / actions** | `current_staff_presence`; `toggle_staff_presence` |
+| **Enforced now** | Grant helper remains **false**. `app_private.may_set_staff_presence` allows own-only writes (active staff record, active assignment, granted consent, active membership). `set_staff_presence` RPC. Tests: `08_staff_presence.sql`. |
+| **Application `can()`** | `ownConsentedStaffProfile` proves `staff:toggle_staff_presence`. Hide the control otherwise. |
+| **Negative tests** | Staff cannot toggle another profile; deactivated actor denied. |
 
 ### C4 — Staff creating content
 
@@ -131,11 +130,10 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | | |
 | --- | --- |
 | **Purpose** | Platform reads of private personal data only inside an active support session, with a reason, audited. Read-only unless write was granted separately. |
-| **Tables / actions** | Future staff and booking tables; `view_private_staff_data`, `view_booking_customer_details` |
-| **Enforced now** | No those tables. Platform SELECT on existing private tables (`users`, invitations, memberships) already requires tenant membership or `platform_may_read_tenant`. Support without a live session cannot read the subscription overview. |
-| **Future migration** | SELECT USING `platform_may_read_tenant` (never role-alone). Writes using `platform_may_write_tenant`. |
+| **Tables / actions** | `staff_members`; `view_private_staff_data`; future booking tables |
+| **Enforced now** | `staff_members` SELECT uses `may_view_private_staff` (`view_private_staff_data` or `platform_may_read_tenant`). No anonymous policy. Tests in `08_staff_presence.sql`. Booking customer details still future. |
 | **Application `can()`** | Masking-by-default UI (OQ-17 remains open). |
-| **Negative tests** | Present: support cannot `platform_may_read_tenant` harbor-light; editor cannot read `platform.admin`'s `users` row. Table-specific tests required later. |
+| **Negative tests** | Admin without a session cannot read harbor `staff_members`. |
 
 ### C12 — Venue manager domain request
 
@@ -164,11 +162,10 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | | |
 | --- | --- |
 | **Purpose** | Owner/manager/editor/booking-manager may toggle own presence only with an active membership, a public staff profile, and consent. |
-| **Tables / actions** | Future staff profiles; `toggle_own_presence` |
-| **Enforced now** | Default **deny** for conditional cells (owner/manager/editor/booking-manager). Staff `toggle_own_presence` is allow in the matrix; still no table to write. |
-| **Future migration** | WITH CHECK on membership + public profile + consent. |
-| **Application `can()`** | Hide when there is no public profile. |
-| **Negative tests** | Present: owner helper is false. Row tests required later. |
+| **Tables / actions** | `current_staff_presence`; `toggle_own_presence` |
+| **Enforced now** | Grant helper remains **false** for conditional cells. `may_set_staff_presence` implements membership + linked staff record + granted consent. Staff `toggle_own_presence` remains allow and is still own-only at the helper. Tests: `08_staff_presence.sql`. |
+| **Application `can()`** | `ownConsentedStaffProfile` proves `<role>:toggle_own_presence`. |
+| **Negative tests** | Editor cannot toggle another profile; helper stays false without proof. |
 
 ### C15 — Account status gate
 
@@ -198,10 +195,9 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | Module actions require entitlement. Visibility toggles cannot create an entitlement. |
 | **Tables / actions** | `venue_module_entitlements` (platform-write); `venue_module_settings`; `reject_unentitled_module_enable` |
-| **Enforced now** | Tenant INSERT on entitlements denied. Enabling a module without entitlement raises `23514`. Night Orchid has an offers **deny** override. |
-| **Future migration** | Module-specific tables must check `module_is_entitled` on write and public read. |
+| **Enforced now** | Tenant INSERT on entitlements denied. Enabling a module without entitlement raises `23514`. Night Orchid has an offers **deny** override. Staff writes and `list_public_staff_presence` require `module_is_entitled('staff_presence')`. |
 | **Application `can()`** | Disable unentitled module switches. |
-| **Negative tests** | Present: settings INSERT for offers denied; entitlement INSERT denied (`03` and `05`). |
+| **Negative tests** | Present: settings INSERT for offers denied; entitlement INSERT denied (`03` and `05`). Staff: draft-room create denied (`08`). |
 
 ### C18 — Cross-venue copy
 
@@ -220,10 +216,10 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | Tenant-content writes (`manage_business`, `manage_venue`, branding, invite, assign_roles, public staff profiles) need an active support session with **write** access. Platform records (`manage_platform_tenants`, entitlements, platform users, domain verification) do not. `moderate_content` is excluded (ADR-036). |
 | **Tables / actions** | `venues`, `businesses`, `invitations`, `venue_memberships`, translations; `support_sessions` |
-| **Enforced now** | `protect_venue_platform_columns` and `protect_business_tenant_content` reject profile-field changes unless `platform_may_write_tenant`. Invitations INSERT and venue membership writes no longer accept `manage_platform_tenants` alone. Classification lock remains a platform record. First-owner business/venue **create** via `manage_platform_tenants` remains for operator onboarding. |
-| **Future migration** | Branding, staff profiles, domain verification columns: content vs platform-record split must follow this same rule. |
+| **Enforced now** | `protect_venue_platform_columns` and `protect_business_tenant_content` reject profile-field changes unless `platform_may_write_tenant`. Invitations INSERT and venue membership writes no longer accept `manage_platform_tenants` alone. Classification lock remains a platform record. First-owner business/venue **create** via `manage_platform_tenants` remains for operator onboarding. Staff profile writes use `may_manage_public_staff_profiles` (includes write session). Presence toggles are **not** a C19 tenant-write cell. |
+| **Future migration** | Domain verification columns: content vs platform-record split must follow this same rule. |
 | **Application `can()`** | Support banner; disable tenant edits outside write mode. |
-| **Negative tests** | Present: admin cannot rename harbor venue/business, invite, or assign without a session; can lock classification; can edit city inside a live write session created in the test transaction. |
+| **Negative tests** | Present: admin cannot rename harbor venue/business, invite, or assign without a session; can lock classification; can edit city inside a live write session created in the test transaction. Staff: create without session forbidden; create with write session allowed; presence toggle still forbidden (`08`). |
 
 ## Foundation helpers (quick reference)
 
@@ -236,6 +232,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | `is_user_active` | C15 |
 | `subscription_allows_tenant_writes` / `venue_is_publicly_visible` | C16 |
 | `module_is_entitled` / `reject_unentitled_module_enable` | C17 |
+| `may_set_staff_presence` / `may_manage_public_staff_profiles` / `may_view_private_staff` | C3, C11, C14, C19 |
 | `apply_venue_moderation` | ADR-036; `authenticated` only, not `anon` |
 
 ## What `can()` must never be trusted for

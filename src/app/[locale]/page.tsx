@@ -11,7 +11,7 @@ import { Link } from "@/core/i18n/navigation";
 import { resolveRequestLocale } from "@/core/i18n/server";
 
 const SURFACE_LINKS = [
-  { href: "/v/example-venue", key: "publicSite" },
+  { href: "/v/harbor-light", key: "publicSite" },
   { href: "/admin", key: "admin" },
   { href: "/platform", key: "platform" },
 ] as const;
@@ -65,7 +65,7 @@ function Overview(): React.ReactElement {
           {t("nextStep")}
         </p>
         <Button asChild variant="outline">
-          <Link href="/v/example-venue">{t("exampleSlug")}</Link>
+          <Link href="/v/harbor-light">{t("exampleSlug")}</Link>
         </Button>
       </section>
     </div>

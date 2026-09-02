@@ -10,6 +10,20 @@ export interface AuthzContext {
   targetUserId?: string;
   requestedRole?: string;
   provenConditions?: readonly string[];
+  ownConsentedStaffProfile?: boolean;
+}
+
+export function staffOwnPresenceProvenConditions(
+  roleKey: string | null,
+  ownConsentedStaffProfile: boolean,
+): string[] {
+  if (!ownConsentedStaffProfile || roleKey === null) {
+    return [];
+  }
+  if (roleKey === "staff") {
+    return ["staff:toggle_staff_presence"];
+  }
+  return [`${roleKey}:toggle_own_presence`];
 }
 
 export function scopeIsComplete(scope: AuthzScope | null | undefined): boolean {

@@ -4,9 +4,9 @@
 
 This document describes the conceptual data model: the tenant hierarchy, the entities each module needs, how multilingual content is stored, how public and private data are separated, and how Row Level Security is expected to scope every tenant-owned record.
 
-This is a **design document, not a schema dump**. Column lists are indicative, deliberately incomplete on detail, and contain no implementation code or migrations. All decisions that gated the schema are now accepted, so migrations may be written from this document — see [decisions-and-open-questions.md](./decisions-and-open-questions.md#4-decisions-needed-before-application-scaffolding).
+This is a **design document, not a schema dump**. Column lists are indicative. The staff presence module is implemented; see [staff-presence.md](./staff-presence.md). The private record is **business-scoped**; public profiles and presence are **venue-scoped**.
 
-Related: [product-brief.md](./product-brief.md) · [architecture.md](./architecture.md) · [roles-and-permissions.md](./roles-and-permissions.md)
+Related: [product-brief.md](./product-brief.md) · [architecture.md](./architecture.md) · [roles-and-permissions.md](./roles-and-permissions.md) · [staff-presence.md](./staff-presence.md)
 
 ---
 
@@ -219,57 +219,51 @@ Every venue moves through this independently. All period durations (warning, res
 
 ## 5. Staff: public and private data
 
+See [staff-presence.md](./staff-presence.md) for the implemented module, including presence expiry, consent as an operational record, and avatar-upload deferral.
+
 ### 5.1 Staff public and private separation
 
-Public staff data and private employment data are **different entities in different tables with different RLS policies**. This is a structural guarantee, not a convention: no public query path can reach a private table.
+Public staff data and private staff records are **different entities in different tables with different RLS policies**. No public query path can reach the private table. Anonymous users have **no table GRANT** on staff tables; the public site uses `list_public_staff_presence`.
 
 ```mermaid
 erDiagram
-    USERS ||--o{ STAFF_PUBLIC_PROFILES : "one per venue"
+    BUSINESSES ||--o{ STAFF_MEMBERS : "private record"
+    STAFF_MEMBERS ||--o{ STAFF_PUBLIC_PROFILES : "one per venue"
     VENUES ||--o{ STAFF_PUBLIC_PROFILES : ""
-    USERS ||--o{ STAFF_PRIVATE_DETAILS : "one per venue"
-    VENUES ||--o{ STAFF_PRIVATE_DETAILS : ""
     STAFF_PUBLIC_PROFILES ||--o{ STAFF_PUBLIC_PROFILE_TRANSLATIONS : "bio per locale"
+    STAFF_PUBLIC_PROFILES ||--o{ CURRENT_STAFF_PRESENCE : "current"
     STAFF_PUBLIC_PROFILES ||--o{ STAFF_PRESENCE_EVENTS : "history"
-    STAFF_PUBLIC_PROFILES ||--o{ STAFF_PUBLIC_CONSENTS : ""
+    STAFF_PUBLIC_PROFILES ||--o{ STAFF_CONSENT_EVENTS : "history"
 ```
 
-### 5.2 `staff_public_profiles` — publicly readable
+### 5.2 `staff_members` — private, business-scoped
 
-`id`, `venue_id`, `user_id`, `public_display_name`, `public_avatar_media_id`, `sort_order`, `is_publicly_listed`, `created_at`, `updated_at`, `archived_at`
+`id`, `business_id`, optional `user_id`, `internal_display_name`, `status` (`active` / `deactivated`), deactivation/restoration timestamps and actors, created/updated metadata.
+
+- Never translated. Never exposed on the public site.
+- Unique `(business_id, user_id)` where `user_id` is set. The same login may have separate rows in different businesses.
+- Does **not** store legal name, email, phone, DOB, salary or home address.
+
+### 5.3 `staff_public_profiles` — venue assignment and public profile
+
+`id`, `venue_id`, `business_id`, `staff_member_id`, `public_display_name`, optional `public_title`, optional `avatar_storage_path`, `display_order`, `assignment_status`, `publication_state` (`draft` / `published`), `consent_state` (`pending` / `granted` / `withdrawn`), consent recorded at/by, quarantine columns.
 
 - Translated fields: **`staff_public_profile_translations`** (short public bio).
-- One row **per venue per person**, so the same person can present differently at different venues.
-- Contains **no** legal name, no email, no phone, no employment data, no account status.
-- Publicly visible only when: consent is current **and** `is_publicly_listed` **and** the `staff_presence` module is entitled and enabled **and** the venue is published **and** the membership is active.
-
-### 5.3 `staff_private_details` — restricted
-
-`id`, `venue_id`, `user_id`, `legal_name`, `private_email`, `private_phone`, `employment_notes`, `internal_notes`, `start_date`, `end_date`, `emergency_contact`, `updated_by`, `updated_at`
-
-- Readable only with `view_private_staff_data` for that venue (or the platform inside an audited support session).
-- **Never translated.** Private records are internal working data, not published content.
-- Invitation state and account status live on `invitations` / `users`, also restricted.
-- This table is **not** payroll and **not** authoritative HR; it holds only what a venue needs to run a rota and contact its people. Payroll is a non-goal.
+- Composite FKs protect `(staff_member_id, business_id)` and `(venue_id, business_id)` (ADR-037).
+- Publicly visible only when every gate in [staff-presence.md](./staff-presence.md#consent-and-publication) passes.
 
 ### 5.4 Staff presence — public availability indicator
 
-**`current_staff_presence`** — `id`, `venue_id`, `staff_public_profile_id`, `state` (`text CHECK (state IN ('in','not_in'))`), `changed_at`, `changed_by`, `expires_at` (nullable)
+**`current_staff_presence`** — `venue_id`, `staff_public_profile_id`, `state` (`present` / `not_present`), `changed_at`, `changed_by`, `presence_expires_at`, `source`
 
-**`staff_presence_events`** (append-only history) — `id`, `venue_id`, `staff_public_profile_id`, `state`, `changed_at`, `changed_by`, `source` (`text CHECK (source IN ('self','manager'))`)
+**`staff_presence_events`** — append-only history. Not public.
 
-- **Presence is venue-specific**: being "in" at one venue says nothing about another.
-- The public site shows the **current** state plus the **timestamp of the latest change**.
-- Optional `expires_at` lets a venue auto-clear presence at closing time so a stale "in today" does not persist overnight (default behaviour remains open — OQ-21).
-- History exists for the venue's own operational insight (busy nights) and audit — **explicitly not** payroll or authoritative timekeeping, and it must never be presented as hours worked.
+- Forgotten “present” rows expire: public reads treat `presence_expires_at <= now()` as `not_present` without a cron job.
+- History is operational audit, **not** hours worked.
 
-### 5.5 `staff_public_consents`
+### 5.5 Consent history
 
-`id`, `venue_id`, `user_id`, `consent_type` (`text CHECK (consent_type IN ('public_profile','public_presence'))`), `granted_at`, `granted_by` (the staff member themselves), `withdrawn_at`, `consent_text_version`
-
-- Consent is per venue and per type, timestamped, versioned against the wording shown, and **revocable at any time**.
-- Withdrawal removes public visibility immediately; it does not delete the profile, the account, or history.
-- Deactivating a membership also removes public visibility immediately, regardless of consent.
+**`staff_consent_events`** — append-only operational consent history per public profile. Manager-recorded consent is not legal proof.
 
 ## 6. Content modules
 
@@ -487,7 +481,7 @@ These change only through a reviewed migration that alters one constraint.
 | Offer state | `offers.state` | `draft`, `published`, `archived` |
 | Booking state | `booking_requests.state` | `new`, `in_review`, `accepted`, `declined`, `cancelled_by_customer`, `no_show`, `completed` |
 | Invitation state | `invitations.state` | `pending`, `accepted`, `expired`, `revoked` |
-| Presence state | `current_staff_presence.state` | `in`, `not_in` |
+| Presence state | `current_staff_presence.state` | `present`, `not_present` |
 | Atmosphere level | `venue_atmosphere.level` | `quiet`, `getting_busy`, `lively`, `packed` |
 | Content classification | `venues.content_classification` | `general`, `nightlife_18_plus` |
 | Venue publication state | `venues.publication_state` | `draft`, `published`, `unpublished_by_platform` |

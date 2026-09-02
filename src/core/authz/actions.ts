@@ -90,9 +90,10 @@ export function isTenantWriteAction(action: string): boolean {
 }
 
 /**
- * Conditional cells that the database currently treats as effective. Every
- * other conditional cell default-denies until its condition can be proven
- * (docs/security/conditional-permission-enforcement.md).
+ * Conditional cells that the database currently treats as effective at the
+ * grant-helper layer. C3 and C14 stay false here so staff never receive a
+ * blanket `toggle_staff_presence` grant; row-level `may_set_staff_presence`
+ * implements those conditions.
  */
 export function conditionalTenantGrantOk(
   roleKey: string,

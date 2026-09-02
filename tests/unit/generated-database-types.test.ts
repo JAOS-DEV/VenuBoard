@@ -28,6 +28,9 @@ describe("generated database types", () => {
     expect(source).toContain("onboard_platform_venue");
     expect(source).toContain("venue_slug_is_available");
     expect(source).toContain("venue_branding:");
-    expect(source).toContain("platform_onboarding_runs:");
+    expect(source).toContain("staff_members:");
+    expect(source).toContain("staff_public_profiles:");
+    expect(source).toContain("list_public_staff_presence");
+    expect(source).toContain("create_staff_member_with_profile");
   });
 });

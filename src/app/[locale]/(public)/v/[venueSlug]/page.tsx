@@ -1,17 +1,15 @@
 import { getTranslations } from "next-intl/server";
 
-import { NotImplementedNotice } from "@/components/not-implemented-notice";
+import { StaffCarousel } from "@/components/staff-presence/staff-carousel";
 import { Badge } from "@/components/ui/badge";
 import { resolveRequestLocale } from "@/core/i18n/server";
+import {
+  loadPublicStaffCarousel,
+  loadPublicVenueSnapshot,
+} from "@/core/staff-presence/queries";
 
-/**
- * Development fallback route for a public venue site.
- *
- * `/v/[venueSlug]` is the documented permanent fallback used in local
- * development (ADR-020). Production resolution order — verified custom domain,
- * then VenuBoard subdomain, then this path — is not implemented, and neither is
- * any tenant lookup. This page echoes the slug and says so.
- */
+export const dynamic = "force-dynamic";
+
 interface PublicVenuePageProps {
   params: Promise<{ locale: string; venueSlug: string }>;
 }
@@ -20,24 +18,51 @@ export default async function PublicVenuePage({
   params,
 }: PublicVenuePageProps): Promise<React.ReactElement> {
   const { venueSlug } = await params;
-  await resolveRequestLocale(params);
-
+  const locale = await resolveRequestLocale(params);
   const t = await getTranslations("publicVenue");
+  const tStaff = await getTranslations("staffPublic");
+
+  const venue = await loadPublicVenueSnapshot(venueSlug);
+  const carousel = await loadPublicStaffCarousel(venueSlug, locale);
 
   return (
     <div className="space-y-6">
       <header className="space-y-3">
         <Badge variant="outline">{t("developmentFallback")}</Badge>
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {venue?.name ?? t("unavailableTitle")}
+        </h1>
+        {venue !== null ? (
+          <p className="font-mono text-sm text-muted-foreground">
+            {venue.slug}
+          </p>
+        ) : (
+          <p className="text-muted-foreground">{t("unavailableBody")}</p>
+        )}
       </header>
 
-      <NotImplementedNotice
-        heading={t("slugLabel")}
-        body={t("notImplemented")}
-        note={t("routingNote")}
-      >
-        <p className="font-mono text-base text-foreground">{venueSlug}</p>
-      </NotImplementedNotice>
+      {venue?.contentClassification === "nightlife_18_plus" ? (
+        <aside
+          className="rounded-md border border-border bg-secondary p-4 text-sm"
+          data-testid="adult-notice"
+        >
+          <p className="font-medium">{t("adultNoticeTitle")}</p>
+          <p className="mt-1 text-muted-foreground">{t("adultNoticeBody")}</p>
+        </aside>
+      ) : null}
+
+      <StaffCarousel
+        carousel={carousel}
+        headingFallback={tStaff("headingFallback")}
+        inNowLabel={tStaff("inNow")}
+        notInLabel={tStaff("notIn")}
+        emptyLabel={tStaff("empty")}
+        previousLabel={tStaff("previous")}
+        nextLabel={tStaff("next")}
+        pauseLabel={tStaff("pause")}
+        playLabel={tStaff("play")}
+        branding={venue?.branding ?? null}
+      />
     </div>
   );
 }
