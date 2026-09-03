@@ -25,6 +25,8 @@ describe("parseSafeApplicationPath", () => {
   it.each([
     "https://evil.example",
     "http://evil.example/admin",
+    "http://localhost:3000/admin",
+    "http://127.0.0.1:3000/admin",
     "//evil.example",
     "/\\evil.example",
     "///evil.example",

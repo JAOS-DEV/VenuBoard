@@ -120,7 +120,7 @@ A valid venue slug in a URL never grants `/admin`. Platform administrators are n
 
 ## Local testing
 
-Canonical local workflow, including Studio, the local inbox and fictional personas: `npm run local:start` then http://localhost:3000/en/dev. That hub is a real 404 outside ordinary local development. It does not create sessions or bypass actor resolution. See the README local-development section.
+Canonical local workflow, including Studio, the local inbox and fictional personas: `npm run local:start` then http://localhost:3000/en/dev. Magic-link callbacks return to `http://localhost:3000/{locale}/auth/callback` so the session stays on the same origin as the app. Supabase API, Studio and the mailbox remain on `127.0.0.1` ports 54321–54324. That hub is a real 404 outside ordinary local development. It does not create sessions or bypass actor resolution. See the README local-development section.
 
 ```bash
 npm run supabase:start    # Docker
