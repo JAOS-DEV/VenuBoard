@@ -3,53 +3,130 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Neutral shadcn/ui baseline. Venue-specific branding is a later phase: it will
- * override these custom properties per venue rather than shipping venue CSS.
- * See docs/architecture.md section 12.
+ * VenuBoard design tokens.
+ * shadcn/ui primitives consume these CSS custom properties.
+ * Venue branding may overlay accent/primary highlights only — never
+ * unconstrained text/background contrast. See docs/ui-design-system.md.
  */
+
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --gutter: 1rem;
+  --section-gap: 1.25rem;
+  --header-height: 3.5rem;
+  --bottom-nav-height: 4rem;
+  --content-width: 72rem;
+  --content-width-narrow: 40rem;
+  --control-height: 2.75rem;
+  --touch-min: 2.75rem;
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --shadow-elevated: 0 8px 24px oklch(0.145 0 0 / 10%);
+
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.165 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.165 0 0);
+  --elevated: oklch(1 0 0);
+  --elevated-foreground: oklch(0.165 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.165 0 0);
+  --primary: oklch(0.22 0 0);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.22 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.48 0 0);
+  --accent: oklch(0.95 0.02 250);
+  --accent-foreground: oklch(0.22 0 0);
+  --destructive: oklch(0.55 0.2 27);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --warning: oklch(0.75 0.14 75);
+  --warning-foreground: oklch(0.25 0.05 75);
+  --success: oklch(0.55 0.12 155);
+  --success-foreground: oklch(0.985 0 0);
+  --info: oklch(0.55 0.1 240);
+  --info-foreground: oklch(0.985 0 0);
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.9 0 0);
+  --ring: oklch(0.45 0 0);
+
+  --status-present: oklch(0.5 0.13 155);
+  --status-present-foreground: oklch(0.985 0 0);
+  --status-not-present: oklch(0.9 0 0);
+  --status-not-present-foreground: oklch(0.35 0 0);
+  --status-draft: oklch(0.92 0.02 250);
+  --status-draft-foreground: oklch(0.3 0.04 250);
+  --status-scheduled: oklch(0.9 0.06 240);
+  --status-scheduled-foreground: oklch(0.3 0.08 240);
+  --status-published: oklch(0.88 0.08 155);
+  --status-published-foreground: oklch(0.25 0.08 155);
+  --status-cancelled: oklch(0.9 0.05 27);
+  --status-cancelled-foreground: oklch(0.35 0.1 27);
+  --status-archived: oklch(0.9 0 0);
+  --status-archived-foreground: oklch(0.35 0 0);
+  --status-pending: oklch(0.92 0.08 85);
+  --status-pending-foreground: oklch(0.32 0.08 85);
+  --status-quarantined: oklch(0.55 0.2 27);
+  --status-quarantined-foreground: oklch(0.985 0 0);
+  --status-disabled: oklch(0.92 0 0);
+  --status-disabled-foreground: oklch(0.45 0 0);
+
+  color-scheme: light;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: oklch(0.155 0 0);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.2 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --elevated: oklch(0.23 0 0);
+  --elevated-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.2 0 0);
+  --popover-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.93 0 0);
+  --primary-foreground: oklch(0.2 0 0);
+  --secondary: oklch(0.27 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.27 0 0);
+  --muted-foreground: oklch(0.72 0 0);
+  --accent: oklch(0.28 0.03 250);
+  --accent-foreground: oklch(0.97 0 0);
+  --destructive: oklch(0.68 0.18 22);
+  --destructive-foreground: oklch(0.15 0 0);
+  --warning: oklch(0.78 0.14 75);
+  --warning-foreground: oklch(0.2 0.04 75);
+  --success: oklch(0.7 0.12 155);
+  --success-foreground: oklch(0.15 0 0);
+  --info: oklch(0.7 0.1 240);
+  --info-foreground: oklch(0.15 0 0);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.7 0 0);
+  --shadow-elevated: 0 10px 28px oklch(0 0 0 / 40%);
+
+  --status-present: oklch(0.68 0.13 155);
+  --status-present-foreground: oklch(0.15 0 0);
+  --status-not-present: oklch(0.3 0 0);
+  --status-not-present-foreground: oklch(0.82 0 0);
+  --status-draft: oklch(0.3 0.03 250);
+  --status-draft-foreground: oklch(0.85 0.03 250);
+  --status-scheduled: oklch(0.32 0.06 240);
+  --status-scheduled-foreground: oklch(0.86 0.04 240);
+  --status-published: oklch(0.32 0.08 155);
+  --status-published-foreground: oklch(0.86 0.05 155);
+  --status-cancelled: oklch(0.32 0.06 27);
+  --status-cancelled-foreground: oklch(0.86 0.05 27);
+  --status-archived: oklch(0.3 0 0);
+  --status-archived-foreground: oklch(0.8 0 0);
+  --status-pending: oklch(0.34 0.08 85);
+  --status-pending-foreground: oklch(0.9 0.05 85);
+  --status-quarantined: oklch(0.68 0.18 22);
+  --status-quarantined-foreground: oklch(0.15 0 0);
+  --status-disabled: oklch(0.28 0 0);
+  --status-disabled-foreground: oklch(0.7 0 0);
+
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -61,6 +138,8 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-elevated: var(--elevated);
+  --color-elevated-foreground: var(--elevated-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -73,9 +152,35 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-status-present: var(--status-present);
+  --color-status-present-foreground: var(--status-present-foreground);
+  --color-status-not-present: var(--status-not-present);
+  --color-status-not-present-foreground: var(--status-not-present-foreground);
+  --color-status-draft: var(--status-draft);
+  --color-status-draft-foreground: var(--status-draft-foreground);
+  --color-status-scheduled: var(--status-scheduled);
+  --color-status-scheduled-foreground: var(--status-scheduled-foreground);
+  --color-status-published: var(--status-published);
+  --color-status-published-foreground: var(--status-published-foreground);
+  --color-status-cancelled: var(--status-cancelled);
+  --color-status-cancelled-foreground: var(--status-cancelled-foreground);
+  --color-status-archived: var(--status-archived);
+  --color-status-archived-foreground: var(--status-archived-foreground);
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-foreground: var(--status-pending-foreground);
+  --color-status-quarantined: var(--status-quarantined);
+  --color-status-quarantined-foreground: var(--status-quarantined-foreground);
+  --color-status-disabled: var(--status-disabled);
+  --color-status-disabled-foreground: var(--status-disabled-foreground);
 }
 
 @layer base {
@@ -84,18 +189,37 @@
     outline-color: color-mix(in oklab, var(--color-ring) 50%, transparent);
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family:
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif,
+      "Apple Color Emoji",
+      "Segoe UI Emoji";
+    min-height: 100dvh;
   }
 
-  /*
-   * Thai text needs more vertical room than Latin for tone marks and vowel
-   * signs, and must never be force-uppercased. See docs/architecture.md
-   * section 11.
-   */
   :lang(th) {
     line-height: 1.75;
     text-transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

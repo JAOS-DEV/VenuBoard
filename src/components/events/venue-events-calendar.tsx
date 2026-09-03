@@ -199,26 +199,33 @@ export function VenueEventsCalendar(props: {
   const canGoPrev = monthKey > bounds.minMonthKey;
   const canGoNext = monthKey < bounds.maxMonthKey;
 
+  const todayISO = props.initialSelectedDateISO;
+  const selectedEvents = eventsByDay.get(selectedDateISO) ?? [];
+  const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
   return (
     <section
       className="space-y-3"
       aria-label={props.heading ?? "Events calendar"}
     >
       {props.heading ? (
-        <h2 className="text-lg font-semibold">{props.heading}</h2>
+        <h2 className="text-base font-semibold">{props.heading}</h2>
       ) : null}
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => setMonthKey((m) => shiftMonth(m, -1))}
           disabled={!canGoPrev}
           aria-label="Previous month"
-          className="rounded-md border px-3 py-1 disabled:opacity-50"
+          className="inline-flex h-11 min-w-11 items-center justify-center rounded-md border border-border px-3 text-sm disabled:opacity-50"
         >
           Prev
         </button>
-        <div aria-live="polite" className="font-medium">
+        <div
+          aria-live="polite"
+          className="min-w-0 flex-1 text-center text-sm font-medium"
+        >
           {monthKey}
         </div>
         <button
@@ -226,15 +233,15 @@ export function VenueEventsCalendar(props: {
           onClick={() => setMonthKey((m) => shiftMonth(m, 1))}
           disabled={!canGoNext}
           aria-label="Next month"
-          className="rounded-md border px-3 py-1 disabled:opacity-50"
+          className="inline-flex h-11 min-w-11 items-center justify-center rounded-md border border-border px-3 text-sm disabled:opacity-50"
         >
           Next
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-xs font-medium text-muted-foreground">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-          <div key={d} className="px-1 py-1">
+      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-muted-foreground">
+        {weekdayLabels.map((d) => (
+          <div key={d} className="py-1">
             {d}
           </div>
         ))}
@@ -242,7 +249,7 @@ export function VenueEventsCalendar(props: {
 
       <div
         ref={gridRef}
-        className="grid grid-cols-7 gap-1"
+        className="space-y-1"
         role="grid"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -279,66 +286,92 @@ export function VenueEventsCalendar(props: {
           }
         }}
       >
-        {dayCells.map((iso) => {
-          const list = eventsByDay.get(iso) ?? [];
-          const isSelected = iso === selectedDateISO;
-          const listCount = list.length;
-          return (
-            <div
-              key={iso}
-              role="gridcell"
-              className={`min-h-[90px] rounded-md border p-2 ${
-                isSelected ? "border-foreground" : "border-border"
-              }`}
-            >
-              <button
-                type="button"
-                ref={(el) => {
-                  if (!el) return;
-                  dayButtonRefs.current.set(iso, el);
-                }}
-                tabIndex={isSelected ? 0 : -1}
-                onClick={() => onSelectDate(iso)}
-                aria-label={`Select ${iso}`}
-                className="flex w-full items-start justify-between gap-2 text-left"
-              >
-                <span className="text-sm font-medium">
-                  {Number(iso.slice(8, 10))}
-                </span>
-                {listCount > 0 ? (
-                  <span className="rounded bg-secondary px-1 text-[10px]">
-                    {listCount}
-                  </span>
-                ) : null}
-              </button>
-
-              {listCount > 0 ? (
-                <div className="mt-2 space-y-1">
-                  {list.slice(0, 3).map((e) => {
-                    const { summary } = formatVenueDateTimeRange({
-                      startsAt: e.startsAt,
-                      endsAt: e.endsAt,
-                      isAllDay: e.isAllDay,
-                      timeZone: timezone,
-                      locale,
-                    });
-                    return (
-                      <div key={e.id} className="text-[12px]">
-                        <div className="font-medium">{e.title}</div>
-                        <div className="text-muted-foreground">{summary}</div>
-                      </div>
-                    );
-                  })}
-                  {listCount > 3 ? (
-                    <div className="text-xs text-muted-foreground">
-                      +{listCount - 3} more
-                    </div>
-                  ) : null}
+        {Array.from({ length: 6 }, (_, week) => (
+          <div key={week} role="row" className="grid grid-cols-7 gap-1">
+            {dayCells.slice(week * 7, week * 7 + 7).map((iso) => {
+              const list = eventsByDay.get(iso) ?? [];
+              const isSelected = iso === selectedDateISO;
+              const isToday = iso === todayISO;
+              const inMonth = iso.slice(0, 7) === monthKey;
+              const listCount = list.length;
+              return (
+                <div key={iso} role="gridcell" className="aspect-square">
+                  <button
+                    type="button"
+                    ref={(el) => {
+                      if (!el) return;
+                      dayButtonRefs.current.set(iso, el);
+                    }}
+                    tabIndex={isSelected ? 0 : -1}
+                    onClick={() => onSelectDate(iso)}
+                    aria-label={`Select ${iso}`}
+                    aria-current={isToday ? "date" : undefined}
+                    aria-pressed={isSelected}
+                    className={`flex size-full min-h-11 flex-col items-center justify-center rounded-md text-sm ${
+                      isSelected
+                        ? "bg-primary text-primary-foreground"
+                        : isToday
+                          ? "ring-1 ring-ring"
+                          : ""
+                    } ${inMonth ? "text-foreground" : "text-muted-foreground"}`}
+                  >
+                    <span className="leading-none">
+                      {Number(iso.slice(8, 10))}
+                    </span>
+                    {listCount > 0 ? (
+                      <span
+                        className={`mt-1 size-1.5 rounded-full ${
+                          isSelected ? "bg-primary-foreground" : "bg-foreground"
+                        }`}
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <span className="mt-1 size-1.5" aria-hidden="true" />
+                    )}
+                    <span className="sr-only">
+                      {listCount > 0
+                        ? `${String(listCount)} events`
+                        : "No events"}
+                    </span>
+                  </button>
                 </div>
-              ) : null}
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-2" aria-live="polite">
+        <h3 className="text-sm font-medium">{selectedDateISO}</h3>
+        {selectedEvents.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No events on this day.
+          </p>
+        ) : (
+          <ol className="space-y-2" aria-label="Event list">
+            {selectedEvents.map((e) => {
+              const { summary } = formatVenueDateTimeRange({
+                startsAt: e.startsAt,
+                endsAt: e.endsAt,
+                isAllDay: e.isAllDay,
+                timeZone: timezone,
+                locale,
+              });
+              return (
+                <li
+                  key={e.id}
+                  className="rounded-lg bg-card p-3 ring-1 ring-border"
+                >
+                  <p className="font-medium">{e.title}</p>
+                  <p className="text-sm text-muted-foreground">{summary}</p>
+                  {e.summary ? (
+                    <p className="mt-1 text-sm">{e.summary}</p>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ol>
+        )}
       </div>
     </section>
   );

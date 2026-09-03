@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { PageHeader } from "@/components/patterns/page-header";
 import { StaffAdminPanel } from "@/components/staff-presence/staff-admin-panel";
 import { VenueScopeForm } from "@/components/staff-presence/venue-scope-form";
 import { resolveRequestActor } from "@/core/actors/resolve";
@@ -102,6 +103,15 @@ export default async function AdminStaffPage({
     state_expired: t("stateExpired"),
     state_restricted: t("stateRestricted"),
     state_suspended: t("stateSuspended"),
+    consentPending: t("consentPending"),
+    consentGranted: t("consentGranted"),
+    consentWithdrawn: t("consentWithdrawn"),
+    presencePresent: t("presencePresent"),
+    presenceNotPresent: t("presenceNotPresent"),
+    staffActive: t("staffActive"),
+    staffDeactivated: t("staffDeactivated"),
+    moreActions: t("moreActions"),
+    details: t("details"),
   };
 
   const canSeeModule =
@@ -138,11 +148,8 @@ export default async function AdminStaffPage({
     directory.rows.some((row) => actorOwnsConsentedProfile(actor.userId, row));
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="max-w-2xl text-muted-foreground">{t("intro")}</p>
-      </header>
+    <div className="space-y-5">
+      <PageHeader title={t("title")} description={t("intro")} />
       {venues.length > 1 ? (
         <VenueScopeForm
           venues={venues}

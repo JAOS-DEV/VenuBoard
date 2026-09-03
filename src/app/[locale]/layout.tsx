@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 
-import { AppShell } from "@/components/app-shell";
-import { headerIdentity, resolveRequestActor } from "@/core/actors/resolve";
-import { isOrdinaryLocalDevelopment } from "@/core/dev/guard";
-import { serverEnv } from "@/core/env/server";
+import { ThemeProvider } from "@/core/theme/theme-provider";
 import { routing } from "@/core/i18n/routing";
 import { resolveRequestLocale } from "@/core/i18n/server";
 
@@ -17,6 +14,13 @@ export const metadata: Metadata = {
   description:
     "VenuBoard venue platform. Remaining product modules are later work.",
   robots: { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  colorScheme: "light dark",
 };
 
 export function generateStaticParams(): Array<{ locale: string }> {
@@ -33,24 +37,13 @@ export default async function LocaleLayout({
   params,
 }: LocaleLayoutProps): Promise<React.ReactElement> {
   const locale = await resolveRequestLocale(params);
-  const actor = await resolveRequestActor({ memberships: "none" });
-  const session = headerIdentity(actor);
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <body className="antialiased">
-        <NextIntlClientProvider>
-          <AppShell
-            environment={serverEnv.VENUBOARD_ENV}
-            signedIn={session.signedIn}
-            developerHubEnabled={isOrdinaryLocalDevelopment(
-              serverEnv.VENUBOARD_ENV,
-              process.env.NODE_ENV,
-            )}
-          >
-            {children}
-          </AppShell>
-        </NextIntlClientProvider>
+        <ThemeProvider>
+          <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

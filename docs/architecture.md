@@ -1,6 +1,6 @@
 # VenuBoard — Architecture
 
-**Status:** Accepted 2026-08-30 — nothing here blocks scaffolding · **Stage:** Authentication, invitations and platform-led onboarding · **Last updated:** 2026-09-01
+**Status:** Accepted 2026-08-30 — nothing here blocks scaffolding · **Stage:** Authentication, invitations, platform-led onboarding, staff presence, events, and the mobile-first UI foundation · **Last updated:** 2026-09-03
 
 This document describes the technical architecture. The foundation schema, RLS, authentication, invitation acceptance, actor resolution, application `can()`, platform-led onboarding and the **staff presence module** now exist. Remaining product modules are not built. Product scope is in [product-brief.md](./product-brief.md), the schema in [data-model.md](./data-model.md), authorisation in [roles-and-permissions.md](./roles-and-permissions.md), authentication in [authentication.md](./authentication.md), and the reasoning and unresolved questions in [decisions-and-open-questions.md](./decisions-and-open-questions.md).
 
@@ -157,6 +157,8 @@ Module rules:
 - Cross-module access goes through a module's exported functions, never by reaching into another module's tables directly.
 - Every module declares a **module key** (`core_profile`, `staff_presence`, `feed`, `events`, `booking_requests`, `atmosphere`, `offers`, `social_links`) used consistently by entitlements, venue settings, navigation and analytics.
 - Extracting a module into a separate service later must remain possible, but is not a goal.
+
+Presentation follows the canonical [UI design system](./ui-design-system.md): shadcn/ui primitives in `src/components/ui`, reusable patterns in `src/components/patterns`, feature UI in feature folders. Public, venue-admin, platform and developer shells stay related but purpose-specific.
 
 ## 5. Surfaces, routing and tenant resolution
 
@@ -377,9 +379,11 @@ The policy is defined in [roles-and-permissions.md](./roles-and-permissions.md#7
 | **Vocabulary consistency** | Vitest                        | Generated TypeScript unions and Zod schemas match the database `CHECK` constraints in both directions                                                                                                                                                                                                                                                                                                                |
 | **Moderation**             | Vitest + Playwright           | `moderate_content` is refused without a reason and refused to `platform_support`; quarantine removes content from the public site; a **venue cannot republish a quarantined record**; restore is audited like a takedown                                                                                                                                                                                             |
 | End-to-end                 | Playwright                    | Both sign-in methods, operator-led tenant creation, publish flow, booking request lifecycle, presence toggle, support session banner and audit, platform entitlement changes, trial expiry                                                                                                                                                                                                                           |
-| Accessibility / perf       | Playwright + audits           | Public site on a mobile viewport, contrast of venue palettes                                                                                                                                                                                                                                                                                                                                                         |
+| Accessibility / perf       | Playwright + `@axe-core/playwright` | Public, auth, admin and platform pages on mobile viewports; WCAG 2.0/2.1 A/AA tags; contrast of venue palettes. Automated scans are not complete accessibility proof.                                                                                                                                                                                                                         |
 
 All suites run against the **deterministic seed dataset and fixed test identities** described in [section 17.1](#171-seed-data-and-the-reset-workflow), so a matrix cell maps to a real login against known data rather than to bespoke setup code.
+
+Completed user-facing feature work must report: the test persona, exact route, happy-path steps, expected results, permission/negative checks, mobile/light/dark checks, and reset/teardown steps. See [UI design system](./ui-design-system.md#adding-a-future-module).
 
 Non-negotiable rules:
 

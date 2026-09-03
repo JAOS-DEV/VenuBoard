@@ -146,7 +146,7 @@ test.describe("staff presence", () => {
     await restoreCard.getByLabel(/I confirm restoration/).check();
     await restoreCard.getByRole("button", { name: "Restore" }).click();
     await expect(
-      restoreCard.getByText("draft", { exact: false }),
+      restoreCard.locator("[data-slot='badge']", { hasText: "Unpublished" }),
     ).toBeVisible();
     await page.goto("/en/v/harbor-light");
     await expect(page.getByText(publicName)).toHaveCount(0);

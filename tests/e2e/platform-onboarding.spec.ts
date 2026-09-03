@@ -325,7 +325,7 @@ test.describe("platform onboarding RPC result", () => {
       page.getByRole("heading", { name: "Platform venue overview" }),
     ).toBeVisible();
     expect(page.url()).not.toContain(token);
-    await expect(page.getByText("draft")).toBeVisible();
+    await expect(page.getByText("Unpublished", { exact: true })).toBeVisible();
     await expect(page.getByText(/Entitled modules:/)).toContainText(
       "core_profile",
     );

@@ -13,6 +13,26 @@ const badgeVariants = cva(
         outline: "border-border text-foreground",
         destructive:
           "border-transparent bg-destructive text-destructive-foreground",
+        present:
+          "border-transparent bg-[var(--status-present)] text-[var(--status-present-foreground)]",
+        notPresent:
+          "border-transparent bg-[var(--status-not-present)] text-[var(--status-not-present-foreground)]",
+        draft:
+          "border-transparent bg-[var(--status-draft)] text-[var(--status-draft-foreground)]",
+        scheduled:
+          "border-transparent bg-[var(--status-scheduled)] text-[var(--status-scheduled-foreground)]",
+        published:
+          "border-transparent bg-[var(--status-published)] text-[var(--status-published-foreground)]",
+        cancelled:
+          "border-transparent bg-[var(--status-cancelled)] text-[var(--status-cancelled-foreground)]",
+        archived:
+          "border-transparent bg-[var(--status-archived)] text-[var(--status-archived-foreground)]",
+        pending:
+          "border-transparent bg-[var(--status-pending)] text-[var(--status-pending-foreground)]",
+        quarantined:
+          "border-transparent bg-[var(--status-quarantined)] text-[var(--status-quarantined-foreground)]",
+        disabled:
+          "border-transparent bg-[var(--status-disabled)] text-[var(--status-disabled-foreground)]",
       },
     },
     defaultVariants: {

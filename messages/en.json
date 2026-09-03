@@ -12,7 +12,46 @@
     "environment": "Environment",
     "language": "Language",
     "developmentBadge": "Features are under development",
-    "documentation": "Documentation"
+    "documentation": "Documentation",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "menu": "Menu",
+    "more": "More",
+    "uiGallery": "UI gallery",
+    "localShort": "local",
+    "signInShort": "Sign in"
+  },
+  "adminNav": {
+    "primary": "Venue administration",
+    "home": "Home",
+    "staff": "Staff",
+    "events": "Events",
+    "more": "More"
+  },
+  "platformNav": {
+    "overview": "Overview",
+    "onboard": "Onboard"
+  },
+  "status": {
+    "notEntitled": "Not included in this venue’s plan",
+    "moduleDisabled": "Module disabled",
+    "trialExpired": "Trial expired",
+    "temporarilyUnavailable": "Temporarily unavailable",
+    "trial": "Trial",
+    "enabled": "Enabled",
+    "present": "In now",
+    "notPresent": "Not currently in",
+    "draft": "Draft",
+    "scheduled": "Scheduled",
+    "published": "Published",
+    "cancelled": "Cancelled",
+    "archived": "Archived",
+    "pending": "Pending approval",
+    "quarantined": "Quarantined",
+    "disabled": "Disabled",
+    "unpublished": "Unpublished"
   },
   "nav": {
     "home": "Overview",
@@ -35,13 +74,33 @@
     "adultNoticeTitle": "18+ venue",
     "adultNoticeBody": "This venue is classified as adult nightlife. The 18+ notice is independent of the staff module and is not legal advice."
   },
+  "eventsPublic": {
+    "upcoming": "Upcoming events",
+    "calendar": "Events calendar",
+    "selectedDay": "Events on the selected day",
+    "noEventsOnDay": "No events on this day.",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "eventCount": "{count}",
+    "weekdays": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    }
+  },
   "admin": {
     "title": "Venue administration",
     "intro": "Select a venue you are authorised for, then open the staff presence or events module. Controls are hidden when you lack the matching action; the database still enforces every write.",
     "venueSelector": "Venue",
     "useVenue": "Use this venue",
     "staffModule": "Staff presence",
-    "eventsModule": "Events"
+    "staffModuleHelp": "Who is on the floor right now.",
+    "eventsModule": "Events",
+    "eventsModuleHelp": "Upcoming and published events."
   },
   "staffPublic": {
     "headingFallback": "Staff in today",
@@ -111,13 +170,22 @@
     "notFound": "That staff record was not found.",
     "conflict": "That staff assignment already exists.",
     "inactive": "That staff record is not active.",
-    "stateNotEntitled": "Not entitled",
-    "stateEntitledDisabled": "Entitled but disabled",
+    "stateNotEntitled": "Not included in this venue’s plan",
+    "stateEntitledDisabled": "Module disabled",
     "stateEnabled": "Enabled",
     "stateTrial": "Trial",
-    "stateExpired": "Entitlement expired",
-    "stateRestricted": "Venue restricted",
-    "stateSuspended": "Venue suspended"
+    "stateExpired": "Trial expired",
+    "stateRestricted": "Temporarily unavailable",
+    "stateSuspended": "Temporarily unavailable",
+    "consentPending": "Consent pending",
+    "consentGranted": "Consent recorded",
+    "consentWithdrawn": "Consent withdrawn",
+    "presencePresent": "In now",
+    "presenceNotPresent": "Not currently in",
+    "staffActive": "Active",
+    "staffDeactivated": "Deactivated",
+    "moreActions": "More actions",
+    "details": "Profile details"
   },
   "eventsAdmin": {
     "title": "Events",
@@ -129,13 +197,13 @@
     "unavailable": "Events are not available.",
     "createEvent": "Create event",
     "editEvent": "Edit event",
-    "stateNotEntitled": "Not entitled",
-    "stateEntitledDisabled": "Entitled but disabled",
+    "stateNotEntitled": "Not included in this venue’s plan",
+    "stateEntitledDisabled": "Module disabled",
     "stateEnabled": "Enabled",
     "stateTrial": "Trial",
-    "stateExpired": "Entitlement expired",
-    "stateRestricted": "Venue restricted",
-    "stateSuspended": "Venue suspended",
+    "stateExpired": "Trial expired",
+    "stateRestricted": "Temporarily unavailable",
+    "stateSuspended": "Temporarily unavailable",
     "draft": "Draft",
     "pendingApproval": "Awaiting approval",
     "approved": "Approved",
@@ -195,7 +263,9 @@
     "supportBody": "Platform support can open this surface, but creating businesses, venues, trials or owner invitations requires a platform administrator with manage_platform_tenants. Support sessions cannot substitute for that authority.",
     "recentVenues": "Recent venues",
     "listLimit": "Showing at most {limit} venues. This list is bounded and does not load every tenant.",
-    "empty": "No venues are visible yet. Onboard a business to create the first unpublished venue."
+    "empty": "No venues are visible yet. Onboard a business to create the first unpublished venue.",
+    "publicationDraft": "Unpublished",
+    "publicationPublished": "Published"
   },
   "onboarding": {
     "title": "Onboard a business and first venue",
@@ -370,6 +440,13 @@
     "openSignIn": "Open sign-in",
     "role": "Role and context",
     "destination": "Intended destination",
+    "accounts": "Accounts",
+    "commands": "Commands",
+    "searchPersonas": "Search personas",
+    "technicalDetails": "Technical detail",
+    "deactivated": "Deactivated",
+    "uiGallery": "UI component gallery",
+    "uiGalleryHelp": "Local visual reference for primitives, patterns and themes.",
     "serviceLabels": {
       "application": "VenuBoard application",
       "studio": "Supabase Studio",
@@ -458,5 +535,32 @@
     "title": "Access denied",
     "description": "You are signed in, but you do not have access to this part of VenuBoard.",
     "home": "Back to overview"
+  },
+  "gallery": {
+    "title": "UI component gallery",
+    "description": "Local visual reference. Unavailable outside ordinary local development.",
+    "typography": "Typography",
+    "colors": "Colour tokens",
+    "buttons": "Buttons",
+    "forms": "Inputs and form states",
+    "cards": "Cards",
+    "badges": "Badges and statuses",
+    "alerts": "Alerts",
+    "dialogs": "Dialogs and drawers",
+    "states": "Empty, loading and error",
+    "navigation": "Navigation",
+    "staff": "Staff cards",
+    "events": "Event cards",
+    "themes": "Themes",
+    "brand": "Tenant brand examples",
+    "openDialog": "Open dialog",
+    "openSheet": "Open drawer",
+    "dialogTitle": "Example dialog",
+    "dialogBody": "Focus stays inside until you close it.",
+    "sheetTitle": "Example drawer",
+    "sheetBody": "Use Escape to close.",
+    "primary": "Primary",
+    "secondary": "Secondary",
+    "destructive": "Destructive"
   }
 }
