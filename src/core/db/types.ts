@@ -345,6 +345,240 @@ export type Database = {
         };
         Relationships: [];
       };
+      event_translations: {
+        Row: {
+          created_at: string;
+          cta_label: string | null;
+          description: string | null;
+          event_id: string;
+          id: string;
+          locale: string;
+          summary: string | null;
+          title: string;
+          updated_at: string;
+          updated_by: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          cta_label?: string | null;
+          description?: string | null;
+          event_id: string;
+          id?: string;
+          locale: string;
+          summary?: string | null;
+          title: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          created_at?: string;
+          cta_label?: string | null;
+          description?: string | null;
+          event_id?: string;
+          id?: string;
+          locale?: string;
+          summary?: string | null;
+          title?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_translations_parent_fkey";
+            columns: ["event_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id", "venue_id"];
+          },
+          {
+            foreignKeyName: "event_translations_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      event_workflow_events: {
+        Row: {
+          action: string;
+          actor_user_id: string | null;
+          created_at: string;
+          event_id: string;
+          from_approval: string | null;
+          from_state: string | null;
+          id: string;
+          to_approval: string | null;
+          to_state: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          action: string;
+          actor_user_id?: string | null;
+          created_at?: string;
+          event_id: string;
+          from_approval?: string | null;
+          from_state?: string | null;
+          id?: string;
+          to_approval?: string | null;
+          to_state?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          action?: string;
+          actor_user_id?: string | null;
+          created_at?: string;
+          event_id?: string;
+          from_approval?: string | null;
+          from_state?: string | null;
+          id?: string;
+          to_approval?: string | null;
+          to_state?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "event_workflow_events_parent_fkey";
+            columns: ["event_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id", "venue_id"];
+          },
+        ];
+      };
+      events: {
+        Row: {
+          approval_status: string;
+          archived_at: string | null;
+          business_id: string;
+          cancellation_reason: string | null;
+          cancelled_at: string | null;
+          created_at: string;
+          created_by: string | null;
+          ends_at: string;
+          id: string;
+          is_all_day: boolean;
+          platform_quarantine_reason: string | null;
+          platform_quarantined_at: string | null;
+          platform_quarantined_by: string | null;
+          poster_storage_path: string | null;
+          publish_at: string | null;
+          published_at: string | null;
+          recurrence_rule: string | null;
+          rejection_reason: string | null;
+          source_event_id: string | null;
+          source_venue_id: string | null;
+          starts_at: string;
+          state: string;
+          timezone: string;
+          updated_at: string;
+          updated_by: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          approval_status?: string;
+          archived_at?: string | null;
+          business_id: string;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          ends_at: string;
+          id?: string;
+          is_all_day?: boolean;
+          platform_quarantine_reason?: string | null;
+          platform_quarantined_at?: string | null;
+          platform_quarantined_by?: string | null;
+          poster_storage_path?: string | null;
+          publish_at?: string | null;
+          published_at?: string | null;
+          recurrence_rule?: string | null;
+          rejection_reason?: string | null;
+          source_event_id?: string | null;
+          source_venue_id?: string | null;
+          starts_at: string;
+          state?: string;
+          timezone: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          approval_status?: string;
+          archived_at?: string | null;
+          business_id?: string;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          ends_at?: string;
+          id?: string;
+          is_all_day?: boolean;
+          platform_quarantine_reason?: string | null;
+          platform_quarantined_at?: string | null;
+          platform_quarantined_by?: string | null;
+          poster_storage_path?: string | null;
+          publish_at?: string | null;
+          published_at?: string | null;
+          recurrence_rule?: string | null;
+          rejection_reason?: string | null;
+          source_event_id?: string | null;
+          source_venue_id?: string | null;
+          starts_at?: string;
+          state?: string;
+          timezone?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "events_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "events_platform_quarantined_by_fkey";
+            columns: ["platform_quarantined_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "events_source_event_fkey";
+            columns: ["source_event_id", "source_venue_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id", "venue_id"];
+          },
+          {
+            foreignKeyName: "events_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "events_venue_business_fkey";
+            columns: ["venue_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "events_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       fixed_roles: {
         Row: {
           axis: string;
@@ -1979,6 +2213,8 @@ export type Database = {
     };
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: Json };
+      approve_event: { Args: { p_event_id: string }; Returns: Json };
+      archive_event: { Args: { p_event_id: string }; Returns: Json };
       assign_staff_to_venue: {
         Args: {
           p_payload: Json;
@@ -1989,6 +2225,18 @@ export type Database = {
       };
       bulk_mark_staff_not_present: {
         Args: { p_venue_id: string };
+        Returns: Json;
+      };
+      cancel_event: {
+        Args: { p_event_id: string; p_reason: string };
+        Returns: Json;
+      };
+      copy_event_to_venue: {
+        Args: { p_destination_venue_id: string; p_event_id: string };
+        Returns: Json;
+      };
+      create_event: {
+        Args: { p_payload: Json; p_venue_id: string };
         Returns: Json;
       };
       create_staff_member_with_profile: {
@@ -2019,12 +2267,33 @@ export type Database = {
         };
         Returns: Json;
       };
+      list_public_venue_events: {
+        Args: {
+          p_limit?: number;
+          p_locale?: string;
+          p_month?: string;
+          p_offset?: number;
+          p_venue_slug: string;
+          p_view?: string;
+        };
+        Returns: Json;
+      };
       onboard_platform_venue: {
         Args: { p_idempotency_key: string; p_payload: Json };
         Returns: Json;
       };
+      publish_event_now: { Args: { p_event_id: string }; Returns: Json };
+      reject_event: {
+        Args: { p_event_id: string; p_reason: string };
+        Returns: Json;
+      };
+      restore_event_to_draft: { Args: { p_event_id: string }; Returns: Json };
       restore_staff_member: {
         Args: { p_staff_member_id: string };
+        Returns: Json;
+      };
+      schedule_event_publication: {
+        Args: { p_event_id: string; p_publish_at: string };
         Returns: Json;
       };
       set_staff_presence: {
@@ -2033,6 +2302,18 @@ export type Database = {
       };
       set_staff_public_consent: {
         Args: { p_consent_state: string; p_profile_id: string };
+        Returns: Json;
+      };
+      submit_event_for_approval: {
+        Args: { p_event_id: string };
+        Returns: Json;
+      };
+      update_event_draft: {
+        Args: { p_event_id: string; p_payload: Json };
+        Returns: Json;
+      };
+      update_events_module_settings: {
+        Args: { p_payload: Json; p_venue_id: string };
         Returns: Json;
       };
       update_staff_public_profile: {

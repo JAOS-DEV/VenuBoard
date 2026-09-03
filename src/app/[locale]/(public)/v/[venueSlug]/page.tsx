@@ -4,6 +4,11 @@ import { StaffCarousel } from "@/components/staff-presence/staff-carousel";
 import { Badge } from "@/components/ui/badge";
 import { resolveRequestLocale } from "@/core/i18n/server";
 import {
+  loadPublicVenueArchiveEvents,
+  loadPublicVenueUpcomingEvents,
+} from "@/core/events/queries";
+import { VenueEventsSection } from "@/components/events/venue-events-section";
+import {
   loadPublicStaffCarousel,
   loadPublicVenueSnapshot,
 } from "@/core/staff-presence/queries";
@@ -24,6 +29,10 @@ export default async function PublicVenuePage({
 
   const venue = await loadPublicVenueSnapshot(venueSlug);
   const carousel = await loadPublicStaffCarousel(venueSlug, locale);
+  const eventsUpcoming = await loadPublicVenueUpcomingEvents(venueSlug, locale);
+  const eventsArchive = eventsUpcoming.showPastArchive
+    ? await loadPublicVenueArchiveEvents(venueSlug, locale)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -61,6 +70,13 @@ export default async function PublicVenuePage({
         nextLabel={tStaff("next")}
         pauseLabel={tStaff("pause")}
         playLabel={tStaff("play")}
+        branding={venue?.branding ?? null}
+      />
+
+      <VenueEventsSection
+        locale={locale}
+        upcoming={eventsUpcoming}
+        archive={eventsArchive}
         branding={venue?.branding ?? null}
       />
     </div>

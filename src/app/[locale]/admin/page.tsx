@@ -47,6 +47,9 @@ export default async function AdminPage({
       <Button asChild>
         <Link href="/admin/staff">{t("staffModule")}</Link>
       </Button>
+      <Button asChild>
+        <Link href="/admin/events">{t("eventsModule")}</Link>
+      </Button>
     </div>
   );
 }

@@ -322,16 +322,26 @@ stateDiagram-v2
 
 ### 6.3 Events
 
-**`events`** — `id`, `venue_id`, `starts_at`, `ends_at`, `timezone` (defaults to the venue timezone), `state` (`text CHECK (state IN ('draft','scheduled','published','cancelled','archived'))`), `cancellation_reason`, `cover_media_id`, `published_at`, `created_by`, `updated_at`, `archived_at`, `source_event_id` (set when copied from another venue), `recurrence_rule` (reserved, unused in MVP)
+> **Now implemented.** See [events-calendar.md](./events-calendar.md) for full documentation.
 
-- Translated fields: **`event_translations`** (title and description).
+**`events`** — `id`, `venue_id`, `business_id` (composite FK to `venues (id, business_id)`), `starts_at`, `ends_at`, `timezone` (IANA, validated), `is_all_day`, `state` (`text CHECK (state IN ('draft','scheduled','published','cancelled','archived'))`), `approval_status` (`text CHECK (...IN ('not_submitted','pending','approved','rejected'))`), `rejection_reason`, `publish_at`, `published_at`, `cancelled_at`, `cancellation_reason`, `archived_at`, `poster_storage_path` (venue-scoped path, validated), `source_event_id`, `source_venue_id`, `recurrence_rule` (reserved, unused), `platform_quarantined_at`, `platform_quarantine_reason`, `platform_quarantined_by`, `created_by`, `updated_by`, `created_at`, `updated_at`.
 
-**`event_media`** — `id`, `event_id`, `venue_id`, `media_asset_id`, `sort_order`
+- `ends_at` is **exclusive** — it marks the end instant. Duration bounded to ≤ 7 days.
+- `approval_status` is **independent** from `state`. A draft event can be approved but not yet published.
+- Scheduled publication is evaluated at **query time** — no cron job. `publish_at <= now()` at read time.
+- Quarantined events cannot have `state = 'published'` or `state = 'scheduled'` (check constraint).
 
-**`event_cross_promotions`** — `id`, `event_id`, `origin_venue_id`, `promoted_venue_id`, `created_by`, `created_at`, `removed_at`
+**`event_translations`** — `id`, `event_id`, `venue_id` (composite FK to `events (id, venue_id)`), `locale` (`text CHECK (locale IN ('en','th'))`), `title`, `summary`, `description`, `cta_label`, `updated_by`, `created_at`, `updated_at`.
 
-- Both venues must belong to the **same business**, and the actor must be authorised in **both** (see [roles-and-permissions.md](./roles-and-permissions.md#5-conditional-rules), C18).
-- **Copying** an event creates an independent event row — and its own translation rows — in the destination venue with `source_event_id` set; the copy then lives its own life. Cross-**promotion** instead surfaces one event on another venue's site without duplicating it.
+- Unique on `(event_id, locale)`. EN is required; TH is optional with EN fallback.
+- Entity-specific, not polymorphic. No audit data or rejection reasons in translations.
+
+**`event_workflow_events`** — `id`, `event_id`, `venue_id`, `action`, `from_state`, `to_state`, `from_approval`, `to_approval`, `actor_user_id`, `created_at`. Append-only workflow audit. Contains no translation content or rejection reasons.
+
+**Same-business copy** (C18): `copy_event_to_venue` creates an independent draft in the destination venue. `source_event_id` / `source_venue_id` are informational. `poster_storage_path` is NOT copied (venue-specific). Approval/publication state is reset. Cross-business copy is denied.
+
+**Cross-promotion** (`event_cross_promotions`) is deferred. Copy is the MVP mechanism.
+
 - `recurrence_rule` is reserved so postponing recurrence does not require a later breaking change. It is unused and ignored in MVP.
 
 ### 6.4 Booking requests
