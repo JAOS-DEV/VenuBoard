@@ -17,6 +17,7 @@ interface VenueAdminShellProps {
   developerHubEnabled: boolean;
   showStaff: boolean;
   showEvents: boolean;
+  showAtmosphere: boolean;
   children: React.ReactNode;
 }
 
@@ -26,6 +27,7 @@ export function VenueAdminShell({
   developerHubEnabled,
   showStaff,
   showEvents,
+  showAtmosphere,
   children,
 }: VenueAdminShellProps): React.ReactElement {
   const tApp = useTranslations("app");
@@ -38,12 +40,18 @@ export function VenueAdminShell({
     { href: "/admin", key: "home" },
     ...(showStaff ? [{ href: "/admin/staff", key: "staff" as const }] : []),
     ...(showEvents ? [{ href: "/admin/events", key: "events" as const }] : []),
+    ...(showAtmosphere
+      ? [{ href: "/admin/atmosphere", key: "atmosphere" as const }]
+      : []),
   ];
 
   const desktopSurfaces = [
     { href: "/admin", label: tAdmin("home") },
     ...(showStaff ? [{ href: "/admin/staff", label: tAdmin("staff") }] : []),
     ...(showEvents ? [{ href: "/admin/events", label: tAdmin("events") }] : []),
+    ...(showAtmosphere
+      ? [{ href: "/admin/atmosphere", label: tAdmin("atmosphere") }]
+      : []),
     { href: "/", label: tNav("home") },
   ];
 

@@ -26,6 +26,23 @@ export function staffOwnPresenceProvenConditions(
   return [`${roleKey}:toggle_own_presence`];
 }
 
+/**
+ * C6 is venue-row opt-in, not a blanket grant. Only prove
+ * `manage_atmosphere` when the database setting is already true.
+ */
+export function atmosphereFrontOfHouseProvenConditions(
+  roleKey: string | null,
+  venueAllowsFrontOfHouse: boolean,
+): string[] {
+  if (!venueAllowsFrontOfHouse || roleKey === null) {
+    return [];
+  }
+  if (roleKey === "content_editor" || roleKey === "staff") {
+    return [`${roleKey}:manage_atmosphere`];
+  }
+  return [];
+}
+
 export function scopeIsComplete(scope: AuthzScope | null | undefined): boolean {
   if (scope === null || scope === undefined) {
     return false;

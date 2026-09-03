@@ -4,9 +4,9 @@
 
 This document describes the conceptual data model: the tenant hierarchy, the entities each module needs, how multilingual content is stored, how public and private data are separated, and how Row Level Security is expected to scope every tenant-owned record.
 
-This is a **design document, not a schema dump**. Column lists are indicative. The staff presence module is implemented; see [staff-presence.md](./staff-presence.md). The private record is **business-scoped**; public profiles and presence are **venue-scoped**.
+This is a **design document, not a schema dump**. Column lists are indicative. Staff presence, events, and atmosphere are implemented; see [staff-presence.md](./staff-presence.md), [events-calendar.md](./events-calendar.md), and [atmosphere.md](./atmosphere.md).
 
-Related: [product-brief.md](./product-brief.md) · [architecture.md](./architecture.md) · [roles-and-permissions.md](./roles-and-permissions.md) · [staff-presence.md](./staff-presence.md)
+Related: [product-brief.md](./product-brief.md) · [architecture.md](./architecture.md) · [roles-and-permissions.md](./roles-and-permissions.md) · [staff-presence.md](./staff-presence.md) · [atmosphere.md](./atmosphere.md)
 
 ---
 
@@ -366,11 +366,15 @@ Rules reflected in the model:
 
 ### 6.5 Atmosphere
 
-**`venue_atmosphere`** — `venue_id`, `level` (`text CHECK (level IN ('quiet','getting_busy','lively','packed'))`), `updated_by`, `updated_at`, `stale_after_minutes`, `expires_at`. Translated fields: **`venue_atmosphere_translations`** (optional custom public wording per level).
+> **Now implemented.** See [atmosphere.md](./atmosphere.md). This is a subjective promotional indicator, not occupancy, capacity, safety, or tracking.
 
-- The public site shows the level, the optional custom wording, and **when it was last updated**.
-- Once `expires_at` passes (derived from `updated_at + stale_after_minutes`, configurable per venue), the value is **treated as stale and not displayed** rather than shown misleadingly.
-- Optional `venue_atmosphere_events` history supports "busy nights" analytics.
+**`venue_atmosphere`** — one current row per venue: `venue_id`, `business_id` (composite FK to `venues (id, business_id)`), `atmosphere_state` (`text CHECK (… IN ('calm','social','lively','high_energy'))`), `set_at`, `expires_at`, `changed_by`, created/updated metadata.
+
+- Public reads use `get_public_venue_atmosphere`. Expired rows are treated as absent at **query time**; no cron job.
+- Actor identifiers and operational timestamps are not returned publicly.
+- There is no `venue_atmosphere_translations` table. Public labels come from application messages; the public heading is `venue_module_setting_translations`.
+
+**`venue_atmosphere_events`** — append-only private history (`set`, `replace`, `clear`). No emails or request payloads. Central `audit_log` records `{state, expiry_minutes}` only.
 
 ### 6.6 Offers and promotions
 
@@ -492,7 +496,7 @@ These change only through a reviewed migration that alters one constraint.
 | Booking state | `booking_requests.state` | `new`, `in_review`, `accepted`, `declined`, `cancelled_by_customer`, `no_show`, `completed` |
 | Invitation state | `invitations.state` | `pending`, `accepted`, `expired`, `revoked` |
 | Presence state | `current_staff_presence.state` | `present`, `not_present` |
-| Atmosphere level | `venue_atmosphere.level` | `quiet`, `getting_busy`, `lively`, `packed` |
+| Atmosphere state | `venue_atmosphere.atmosphere_state` | `calm`, `social`, `lively`, `high_energy` |
 | Content classification | `venues.content_classification` | `general`, `nightlife_18_plus` |
 | Venue publication state | `venues.publication_state` | `draft`, `published`, `unpublished_by_platform` |
 | Support session mode | `support_sessions.mode` | `read_only`, `write` |
@@ -515,7 +519,7 @@ Every tenant table falls into one of these classes. See [architecture.md](./arch
 
 | Class | Examples | Read | Write |
 | --- | --- | --- | --- |
-| **Public-readable content** | `feed_posts`, `events`, `offers`, `staff_public_profiles`, `current_staff_presence`, `venue_atmosphere`, `venue_social_links`, `venue_branding`, `venue_text_blocks` | Anonymous role may read **only** rows where the venue is published, the module is entitled **and** enabled, the record is `published`, `platform_quarantined_at IS NULL` (and, for staff, consent is current) | Members with the relevant action, in that venue only — **excluding** the platform quarantine columns, which no tenant role may write ([section 6.9](#69-platform-moderation-and-quarantine)) |
+| **Public-readable content** | `feed_posts`, `events`, `offers`, `staff_public_profiles`, `current_staff_presence`, `venue_social_links`, `venue_branding`, `venue_text_blocks` | Anonymous role may read **only** rows where the venue is published, the module is entitled **and** enabled, the record is `published`, `platform_quarantined_at IS NULL` (and, for staff, consent is current). **`venue_atmosphere` is not anonymously selectable**; public atmosphere goes through `get_public_venue_atmosphere`. | Members with the relevant action, in that venue only — **excluding** the platform quarantine columns, which no tenant role may write ([section 6.9](#69-platform-moderation-and-quarantine)) |
 | **Public-readable translations** | `venue_translations`, `post_translations`, `event_translations`, `offer_translations` and the other `*_translations` tables of public entities | Anonymous role may read a translation row **only if it may read the parent row**. Policies test the parent's visibility, never just `venue_id` | Whoever may write the parent record |
 | **Tenant-private** | `staff_private_details`, `booking_requests`, `venue_booking_settings`, `invitations`, `notification_preferences` | Members with the relevant action, in that venue/business only. **No anonymous policy exists at all** | Same, action-gated |
 | **Platform-controlled** | `venue_module_entitlements`, `plans`, `plan_modules`, `modules`, `entitlement_sources`, `subscriptions`, `venue_billing_records`, `venue_storage_usage`, `platform_roles`, `trial_extensions` | Tenants may read their **own** subscription, entitlement and quota state (needed to render the admin panel). Reference tables are readable by authenticated users | **Platform only.** No tenant write policy exists |
@@ -586,7 +590,6 @@ Constraints:
 | `venue_text_block_translations` | `venue_text_blocks` | title, body |
 | `venue_module_setting_translations` | `venue_module_settings` | public heading |
 | `venue_social_link_translations` | `venue_social_links` | label |
-| `venue_atmosphere_translations` | `venue_atmosphere` | custom public wording |
 | `venue_booking_setting_translations` | `venue_booking_settings` | public notice, auto-reply message |
 | `staff_public_profile_translations` | `staff_public_profiles` | public bio |
 | `post_translations` | `feed_posts` | title, body |
@@ -644,7 +647,7 @@ The application ships a **deterministic, repeatable seed dataset** for local and
 | Content states | Every state of `feed_posts`, `events` and `offers`, including scheduled items either side of the seed epoch and a post awaiting approval |
 | Translations | Fully bilingual content, English-only content, Thai-only content, and deliberately partial translations so the fallback chain and coverage view are exercised |
 | Bookings | Requests in every state, assigned and unassigned, with internal notes and restricted customer details |
-| Atmosphere | A fresh atmosphere value and a deliberately stale one past `expires_at` |
+| Atmosphere | A current unexpired atmosphere value, a deliberately expired one, disabled/not-entitled/restricted/draft/18+ fixtures |
 | Support and audit | Completed read-only and write support sessions with matching `audit_log` entries, plus an expired session |
 | Moderation | A quarantined post and a quarantined media asset, each with a recorded reason and `moderation_actions` entries, so the republication block and the restore path are testable |
 | Negative scenarios | Fixtures whose only purpose is to be inaccessible or rejected: a second tenant's records for cross-tenant tests, role/action pairs expected to be denied, and the write attempts that must fail — a cross-venue parent/translation mismatch ([section 11.1](#111-tenant-key-integrity-constraints)) and a venue republishing quarantined content ([section 6.9](#69-platform-moderation-and-quarantine)) |

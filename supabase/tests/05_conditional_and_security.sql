@@ -152,7 +152,11 @@ SELECT ok(
         'restore_event_to_draft',
         'copy_event_to_venue',
         'update_events_module_settings',
-        'list_public_venue_events'
+        'list_public_venue_events',
+        'set_venue_atmosphere',
+        'clear_venue_atmosphere',
+        'update_atmosphere_module_settings',
+        'get_public_venue_atmosphere'
       )
   ),
   'no SECURITY DEFINER helpers are exposed in public except invitation and permission RPCs'
@@ -497,7 +501,7 @@ SELECT ok(
     'manage_atmosphere',
     '00000000-0000-4000-8000-000000000201'
   ),
-  'C6: content_editor manage_atmosphere is default-denied until atmosphere tables exist'
+  'C6: content_editor manage_atmosphere remains grant-helper deny; opt-in is row-level'
 );
 
 SELECT pg_temp.impersonate('00000000-0000-4000-8000-000000000021');

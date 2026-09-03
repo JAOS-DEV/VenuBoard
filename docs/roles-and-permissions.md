@@ -98,7 +98,7 @@ This catalogue is **accepted and final for the MVP at 33 actions**. Every entry 
 | `manage_venue_module_visibility` | venue | Enable/disable and publicly show/hide **entitled** modules |
 | `manage_platform_entitlements` | platform | Grant/revoke plans, add-ons, trials, per-venue overrides, storage quotas, entitlement windows |
 | `view_booking_customer_details` | venue | See a booking's customer contact details — separates "see the queue" from "see personal data" |
-| `manage_atmosphere` | venue | Set the atmosphere status, custom wording and expiry period |
+| `manage_atmosphere` | venue | Set or clear the promotional atmosphere status and its expiry |
 | `manage_offers` | venue | Manage offers and promotions and their validity |
 | `manage_own_public_profile` | self | Edit **own** public display name, avatar, bio |
 | `toggle_own_presence` | self | Toggle **own** presence at a venue where one holds membership and has consented — the fast one-tap path |

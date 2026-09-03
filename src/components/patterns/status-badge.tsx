@@ -16,6 +16,10 @@ const TOKEN_TO_BADGE: Record<StatusVariant, StatusBadgeVariant> = {
   pending: "pending",
   quarantined: "quarantined",
   disabled: "disabled",
+  "atmosphere-calm": "atmosphereCalm",
+  "atmosphere-social": "atmosphereSocial",
+  "atmosphere-lively": "atmosphereLively",
+  "atmosphere-high-energy": "atmosphereHighEnergy",
 };
 
 interface StatusBadgeProps {

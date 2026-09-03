@@ -71,6 +71,14 @@
   --status-quarantined-foreground: oklch(0.985 0 0);
   --status-disabled: oklch(0.92 0 0);
   --status-disabled-foreground: oklch(0.45 0 0);
+  --status-atmosphere-calm: oklch(0.9 0.04 230);
+  --status-atmosphere-calm-foreground: oklch(0.28 0.05 230);
+  --status-atmosphere-social: oklch(0.9 0.06 280);
+  --status-atmosphere-social-foreground: oklch(0.3 0.08 280);
+  --status-atmosphere-lively: oklch(0.88 0.08 155);
+  --status-atmosphere-lively-foreground: oklch(0.25 0.08 155);
+  --status-atmosphere-high-energy: oklch(0.88 0.1 50);
+  --status-atmosphere-high-energy-foreground: oklch(0.28 0.08 50);
 
   color-scheme: light;
 }
@@ -125,6 +133,14 @@
   --status-quarantined-foreground: oklch(0.15 0 0);
   --status-disabled: oklch(0.28 0 0);
   --status-disabled-foreground: oklch(0.7 0 0);
+  --status-atmosphere-calm: oklch(0.3 0.04 230);
+  --status-atmosphere-calm-foreground: oklch(0.86 0.04 230);
+  --status-atmosphere-social: oklch(0.32 0.06 280);
+  --status-atmosphere-social-foreground: oklch(0.88 0.04 280);
+  --status-atmosphere-lively: oklch(0.32 0.08 155);
+  --status-atmosphere-lively-foreground: oklch(0.86 0.05 155);
+  --status-atmosphere-high-energy: oklch(0.34 0.1 50);
+  --status-atmosphere-high-energy-foreground: oklch(0.9 0.05 50);
 
   color-scheme: dark;
 }
@@ -181,6 +197,22 @@
   --color-status-quarantined-foreground: var(--status-quarantined-foreground);
   --color-status-disabled: var(--status-disabled);
   --color-status-disabled-foreground: var(--status-disabled-foreground);
+  --color-status-atmosphere-calm: var(--status-atmosphere-calm);
+  --color-status-atmosphere-calm-foreground: var(
+    --status-atmosphere-calm-foreground
+  );
+  --color-status-atmosphere-social: var(--status-atmosphere-social);
+  --color-status-atmosphere-social-foreground: var(
+    --status-atmosphere-social-foreground
+  );
+  --color-status-atmosphere-lively: var(--status-atmosphere-lively);
+  --color-status-atmosphere-lively-foreground: var(
+    --status-atmosphere-lively-foreground
+  );
+  --color-status-atmosphere-high-energy: var(--status-atmosphere-high-energy);
+  --color-status-atmosphere-high-energy-foreground: var(
+    --status-atmosphere-high-energy-foreground
+  );
 }
 
 @layer base {

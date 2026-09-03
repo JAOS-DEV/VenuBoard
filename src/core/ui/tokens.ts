@@ -33,6 +33,10 @@ export const STATUS_VARIANTS = [
   "pending",
   "quarantined",
   "disabled",
+  "atmosphere-calm",
+  "atmosphere-social",
+  "atmosphere-lively",
+  "atmosphere-high-energy",
 ] as const;
 
 export type StatusVariant = (typeof STATUS_VARIANTS)[number];

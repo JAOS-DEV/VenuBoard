@@ -14,7 +14,7 @@ shadcn components are **source-owned by this repository**. Copies live under `sr
 2. **Patterns** — `src/components/patterns` and `src/components/shells`  
    Reusable VenuBoard composition: page chrome, empty/error/loading states, status badges, form sections, compact headers, admin navigation.
 
-3. **Features** — `src/components/{staff-presence,events,platform,auth,dev}` and route files  
+3. **Features** — `src/components/{staff-presence,events,atmosphere,platform,auth,dev}` and route files.
    Domain UI. Consume primitives and patterns. Do not invent a third visual system with one-off colour classes.
 
 Anti-patterns: giant “god” components with dozens of booleans; repeating arbitrary Tailwind strings that already exist as a pattern; putting `not_entitled` or other database strings in class names or visible copy.

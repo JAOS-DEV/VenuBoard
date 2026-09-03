@@ -45,6 +45,7 @@ export default async function AdminLayout({
       developerHubEnabled={session.developerHubEnabled}
       showStaff={nav.staff}
       showEvents={nav.events}
+      showAtmosphere={nav.atmosphere}
     >
       {children}
     </VenueAdminShell>

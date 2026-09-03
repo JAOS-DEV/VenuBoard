@@ -33,6 +33,14 @@ const badgeVariants = cva(
           "border-transparent bg-[var(--status-quarantined)] text-[var(--status-quarantined-foreground)]",
         disabled:
           "border-transparent bg-[var(--status-disabled)] text-[var(--status-disabled-foreground)]",
+        atmosphereCalm:
+          "border-transparent bg-[var(--status-atmosphere-calm)] text-[var(--status-atmosphere-calm-foreground)]",
+        atmosphereSocial:
+          "border-transparent bg-[var(--status-atmosphere-social)] text-[var(--status-atmosphere-social-foreground)]",
+        atmosphereLively:
+          "border-transparent bg-[var(--status-atmosphere-lively)] text-[var(--status-atmosphere-lively-foreground)]",
+        atmosphereHighEnergy:
+          "border-transparent bg-[var(--status-atmosphere-high-energy)] text-[var(--status-atmosphere-high-energy-foreground)]",
       },
     },
     defaultVariants: {

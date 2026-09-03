@@ -9,7 +9,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 - **The database is the final security boundary** for anyone who can call the Supabase Data API (`anon` / `authenticated`). Browser checks, hidden buttons and Server Action `can()` results must not be the only control for tenant isolation, private-data access, entitlements, platform authority, moderation quarantine, deactivation or privilege escalation.
 - Application `can()` **fails early and improves UX**. It must not replace RLS, `CHECK` constraints, composite foreign keys or invoker triggers.
 - A **conditional** matrix cell is **deny** at RLS until the condition can be evaluated against data that already exists. Treating `grant_kind = 'conditional'` as allow was rejected.
-- Conditions that belong to tables that do not exist yet are **mandatory requirements on those future migrations**. Feed, events, bookings, offers, atmosphere, domain, analytics and notification tables are still future. Staff presence tables exist and close C3, C11 (staff half), C14, and the staff parts of C16–C19.
+- Conditions that belong to tables that do not exist yet are **mandatory requirements on those future migrations**. Feed, bookings, offers, domain, analytics and notification tables are still future. Staff presence, events, and atmosphere tables exist.
 - Helper: `app_private.effective_tenant_grant`. Allow cells stay allow. Conditional cells call `app_private.conditional_tenant_grant_ok`, which currently returns true only for **C2** (`venue_manager` / `assign_roles`, with table WITH CHECK) and **C13** (`view_audit_log`, with SELECT filters). Every other conditional cell is false.
 
 `can()` tests live in `tests/permissions/can.test.ts`. They are not a substitute for the SQL tests named below.
@@ -74,11 +74,10 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | | |
 | --- | --- |
 | **Purpose** | Off by default; a venue may opt in so front-of-house can update atmosphere. |
-| **Tables / actions** | Future atmosphere table; `manage_atmosphere` |
-| **Enforced now** | Default **deny** for conditional cells. |
-| **Future migration** | Require the opt-in setting on INSERT/UPDATE. |
-| **Application `can()`** | Hide the control when opt-in is off. |
-| **Negative tests** | Present: editor helper is false. Staff `manage_atmosphere` is also conditional and denied. |
+| **Tables / actions** | `venue_atmosphere`, `venue_atmosphere_events`, `venue_module_settings.settings.front_of_house_may_update`; `manage_atmosphere` |
+| **Enforced now** | Default **deny** at the grant-helper layer (`conditional_tenant_grant_ok` stays false). `may_write_atmosphere` allows editor/staff only when that venue’s opt-in is true. |
+| **Application `can()`** | Prove `content_editor:manage_atmosphere` / `staff:manage_atmosphere` only from the database setting. Never from the client. |
+| **Negative tests** | `05_conditional_and_security.sql` editor helper remains false. `10_atmosphere.sql` C6 on/off. Unit tests in `tests/unit/atmosphere.test.ts` and `tests/permissions/can.test.ts`. |
 
 ### C7 — Venue manager analytics scope
 

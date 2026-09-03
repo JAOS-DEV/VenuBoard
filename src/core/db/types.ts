@@ -1624,6 +1624,131 @@ export type Database = {
         };
         Relationships: [];
       };
+      venue_atmosphere: {
+        Row: {
+          atmosphere_state: string;
+          business_id: string;
+          changed_by: string;
+          created_at: string;
+          expires_at: string;
+          id: string;
+          set_at: string;
+          updated_at: string;
+          venue_id: string;
+        };
+        Insert: {
+          atmosphere_state: string;
+          business_id: string;
+          changed_by: string;
+          created_at?: string;
+          expires_at: string;
+          id?: string;
+          set_at?: string;
+          updated_at?: string;
+          venue_id: string;
+        };
+        Update: {
+          atmosphere_state?: string;
+          business_id?: string;
+          changed_by?: string;
+          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          set_at?: string;
+          updated_at?: string;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "venue_atmosphere_changed_by_fkey";
+            columns: ["changed_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "venue_atmosphere_venue_business_fkey";
+            columns: ["venue_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "venue_atmosphere_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: true;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      venue_atmosphere_events: {
+        Row: {
+          action: string;
+          actor_user_id: string | null;
+          business_id: string;
+          changed_at: string;
+          environment: string;
+          expires_at: string | null;
+          expiry_minutes: number | null;
+          id: string;
+          new_state: string | null;
+          previous_state: string | null;
+          source: string;
+          venue_id: string;
+        };
+        Insert: {
+          action: string;
+          actor_user_id?: string | null;
+          business_id: string;
+          changed_at?: string;
+          environment: string;
+          expires_at?: string | null;
+          expiry_minutes?: number | null;
+          id?: string;
+          new_state?: string | null;
+          previous_state?: string | null;
+          source?: string;
+          venue_id: string;
+        };
+        Update: {
+          action?: string;
+          actor_user_id?: string | null;
+          business_id?: string;
+          changed_at?: string;
+          environment?: string;
+          expires_at?: string | null;
+          expiry_minutes?: number | null;
+          id?: string;
+          new_state?: string | null;
+          previous_state?: string | null;
+          source?: string;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "venue_atmosphere_events_actor_user_id_fkey";
+            columns: ["actor_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "venue_atmosphere_events_venue_business_fkey";
+            columns: ["venue_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "venue_atmosphere_events_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       venue_billing_records: {
         Row: {
           created_at: string;
@@ -2231,6 +2356,7 @@ export type Database = {
         Args: { p_event_id: string; p_reason: string };
         Returns: Json;
       };
+      clear_venue_atmosphere: { Args: { p_venue_id: string }; Returns: Json };
       copy_event_to_venue: {
         Args: { p_destination_venue_id: string; p_event_id: string };
         Returns: Json;
@@ -2256,6 +2382,10 @@ export type Database = {
           p_venue_id?: string;
         };
         Returns: boolean;
+      };
+      get_public_venue_atmosphere: {
+        Args: { p_locale?: string; p_venue_slug: string };
+        Returns: Json;
       };
       inspect_invitation: { Args: { p_token: string }; Returns: Json };
       list_public_staff_presence: {
@@ -2304,8 +2434,16 @@ export type Database = {
         Args: { p_consent_state: string; p_profile_id: string };
         Returns: Json;
       };
+      set_venue_atmosphere: {
+        Args: { p_expiry_minutes: number; p_state: string; p_venue_id: string };
+        Returns: Json;
+      };
       submit_event_for_approval: {
         Args: { p_event_id: string };
+        Returns: Json;
+      };
+      update_atmosphere_module_settings: {
+        Args: { p_payload: Json; p_venue_id: string };
         Returns: Json;
       };
       update_event_draft: {
