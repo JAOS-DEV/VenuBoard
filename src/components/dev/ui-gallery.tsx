@@ -208,6 +208,22 @@ export function UiGallery(): React.ReactElement {
       </section>
 
       <section className="space-y-3">
+        <SectionHeader title={t("atmosphere")} />
+        <Card className="max-w-md">
+          <CardHeader className="p-3">
+            <CardTitle className="text-base">Right now</CardTitle>
+            <CardDescription>
+              A short promotional description of how the room feels.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center gap-2 p-3 pt-0">
+            <p className="text-lg font-semibold">Lively</p>
+            <Badge variant="atmosphereLively">Lively</Badge>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-3">
         <SectionHeader title={t("themes")} />
         <ThemeSwitcher
           labels={{

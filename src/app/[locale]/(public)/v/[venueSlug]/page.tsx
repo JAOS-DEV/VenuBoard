@@ -1,8 +1,11 @@
 import { getTranslations } from "next-intl/server";
 
+import { PublicAtmosphereCard } from "@/components/atmosphere/public-atmosphere-card";
 import { StaffCarousel } from "@/components/staff-presence/staff-carousel";
 import { VenueBrandScope } from "@/components/patterns/venue-brand-scope";
 import { resolveRequestLocale } from "@/core/i18n/server";
+import { loadPublicVenueAtmosphere } from "@/core/atmosphere/queries";
+import { atmospherePublicCopyKey } from "@/core/atmosphere/labels";
 import {
   loadPublicVenueArchiveEvents,
   loadPublicVenueUpcomingEvents,
@@ -26,8 +29,10 @@ export default async function PublicVenuePage({
   const locale = await resolveRequestLocale(params);
   const t = await getTranslations("publicVenue");
   const tStaff = await getTranslations("staffPublic");
+  const tAtmosphere = await getTranslations("atmospherePublic");
 
   const venue = await loadPublicVenueSnapshot(venueSlug);
+  const atmosphere = await loadPublicVenueAtmosphere(venueSlug, locale);
   const carousel = await loadPublicStaffCarousel(venueSlug, locale);
   const eventsUpcoming = await loadPublicVenueUpcomingEvents(venueSlug, locale);
   const eventsArchive = eventsUpcoming.showPastArchive
@@ -59,6 +64,18 @@ export default async function PublicVenuePage({
           <p className="mt-1 text-muted-foreground">{t("adultNoticeBody")}</p>
         </aside>
       ) : null}
+
+      <PublicAtmosphereCard
+        atmosphere={atmosphere}
+        statusLabel={
+          atmosphere.statusKey === null
+            ? ""
+            : tAtmosphere(atmospherePublicCopyKey(atmosphere.statusKey))
+        }
+        headingFallback={tAtmosphere("headingFallback")}
+        disclaimer={tAtmosphere("disclaimer")}
+        freshnessLabel={tAtmosphere("freshness")}
+      />
 
       <StaffCarousel
         carousel={carousel}

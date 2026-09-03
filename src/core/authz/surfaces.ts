@@ -84,6 +84,28 @@ function hasEventsAccess(actor: AuthenticatedActor): boolean {
   return actor.businessMemberships.length > 0;
 }
 
+function hasAtmosphereAccess(actor: AuthenticatedActor): boolean {
+  const scopes = venueScopes(actor);
+  for (const scope of scopes) {
+    if (
+      can(actor, "manage_atmosphere", scope) ||
+      can(actor, "manage_venue_module_visibility", scope)
+    ) {
+      return true;
+    }
+    if (scope.type !== "venue") {
+      continue;
+    }
+    const membership = actor.venueMemberships.find(
+      (row) => row.venueId === scope.venueId,
+    );
+    if (membership?.role === "content_editor" || membership?.role === "staff") {
+      return true;
+    }
+  }
+  return actor.businessMemberships.length > 0;
+}
+
 /**
  * UX-only navigation flags. Pages still enforce `can()` and the database
  * remains the security boundary.
@@ -92,14 +114,16 @@ export function venueAdminNavAccess(actor: Actor): {
   home: boolean;
   staff: boolean;
   events: boolean;
+  atmosphere: boolean;
 } {
   if (!isActiveAuthenticatedActor(actor)) {
-    return { home: false, staff: false, events: false };
+    return { home: false, staff: false, events: false, atmosphere: false };
   }
 
   return {
     home: true,
     staff: hasStaffAccess(actor),
     events: hasEventsAccess(actor),
+    atmosphere: hasAtmosphereAccess(actor),
   };
 }

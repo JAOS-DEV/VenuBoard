@@ -323,8 +323,8 @@ flowchart TD
 
 ## 12. Public site rendering and performance
 
-- Public pages are server-rendered and aggressively cached per venue, with **tag-based invalidation** on publish, unpublish, presence toggle, atmosphere update and branding change.
-- Presence and atmosphere are the most time-sensitive data; they use short cache lifetimes (and optionally Supabase Realtime for live updates — optional, not required for MVP).
+- Public pages are server-rendered. Staff, events, and atmosphere use `force-dynamic` so public correctness does not depend on cache invalidation. Query-time expiry still treats an expired atmosphere row as absent.
+- If caching is added later, key it by venue and locale, invalidate only that venue, and keep query-time expiry as the safety net. Optional Supabase Realtime remains [OQ-29](./decisions-and-open-questions.md).
 - Branding is applied through CSS custom properties derived from the venue's stored palette and approved font selection. No venue-supplied stylesheet is ever loaded.
 - A contrast check is applied to venue-chosen colour combinations so branding cannot produce an unreadable or inaccessible site.
 - Performance budget is mobile-first, assuming a mid-range Android phone on a mobile network (specific budget targets OPEN).

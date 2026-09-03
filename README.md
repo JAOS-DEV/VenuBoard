@@ -2,7 +2,7 @@
 
 **A modular, multi-tenant, white-label website and management platform for venues.**
 
-> **Repository status: application scaffold plus foundation schema, authentication, invitations, platform-led onboarding and the staff presence module.** The Next.js App Router shell, locale routing, environment validation, local Supabase, PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS, staff presence), invitation acceptance, actor resolution, `can()`, the platform onboarding wizard/RPC, venue-admin staff management, the public staff carousel, and pgTAP tests exist. **Remaining product modules are not implemented** — no feed, events, bookings, offers, atmosphere, analytics UI, notifications, media uploads or support-session UI.
+> **Repository status: application scaffold plus foundation schema, authentication, invitations, platform-led onboarding, staff presence, events, and the live atmosphere module.** The Next.js App Router shell, locale routing, environment validation, local Supabase, PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS, staff presence, events, atmosphere), invitation acceptance, actor resolution, `can()`, the platform onboarding wizard/RPC, venue-admin staff/events/atmosphere management, public venue modules, and pgTAP tests exist. **Remaining product modules are not implemented** — no feed, bookings, offers, analytics UI, notifications, media uploads or support-session UI.
 >
 > **Decision status (2026-08-30):** all scaffolding ADRs are accepted. Remaining work is split into [launch blockers](./docs/decisions-and-open-questions.md#42-launch-blockers--required-before-production-not-before-code) and [feature-specific decisions](./docs/decisions-and-open-questions.md#43-feature-specific-decisions--required-before-the-feature-not-before-the-scaffold). The first-schema obligations are in [section 4.1](./docs/decisions-and-open-questions.md#41-obligations-on-the-first-implementation).
 
@@ -28,6 +28,8 @@ The VenuBoard operator runs a separate **platform administration panel** (`/plat
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [docs/ui-design-system.md](./docs/ui-design-system.md)                         | shadcn/Tailwind layers, tokens, themes, navigation, status vocabulary, accessibility. Completed user-facing work should report persona, route, happy path, negatives, mobile/light/dark, and teardown.             |
 | [docs/staff-presence.md](./docs/staff-presence.md)                             | Staff directory and live presence: public vs private, consent, expiry, authorisation                                                                                                                               |
+| [docs/events-calendar.md](./docs/events-calendar.md)                           | Events calendar: drafts, approval, public calendar, copy across venues                                                                                                                                             |
+| [docs/atmosphere.md](./docs/atmosphere.md)                                     | Live venue atmosphere: subjective promotional status, expiry, public/private boundary                                                                                                                              |
 | [docs/architecture.md](./docs/architecture.md)                                 | Technical architecture, system context diagram, stack, module structure, routing, tenant isolation, internationalisation, testing, environments and hosting                                                        |
 | [docs/authentication.md](./docs/authentication.md)                             | Sign-in, magic links, invitation acceptance, actor resolution, `can()` versus RLS, route protection, MFA representation, local testing                                                                             |
 | [docs/roles-and-permissions.md](./docs/roles-and-permissions.md)               | Role catalogue, the 33 actions, the permissions matrix, support and impersonation model, content moderation rules, public/private data access                                                                      |
@@ -190,9 +192,9 @@ docs/performance           local RLS EXPLAIN baseline (OQ-30)
 
 ## What is not implemented yet
 
-Remaining product work includes feed posts, events, bookings, offers, atmosphere, analytics dashboards, notifications, media uploads, support-session UI, custom-domain tenant resolution, and production integrations. Authentication, invitations, `can()`, platform onboarding and staff presence are implemented.
+Remaining product work includes feed posts, bookings, offers, analytics dashboards, notifications, media uploads, support-session UI, custom-domain tenant resolution, and production integrations. Authentication, invitations, `can()`, platform onboarding, staff presence, events and atmosphere are implemented.
 
-The database **does** implement the foundation: users, platform roles, businesses, venues, memberships, invitations, the 33-action catalogue, modules/plans/entitlements, venue translations, audit, moderation, RLS and staff presence. See `supabase/migrations/`.
+The database **does** implement the foundation: users, platform roles, businesses, venues, memberships, invitations, the 33-action catalogue, modules/plans/entitlements, venue translations, audit, moderation, RLS, staff presence, events and atmosphere. See `supabase/migrations/`.
 
 ## Core architecture principles
 

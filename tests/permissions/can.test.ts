@@ -24,6 +24,26 @@ const GRANTS: RoleActionGrant[] = [
   { roleKey: "business_owner", actionKey: "manage_venue", grantKind: "allow" },
   { roleKey: "business_owner", actionKey: "invite_users", grantKind: "allow" },
   {
+    roleKey: "business_owner",
+    actionKey: "manage_atmosphere",
+    grantKind: "allow",
+  },
+  {
+    roleKey: "venue_manager",
+    actionKey: "manage_atmosphere",
+    grantKind: "allow",
+  },
+  {
+    roleKey: "content_editor",
+    actionKey: "manage_atmosphere",
+    grantKind: "conditional",
+  },
+  {
+    roleKey: "staff",
+    actionKey: "manage_atmosphere",
+    grantKind: "conditional",
+  },
+  {
     roleKey: "content_editor",
     actionKey: "create_content",
     grantKind: "allow",
@@ -433,5 +453,53 @@ describe("can()", () => {
         { ownConsentedStaffProfile: true },
       ),
     ).toBe(true);
+  });
+
+  it("denies C6 atmosphere writes until the venue opt-in is proven", () => {
+    const editor: AuthenticatedActor = actor({
+      userId: "00000000-0000-4000-8000-000000000022",
+      businessMemberships: [],
+      venueMemberships: [
+        {
+          venueId: NIGHT_ORCHID,
+          businessId: ATLAS_BIZ,
+          role: "content_editor",
+          status: "active",
+        },
+      ],
+    });
+    const scope = {
+      type: "venue" as const,
+      venueId: NIGHT_ORCHID,
+      businessId: ATLAS_BIZ,
+    };
+
+    expect(can(editor, "manage_atmosphere", scope)).toBe(false);
+    expect(
+      can(editor, "manage_atmosphere", scope, {
+        provenConditions: ["content_editor:manage_atmosphere"],
+      }),
+    ).toBe(true);
+    expect(
+      can(editor, "manage_atmosphere", scope, {
+        provenConditions: ["staff:manage_atmosphere"],
+      }),
+    ).toBe(false);
+
+    const harbor = actor();
+    expect(
+      can(harbor, "manage_atmosphere", {
+        type: "venue",
+        venueId: HARBOR,
+        businessId: HARBOR_BIZ,
+      }),
+    ).toBe(true);
+    expect(
+      can(harbor, "manage_atmosphere", {
+        type: "venue",
+        venueId: NIGHT_ORCHID,
+        businessId: ATLAS_BIZ,
+      }),
+    ).toBe(false);
   });
 });

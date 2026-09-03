@@ -27,6 +27,8 @@ import { platformMfaBlocksAccess } from "@/core/auth/mfa";
  * the condition is already modelled (C2, C13) or proven in context.
  * C3 and C14 are proven via `ownConsentedStaffProfile` / provenConditions;
  * the database `may_set_staff_presence` helper remains the security boundary.
+ * C6 is proven via `atmosphereFrontOfHouseProvenConditions` from the
+ * venue setting; `may_write_atmosphere` remains the security boundary.
  */
 export function can(
   actor: Actor,

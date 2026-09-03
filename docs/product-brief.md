@@ -176,10 +176,7 @@ Boundaries that must be respected:
 
 ### 6.6 Atmosphere indicator
 
-- Venue-controlled status: quiet, getting busy, lively, packed
-- Optional custom public wording per status
-- Timestamp showing when it was last updated
-- **Automatically expires / becomes stale** after a configurable period, after which the public site stops showing a stale value
+See [atmosphere.md](./atmosphere.md). Venue-controlled promotional statuses are `calm`, `social`, `lively`, and `high_energy`. There is no occupancy, capacity, or safety meaning. Expired or missing updates are simply not shown. Public pages do not show exact change times or who set the status.
 
 ### 6.7 Offers and promotions
 

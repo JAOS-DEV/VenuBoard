@@ -18,11 +18,14 @@ describe("design-system messages", () => {
     expect(keysOf(en.eventsPublic.weekdays)).toEqual(
       keysOf(th.eventsPublic.weekdays),
     );
+    expect(keysOf(en.atmospherePublic)).toEqual(keysOf(th.atmospherePublic));
+    expect(keysOf(en.atmosphereAdmin)).toEqual(keysOf(th.atmosphereAdmin));
   });
 
   it("does not use raw entitlement strings as user copy", () => {
     expect(en.status.notEntitled).not.toContain("not_entitled");
     expect(en.staffAdmin.stateNotEntitled).not.toBe("Not entitled");
     expect(en.eventsAdmin.stateNotEntitled).not.toContain("not_entitled");
+    expect(en.atmosphereAdmin.stateNotEntitled).not.toContain("not_entitled");
   });
 });
