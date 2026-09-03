@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 
+import { PlatformAdminShell } from "@/components/shells/platform-admin-shell";
 import { resolveRequestActor } from "@/core/actors/resolve";
-import { canAccessPlatform } from "@/core/authz/can";
+import { canAccessPlatform, canOnboardTenants } from "@/core/authz/can";
 import {
   parseSafeApplicationPath,
   signInNavigationHref,
@@ -9,6 +10,7 @@ import {
 } from "@/core/auth/redirects";
 import { redirect } from "@/core/i18n/navigation";
 import { resolveRequestLocale } from "@/core/i18n/server";
+import { loadShellSession } from "@/core/shell/session";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +38,7 @@ export default async function PlatformLayout({
   const locale = await resolveRequestLocale(params);
   const actor = await resolveRequestActor({ memberships: "platform" });
   const headerStore = await headers();
+  const session = await loadShellSession();
 
   if (actor.kind !== "authenticated") {
     redirect({
@@ -52,5 +55,14 @@ export default async function PlatformLayout({
     redirect({ href: "/unauthorized", locale });
   }
 
-  return <>{children}</>;
+  return (
+    <PlatformAdminShell
+      environment={session.environment}
+      signedIn={session.signedIn}
+      developerHubEnabled={session.developerHubEnabled}
+      canOnboard={canOnboardTenants(actor)}
+    >
+      {children}
+    </PlatformAdminShell>
+  );
 }

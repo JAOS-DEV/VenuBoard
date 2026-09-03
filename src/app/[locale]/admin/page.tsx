@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
+import { PageHeader } from "@/components/patterns/page-header";
 import { VenueScopeForm } from "@/components/staff-presence/venue-scope-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,9 +29,8 @@ export default async function AdminPage({
     actor.kind === "authenticated" ? actor.currentVenueId : null;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-      <p className="max-w-2xl text-muted-foreground">{t("intro")}</p>
+    <div className="space-y-5">
+      <PageHeader title={t("title")} description={t("intro")} />
       {venues.length > 1 ? (
         <VenueScopeForm
           venues={venues}
@@ -44,12 +44,36 @@ export default async function AdminPage({
           <Badge variant="outline">{venues[0]?.name}</Badge>
         </p>
       ) : null}
-      <Button asChild>
-        <Link href="/admin/staff">{t("staffModule")}</Link>
-      </Button>
-      <Button asChild>
-        <Link href="/admin/events">{t("eventsModule")}</Link>
-      </Button>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        <li>
+          <Button asChild className="h-auto w-full justify-start px-4 py-3">
+            <Link href="/admin/staff">
+              <span className="flex flex-col items-start gap-0.5 text-left">
+                <span>{t("staffModule")}</span>
+                <span className="text-xs font-normal text-primary-foreground/80">
+                  {t("staffModuleHelp")}
+                </span>
+              </span>
+            </Link>
+          </Button>
+        </li>
+        <li>
+          <Button
+            asChild
+            variant="secondary"
+            className="h-auto w-full justify-start px-4 py-3"
+          >
+            <Link href="/admin/events">
+              <span className="flex flex-col items-start gap-0.5 text-left">
+                <span>{t("eventsModule")}</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  {t("eventsModuleHelp")}
+                </span>
+              </span>
+            </Link>
+          </Button>
+        </li>
+      </ul>
     </div>
   );
 }

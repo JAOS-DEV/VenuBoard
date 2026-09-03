@@ -14,6 +14,16 @@ test.describe("developer hub outside ordinary local development", () => {
     );
   });
 
+  test("returns a real 404 for /en/dev/ui in the test environment", async ({
+    page,
+  }) => {
+    const response = await page.goto("/en/dev/ui");
+    expect(response?.status()).toBe(404);
+    await expect(
+      page.getByRole("heading", { name: "Page not found" }),
+    ).toBeVisible();
+  });
+
   test("ignores a developer-persona parameter on sign-in", async ({ page }) => {
     await page.goto("/en/sign-in?persona=platform-admin&next=/platform");
     await expect(page.getByLabel("Email address")).toHaveValue("");

@@ -42,6 +42,40 @@ function labelText(labels: Record<string, string>, key: string): string {
   return labels[key] ?? key;
 }
 
+function consentLabel(state: string, labels: Record<string, string>): string {
+  if (state === "granted") {
+    return labelText(labels, "consentGranted");
+  }
+  if (state === "withdrawn") {
+    return labelText(labels, "consentWithdrawn");
+  }
+  return labelText(labels, "consentPending");
+}
+
+function presenceLabel(state: string, labels: Record<string, string>): string {
+  return state === "present"
+    ? labelText(labels, "presencePresent")
+    : labelText(labels, "presenceNotPresent");
+}
+
+function staffStatusLabel(
+  state: string,
+  labels: Record<string, string>,
+): string {
+  return state === "deactivated"
+    ? labelText(labels, "staffDeactivated")
+    : labelText(labels, "staffActive");
+}
+
+function publicationLabel(
+  state: string,
+  labels: Record<string, string>,
+): string {
+  return state === "published"
+    ? labelText(labels, "published")
+    : labelText(labels, "draft");
+}
+
 function messageFor(
   labels: Record<string, string>,
   code: string | undefined,
@@ -87,8 +121,16 @@ export function StaffAdminPanel({
         </CardHeader>
         <CardContent className="space-y-3">
           <p>
-            <Badge variant="outline">
-              {labels[`state_${directory.moduleState}`]}
+            <Badge
+              variant={
+                directory.moduleState === "enabled" ||
+                directory.moduleState === "trial"
+                  ? "published"
+                  : "disabled"
+              }
+            >
+              {labels[`state_${directory.moduleState}`] ??
+                labelText(labels, "unavailable")}
             </Badge>
           </p>
           {canConfigure ? (
@@ -355,7 +397,7 @@ export function StaffAdminPanel({
         </form>
       ) : null}
 
-      <ul className="space-y-4">
+      <ul className="space-y-3">
         {directory.rows.map((row) => {
           const ownLinked = actorOwnsStaffProfile(
             capabilities.userId,
@@ -367,205 +409,243 @@ export function StaffAdminPanel({
             canManage || (ownLinked && capabilities.canManageOwnConsent);
           const showProfileForm =
             canManage || (ownLinked && capabilities.canEditOwnProfile);
+          const present = row.presenceState === "present";
 
           return (
             <li key={row.profileId}>
               <Card>
-                <CardHeader>
-                  <CardTitle>{row.publicDisplayName}</CardTitle>
-                  <CardDescription>
-                    {row.internalDisplayName !== null
-                      ? `${labels.internalName}: ${row.internalDisplayName}`
-                      : labels.publicOnly}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">{row.consentState}</Badge>
-                    <Badge variant="outline">{row.publicationState}</Badge>
-                    <Badge variant="outline">{row.presenceState}</Badge>
-                    <Badge variant="outline">{row.staffStatus}</Badge>
+                <CardContent className="space-y-3 p-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0 space-y-1">
+                      <h3 className="truncate text-sm font-semibold">
+                        {row.publicDisplayName}
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Badge variant={present ? "present" : "notPresent"}>
+                          {presenceLabel(row.presenceState, labels)}
+                        </Badge>
+                        <Badge
+                          variant={
+                            row.publicationState === "published"
+                              ? "published"
+                              : "draft"
+                          }
+                        >
+                          {publicationLabel(row.publicationState, labels)}
+                        </Badge>
+                        <Badge variant="outline">
+                          {consentLabel(row.consentState, labels)}
+                        </Badge>
+                        {row.staffStatus === "deactivated" ? (
+                          <Badge variant="disabled">
+                            {staffStatusLabel(row.staffStatus, labels)}
+                          </Badge>
+                        ) : null}
+                      </div>
+                    </div>
+                    {showToggle && row.staffStatus === "active" ? (
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => {
+                            run(() =>
+                              setStaffPresenceAction({
+                                profileId: row.profileId,
+                                state: "present",
+                              }),
+                            );
+                          }}
+                        >
+                          {labels.markPresent}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={pending}
+                          onClick={() => {
+                            run(() =>
+                              setStaffPresenceAction({
+                                profileId: row.profileId,
+                                state: "not_present",
+                              }),
+                            );
+                          }}
+                        >
+                          {labels.markNotPresent}
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
 
-                  {showProfileForm ? (
-                    <form
-                      className="grid gap-3 sm:grid-cols-2"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        const form = new FormData(event.currentTarget);
-                        run(() =>
-                          updateStaffProfileAction({
-                            profileId: row.profileId,
-                            publicDisplayName: form.get("publicDisplayName"),
-                            publicTitle: form.get("publicTitle"),
-                            bioEn: form.get("bioEn"),
-                            bioTh: form.get("bioTh"),
-                            displayOrder: form.get("displayOrder"),
-                            publicationState: canManage
-                              ? form.get("publicationState")
-                              : undefined,
-                          }),
-                        );
-                      }}
-                    >
-                      <div className="space-y-1">
-                        <Label>{labels.publicName}</Label>
-                        <Input
-                          name="publicDisplayName"
-                          defaultValue={row.publicDisplayName}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>{labels.publicTitle}</Label>
-                        <Input
-                          name="publicTitle"
-                          defaultValue={row.publicTitle ?? ""}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>{labels.bioEn}</Label>
-                        <Input name="bioEn" defaultValue={row.bioEn ?? ""} />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>{labels.bioTh}</Label>
-                        <Input name="bioTh" defaultValue={row.bioTh ?? ""} />
-                      </div>
-                      {canManage ? (
-                        <>
+                  {showProfileForm || showConsent || canManage ? (
+                    <div className="space-y-4">
+                      {row.internalDisplayName !== null ? (
+                        <p className="text-xs text-muted-foreground">
+                          {labels.internalName}: {row.internalDisplayName}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          {labels.publicOnly}
+                        </p>
+                      )}
+
+                      {showProfileForm ? (
+                        <form
+                          className="grid gap-3 sm:grid-cols-2"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            const form = new FormData(event.currentTarget);
+                            run(() =>
+                              updateStaffProfileAction({
+                                profileId: row.profileId,
+                                publicDisplayName:
+                                  form.get("publicDisplayName"),
+                                publicTitle: form.get("publicTitle"),
+                                bioEn: form.get("bioEn"),
+                                bioTh: form.get("bioTh"),
+                                displayOrder: form.get("displayOrder"),
+                                publicationState: canManage
+                                  ? form.get("publicationState")
+                                  : undefined,
+                              }),
+                            );
+                          }}
+                        >
                           <div className="space-y-1">
-                            <Label>{labels.displayOrder}</Label>
+                            <Label>{labels.publicName}</Label>
                             <Input
-                              name="displayOrder"
-                              type="number"
-                              min={0}
-                              defaultValue={row.displayOrder}
+                              name="publicDisplayName"
+                              defaultValue={row.publicDisplayName}
+                              required
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label>{labels.publication}</Label>
-                            <select
-                              name="publicationState"
-                              defaultValue={row.publicationState}
-                              className="h-11 w-full rounded-md border border-input bg-background px-3"
-                            >
-                              <option value="draft">{labels.draft}</option>
-                              <option value="published">
-                                {labels.published}
-                              </option>
-                            </select>
+                            <Label>{labels.publicTitle}</Label>
+                            <Input
+                              name="publicTitle"
+                              defaultValue={row.publicTitle ?? ""}
+                            />
                           </div>
-                        </>
+                          <div className="space-y-1">
+                            <Label>{labels.bioEn}</Label>
+                            <Input
+                              name="bioEn"
+                              defaultValue={row.bioEn ?? ""}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label>{labels.bioTh}</Label>
+                            <Input
+                              name="bioTh"
+                              defaultValue={row.bioTh ?? ""}
+                            />
+                          </div>
+                          {canManage ? (
+                            <>
+                              <div className="space-y-1">
+                                <Label>{labels.displayOrder}</Label>
+                                <Input
+                                  name="displayOrder"
+                                  type="number"
+                                  min={0}
+                                  defaultValue={row.displayOrder}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label>{labels.publication}</Label>
+                                <select
+                                  name="publicationState"
+                                  defaultValue={row.publicationState}
+                                  className="h-11 w-full rounded-md border border-input bg-background px-3"
+                                >
+                                  <option value="draft">{labels.draft}</option>
+                                  <option value="published">
+                                    {labels.published}
+                                  </option>
+                                </select>
+                              </div>
+                            </>
+                          ) : null}
+                          <div className="sm:col-span-2">
+                            <Button type="submit" disabled={pending}>
+                              {labels.saveProfile}
+                            </Button>
+                          </div>
+                        </form>
                       ) : null}
-                      <div className="sm:col-span-2">
-                        <Button type="submit" disabled={pending}>
-                          {labels.saveProfile}
-                        </Button>
-                      </div>
-                    </form>
-                  ) : null}
 
-                  {showConsent ? (
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        disabled={pending}
-                        onClick={() => {
-                          run(() =>
-                            setStaffConsentAction({
-                              profileId: row.profileId,
-                              consentState: "granted",
-                            }),
-                          );
-                        }}
-                      >
-                        {labels.grantConsent}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        disabled={pending}
-                        onClick={() => {
-                          run(() =>
-                            setStaffConsentAction({
-                              profileId: row.profileId,
-                              consentState: "withdrawn",
-                            }),
-                          );
-                        }}
-                      >
-                        {labels.withdrawConsent}
-                      </Button>
+                      {showConsent ? (
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Button
+                            type="button"
+                            disabled={pending}
+                            onClick={() => {
+                              run(() =>
+                                setStaffConsentAction({
+                                  profileId: row.profileId,
+                                  consentState: "granted",
+                                }),
+                              );
+                            }}
+                          >
+                            {labels.grantConsent}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={pending}
+                            onClick={() => {
+                              run(() =>
+                                setStaffConsentAction({
+                                  profileId: row.profileId,
+                                  consentState: "withdrawn",
+                                }),
+                              );
+                            }}
+                          >
+                            {labels.withdrawConsent}
+                          </Button>
+                        </div>
+                      ) : null}
+
+                      {canManage ? (
+                        <form
+                          className="space-y-3"
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            const form = new FormData(event.currentTarget);
+                            if (form.get("confirmState") !== "on") {
+                              setNotice(labelText(labels, "confirmRequired"));
+                              return;
+                            }
+                            if (row.staffStatus === "deactivated") {
+                              run(() => restoreStaffAction(row.staffMemberId));
+                            } else {
+                              run(() =>
+                                deactivateStaffAction(row.staffMemberId),
+                              );
+                            }
+                          }}
+                        >
+                          <Label className="flex items-center gap-2">
+                            <input type="checkbox" name="confirmState" />
+                            {row.staffStatus === "deactivated"
+                              ? labels.confirmRestore
+                              : labels.confirmDeactivate}
+                          </Label>
+                          <Button
+                            type="submit"
+                            variant="destructive"
+                            disabled={pending}
+                          >
+                            {row.staffStatus === "deactivated"
+                              ? labels.restore
+                              : labels.deactivate}
+                          </Button>
+                        </form>
+                      ) : null}
                     </div>
-                  ) : null}
-
-                  {showToggle && row.staffStatus === "active" ? (
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        disabled={pending}
-                        onClick={() => {
-                          run(() =>
-                            setStaffPresenceAction({
-                              profileId: row.profileId,
-                              state: "present",
-                            }),
-                          );
-                        }}
-                      >
-                        {labels.markPresent}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        disabled={pending}
-                        onClick={() => {
-                          run(() =>
-                            setStaffPresenceAction({
-                              profileId: row.profileId,
-                              state: "not_present",
-                            }),
-                          );
-                        }}
-                      >
-                        {labels.markNotPresent}
-                      </Button>
-                    </div>
-                  ) : null}
-
-                  {canManage ? (
-                    <form
-                      className="space-y-3"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        const form = new FormData(event.currentTarget);
-                        if (form.get("confirmState") !== "on") {
-                          setNotice(labelText(labels, "confirmRequired"));
-                          return;
-                        }
-                        if (row.staffStatus === "deactivated") {
-                          run(() => restoreStaffAction(row.staffMemberId));
-                        } else {
-                          run(() => deactivateStaffAction(row.staffMemberId));
-                        }
-                      }}
-                    >
-                      <Label className="flex items-center gap-2">
-                        <input type="checkbox" name="confirmState" />
-                        {row.staffStatus === "deactivated"
-                          ? labels.confirmRestore
-                          : labels.confirmDeactivate}
-                      </Label>
-                      <Button
-                        type="submit"
-                        variant="destructive"
-                        disabled={pending}
-                      >
-                        {row.staffStatus === "deactivated"
-                          ? labels.restore
-                          : labels.deactivate}
-                      </Button>
-                    </form>
                   ) : null}
                 </CardContent>
               </Card>

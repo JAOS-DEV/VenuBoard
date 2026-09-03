@@ -35,12 +35,12 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: /local-dev-hub\.spec\.ts/,
+      testIgnore: /local-dev-hub\.spec\.ts|local-ui-gallery\.spec\.ts/,
     },
     {
       name: "local-dev",
       use: { ...devices["Desktop Chrome"], baseURL: LOCAL_DEV_URL },
-      testMatch: /local-dev-hub\.spec\.ts/,
+      testMatch: /local-dev-hub\.spec\.ts|local-ui-gallery\.spec\.ts/,
     },
   ],
   webServer: [

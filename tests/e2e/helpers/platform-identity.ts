@@ -68,7 +68,7 @@ export async function signInSeedUser(
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in with password" }).click();
   try {
-    await page.getByRole("button", { name: "Sign out" }).waitFor({
+    await page.waitForURL((url) => !url.pathname.includes("/sign-in"), {
       timeout: 15_000,
     });
     return { ok: true, email, password };

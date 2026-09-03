@@ -33,6 +33,7 @@ export default async function PlatformVenueOverviewPage({
   const locale = await resolveRequestLocale(params);
   const actor = await resolveRequestActor({ memberships: "platform" });
   const t = await getTranslations("platformOverview");
+  const tStatus = await getTranslations("status");
 
   if (actor.kind !== "authenticated") {
     redirect({
@@ -79,7 +80,17 @@ export default async function PlatformVenueOverviewPage({
           </p>
           <p className="flex flex-wrap items-center gap-2">
             {t("publication")}:
-            <Badge variant="outline">{overview.publicationState}</Badge>
+            <Badge
+              variant={
+                overview.publicationState === "published"
+                  ? "published"
+                  : "draft"
+              }
+            >
+              {overview.publicationState === "published"
+                ? tStatus("published")
+                : tStatus("unpublished")}
+            </Badge>
           </p>
           {overview.publicationState !== "published" && (
             <p>{t("unpublished")}</p>

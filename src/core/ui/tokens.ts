@@ -1,0 +1,38 @@
+export const SEMANTIC_COLOR_TOKENS = [
+  "background",
+  "foreground",
+  "card",
+  "card-foreground",
+  "elevated",
+  "elevated-foreground",
+  "muted",
+  "muted-foreground",
+  "border",
+  "input",
+  "ring",
+  "primary",
+  "primary-foreground",
+  "secondary",
+  "secondary-foreground",
+  "accent",
+  "accent-foreground",
+  "destructive",
+  "warning",
+  "success",
+  "info",
+] as const;
+
+export const STATUS_VARIANTS = [
+  "present",
+  "not-present",
+  "draft",
+  "scheduled",
+  "published",
+  "cancelled",
+  "archived",
+  "pending",
+  "quarantined",
+  "disabled",
+] as const;
+
+export type StatusVariant = (typeof STATUS_VARIANTS)[number];

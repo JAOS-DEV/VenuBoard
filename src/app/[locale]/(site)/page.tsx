@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 
+import { PageHeader } from "@/components/patterns/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -33,11 +34,8 @@ function Overview(): React.ReactElement {
   const tNav = useTranslations("nav");
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="max-w-2xl text-muted-foreground">{t("description")}</p>
-      </header>
+    <div className="space-y-6">
+      <PageHeader title={t("title")} description={t("description")} />
 
       <section className="space-y-4">
         <p className="max-w-2xl text-sm text-muted-foreground">

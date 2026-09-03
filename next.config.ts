@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
     root: import.meta.dirname,
   },
   ...(playwrightDistDir !== undefined && playwrightDistDir.length > 0
-    ? { distDir: playwrightDistDir }
+    ? { distDir: playwrightDistDir, devIndicators: false }
     : {}),
 };
 

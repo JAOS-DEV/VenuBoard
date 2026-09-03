@@ -77,7 +77,7 @@ export function SignInForm({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <form
         className="space-y-4"
         action={(formData) => {

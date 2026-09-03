@@ -14,9 +14,12 @@ test.describe("local developer hub", () => {
       page.getByRole("heading", { name: "Local developer hub" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Developer hub" }),
+      page
+        .getByRole("navigation", { name: "Surfaces" })
+        .getByRole("link", { name: "Developer hub" }),
     ).toBeVisible();
 
+    await page.getByRole("tab", { name: "Services" }).click();
     await expect(
       page
         .locator('[data-slot="card"]', {
@@ -45,6 +48,8 @@ test.describe("local developer hub", () => {
         })
         .getByRole("link", { name: "Open local tool" }),
     ).toHaveAttribute("href", "http://127.0.0.1:54321/auth/v1/health");
+
+    await page.getByRole("tab", { name: "Accounts" }).click();
 
     await expect(
       page.getByRole("heading", { name: "Platform administrator" }),

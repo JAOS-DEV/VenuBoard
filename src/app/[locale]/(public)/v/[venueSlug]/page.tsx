@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
 import { StaffCarousel } from "@/components/staff-presence/staff-carousel";
-import { Badge } from "@/components/ui/badge";
+import { VenueBrandScope } from "@/components/patterns/venue-brand-scope";
 import { resolveRequestLocale } from "@/core/i18n/server";
 import {
   loadPublicVenueArchiveEvents,
@@ -35,24 +35,24 @@ export default async function PublicVenuePage({
     : null;
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-3">
-        <Badge variant="outline">{t("developmentFallback")}</Badge>
+    <VenueBrandScope branding={venue?.branding ?? null} className="space-y-6">
+      <header className="space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t("title")}
+        </p>
         <h1 className="text-2xl font-semibold tracking-tight">
           {venue?.name ?? t("unavailableTitle")}
         </h1>
-        {venue !== null ? (
-          <p className="font-mono text-sm text-muted-foreground">
-            {venue.slug}
+        {venue === null ? (
+          <p className="text-sm text-muted-foreground">
+            {t("unavailableBody")}
           </p>
-        ) : (
-          <p className="text-muted-foreground">{t("unavailableBody")}</p>
-        )}
+        ) : null}
       </header>
 
       {venue?.contentClassification === "nightlife_18_plus" ? (
         <aside
-          className="rounded-md border border-border bg-secondary p-4 text-sm"
+          className="rounded-lg border border-border bg-secondary/60 p-3 text-sm"
           data-testid="adult-notice"
         >
           <p className="font-medium">{t("adultNoticeTitle")}</p>
@@ -79,6 +79,6 @@ export default async function PublicVenuePage({
         archive={eventsArchive}
         branding={venue?.branding ?? null}
       />
-    </div>
+    </VenueBrandScope>
   );
 }
