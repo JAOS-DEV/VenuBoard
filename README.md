@@ -74,7 +74,7 @@ That local-only developer hub lists:
 | Local email inbox      | http://127.0.0.1:54324                |
 | Auth health            | http://127.0.0.1:54321/auth/v1/health |
 
-Seeded personas are fictional `example.com` identities. There are **no committed passwords**. Request a magic link from the normal sign-in page, then open the local inbox. The hub can prefill an allowlisted persona email; it does not sign anyone in.
+Seeded personas are fictional `example.com` identities. There are **no committed passwords**. Request a magic link from the normal sign-in page, then open the local inbox. Auth callbacks return to `http://localhost:3000` so the signed-in session stays on the same origin as the app. The hub can prefill an allowlisted persona email; it does not sign anyone in.
 
 ```bash
 npm run local:status    # URLs and commands only — no keys

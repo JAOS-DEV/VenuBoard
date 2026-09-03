@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { resolveAppOrigin } from "@/core/auth/origin";
+import {
+  CANONICAL_LOCAL_APP_ORIGIN,
+  resolveCallbackRedirectOrigin,
+} from "@/core/auth/origin";
 import {
   parseSafeApplicationPath,
   toNavigationHref,
@@ -29,12 +32,12 @@ export async function GET(
   const code = url.searchParams.get("code");
   const nextPath =
     parseSafeApplicationPath(url.searchParams.get("next")) ?? "/admin";
-  const origin = resolveAppOrigin(null) ?? resolveAppOrigin(url.origin);
+  const origin = resolveCallbackRedirectOrigin(request.url);
   const providerError = url.searchParams.get("error");
 
   if (origin === null) {
     return NextResponse.redirect(
-      new URL(`/${locale}/sign-in`, "http://127.0.0.1:3000"),
+      new URL(`/${locale}/sign-in`, CANONICAL_LOCAL_APP_ORIGIN),
     );
   }
 

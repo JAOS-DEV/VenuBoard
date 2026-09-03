@@ -157,18 +157,21 @@ max_indexes = 5
 
 [auth]
 enabled = true
-# The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails.
-site_url = "http://127.0.0.1:3000"
+# The Next.js app origin is http://localhost:3000. Magic links must return there
+# so the browser session stays on the same origin as the app. Supabase API,
+# Studio and the local mailbox remain on 127.0.0.1 ports 54321–54324.
+site_url = "http://localhost:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
-# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+# Exact Auth callback URLs only. No wildcards. Playwright boots its own Next
+# servers on 127.0.0.1 ports 3100 (test) and 3101 (local-dev hub).
 additional_redirect_urls = [
-  "https://127.0.0.1:3000",
-  "http://127.0.0.1:3000/en/auth/callback",
-  "http://127.0.0.1:3000/th/auth/callback",
   "http://localhost:3000/en/auth/callback",
   "http://localhost:3000/th/auth/callback",
+  "http://127.0.0.1:3100/en/auth/callback",
+  "http://127.0.0.1:3100/th/auth/callback",
+  "http://127.0.0.1:3101/en/auth/callback",
+  "http://127.0.0.1:3101/th/auth/callback",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
@@ -201,7 +204,7 @@ password_requirements = ""
 # [auth.webauthn]
 # rp_display_name = "Supabase"
 # rp_id = "localhost"
-# rp_origins = ["http://127.0.0.1:3000"]
+# rp_origins = ["http://localhost:3000"]
 
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
