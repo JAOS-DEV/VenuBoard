@@ -64,11 +64,10 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | | |
 | --- | --- |
 | **Purpose** | Allowed by default unless the venue requires manager approval, in which case the editor cannot publish directly. |
-| **Tables / actions** | Future content, events, offers; `publish_content`, `manage_events`, `manage_offers` |
-| **Enforced now** | Default **deny** for the three conditional editor cells. Manager/owner keep allow. |
-| **Future migration** | WITH CHECK must read the venue approval setting; default-on approval must force `pending_approval`. |
-| **Application `can()`** | Reflect the setting in the editor UI. |
-| **Negative tests** | Present: helper is false for the editor on all three actions. |
+| **Tables / actions** | `events`, `event_translations`; `publish_content`, `manage_events` (offers deferred) |
+| **Enforced now** | **Now enforced for events.** `app_private.may_publish_event` checks `events_require_manager_approval(venue_id)`. If true, only manager/owner may publish. Editor is denied. The `eventsApprovalRequired` field was **removed** from `AuthzContext`; the UX derives `approvalRequired` server-side from the DB and passes it as a prop. `can()` is never consulted for the editor/publish combination. Tests: `09_events.sql` (C5 section). |
+| **Application `can()`** | Show/hide Publish button based on server-fetched `approvalRequired` boolean. DB RPC is the final authority. |
+| **Negative tests** | Present: editor cannot publish at night_orchid (approval required). Editor can create draft and submit. Manager/owner can publish. `09_events.sql`. Unit test in `tests/unit/events-authz.test.ts`. |
 
 ### C6 — Atmosphere updates by editor / staff
 
@@ -204,11 +203,10 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | | |
 | --- | --- |
 | **Purpose** | Copying or promoting an event requires authorisation in **both** venues, same business. |
-| **Tables / actions** | Future events tables |
-| **Enforced now** | No events tables (asserted). Do not implement copy as a single-scope `manage_events` write. |
-| **Future migration** | Server operation or RLS that authorises source **and** destination `venue_id`, and `business_id` equality. Isolation tests must attempt a cross-business copy. |
-| **Application `can()`** | Destination venue picker limited to same business. |
-| **Negative tests** | Present: tables absent. Copy tests required with events. |
+| **Tables / actions** | `events`, `event_translations`; `copy_event_to_venue` RPC |
+| **Enforced now** | **Now enforced.** `app_private.may_copy_event_to_venue` requires `create_content` at source **and** destination venues, plus `business_id` equality. Cross-business copy is categorically denied. Poster path is **not** copied (venue-specific). Approval/publication state is reset to `draft` / `not_submitted`. Tests: `09_events.sql` (C18 section). |
+| **Application `can()`** | Destination venue picker limited to same-business venues where actor has `create_content`. |
+| **Negative tests** | Present: same-business copy succeeds (night_orchid → trial_garden); cross-business denied; unauthorized source denied. `09_events.sql`. |
 
 ### C19 — Platform admin writes inside a tenant
 

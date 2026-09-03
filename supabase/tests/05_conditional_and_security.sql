@@ -139,7 +139,20 @@ SELECT ok(
         'set_staff_presence',
         'bulk_mark_staff_not_present',
         'deactivate_staff_member',
-        'restore_staff_member'
+        'restore_staff_member',
+        'create_event',
+        'update_event_draft',
+        'submit_event_for_approval',
+        'approve_event',
+        'reject_event',
+        'publish_event_now',
+        'schedule_event_publication',
+        'cancel_event',
+        'archive_event',
+        'restore_event_to_draft',
+        'copy_event_to_venue',
+        'update_events_module_settings',
+        'list_public_venue_events'
       )
   ),
   'no SECURITY DEFINER helpers are exposed in public except invitation and permission RPCs'
@@ -566,13 +579,13 @@ SELECT ok(
 );
 
 SELECT ok(
-  NOT EXISTS (
+  EXISTS (
     SELECT 1
     FROM information_schema.tables
     WHERE table_schema = 'public'
-      AND table_name IN ('events', 'event_translations', 'offers', 'staff_profiles')
+      AND table_name IN ('events', 'event_translations')
   ),
-  'C18: product-module tables are absent; cross-venue copy must be enforced in that future migration'
+  'C18: events tables exist; cross-venue copy enforcement lives in events-specific tests'
 );
 
 -- ---------------------------------------------------------------------------
