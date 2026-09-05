@@ -579,6 +579,236 @@ export type Database = {
           },
         ];
       };
+      feed_post_events: {
+        Row: {
+          action: string;
+          actor_user_id: string | null;
+          created_at: string;
+          from_state: string | null;
+          id: string;
+          post_id: string;
+          to_state: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          action: string;
+          actor_user_id?: string | null;
+          created_at?: string;
+          from_state?: string | null;
+          id?: string;
+          post_id: string;
+          to_state?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          action?: string;
+          actor_user_id?: string | null;
+          created_at?: string;
+          from_state?: string | null;
+          id?: string;
+          post_id?: string;
+          to_state?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feed_post_events_parent_fkey";
+            columns: ["post_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "feed_posts";
+            referencedColumns: ["id", "venue_id"];
+          },
+        ];
+      };
+      feed_post_translations: {
+        Row: {
+          body: string;
+          created_at: string;
+          id: string;
+          locale: string;
+          post_id: string;
+          title: string;
+          updated_at: string;
+          updated_by: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          id?: string;
+          locale: string;
+          post_id: string;
+          title: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          id?: string;
+          locale?: string;
+          post_id?: string;
+          title?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feed_post_translations_parent_fkey";
+            columns: ["post_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "feed_posts";
+            referencedColumns: ["id", "venue_id"];
+          },
+          {
+            foreignKeyName: "feed_post_translations_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      feed_posts: {
+        Row: {
+          approved_at: string | null;
+          approved_by: string | null;
+          archived_at: string | null;
+          business_id: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          is_pinned: boolean;
+          media_storage_path: string | null;
+          pinned_at: string | null;
+          platform_quarantine_reason: string | null;
+          platform_quarantined_at: string | null;
+          platform_quarantined_by: string | null;
+          post_type: string;
+          published_at: string | null;
+          rejection_reason: string | null;
+          scheduled_for: string | null;
+          source_post_id: string | null;
+          source_venue_id: string | null;
+          state: string;
+          submitted_by: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          archived_at?: string | null;
+          business_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_pinned?: boolean;
+          media_storage_path?: string | null;
+          pinned_at?: string | null;
+          platform_quarantine_reason?: string | null;
+          platform_quarantined_at?: string | null;
+          platform_quarantined_by?: string | null;
+          post_type?: string;
+          published_at?: string | null;
+          rejection_reason?: string | null;
+          scheduled_for?: string | null;
+          source_post_id?: string | null;
+          source_venue_id?: string | null;
+          state?: string;
+          submitted_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          approved_at?: string | null;
+          approved_by?: string | null;
+          archived_at?: string | null;
+          business_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_pinned?: boolean;
+          media_storage_path?: string | null;
+          pinned_at?: string | null;
+          platform_quarantine_reason?: string | null;
+          platform_quarantined_at?: string | null;
+          platform_quarantined_by?: string | null;
+          post_type?: string;
+          published_at?: string | null;
+          rejection_reason?: string | null;
+          scheduled_for?: string | null;
+          source_post_id?: string | null;
+          source_venue_id?: string | null;
+          state?: string;
+          submitted_by?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "feed_posts_approved_by_fkey";
+            columns: ["approved_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feed_posts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feed_posts_platform_quarantined_by_fkey";
+            columns: ["platform_quarantined_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feed_posts_source_post_fkey";
+            columns: ["source_post_id", "source_venue_id"];
+            isOneToOne: false;
+            referencedRelation: "feed_posts";
+            referencedColumns: ["id", "venue_id"];
+          },
+          {
+            foreignKeyName: "feed_posts_submitted_by_fkey";
+            columns: ["submitted_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feed_posts_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "feed_posts_venue_business_fkey";
+            columns: ["venue_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "feed_posts_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       fixed_roles: {
         Row: {
           axis: string;
@@ -2339,7 +2569,9 @@ export type Database = {
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: Json };
       approve_event: { Args: { p_event_id: string }; Returns: Json };
+      approve_feed_post: { Args: { p_post_id: string }; Returns: Json };
       archive_event: { Args: { p_event_id: string }; Returns: Json };
+      archive_feed_post: { Args: { p_post_id: string }; Returns: Json };
       assign_staff_to_venue: {
         Args: {
           p_payload: Json;
@@ -2361,7 +2593,15 @@ export type Database = {
         Args: { p_destination_venue_id: string; p_event_id: string };
         Returns: Json;
       };
+      copy_feed_post_to_venue: {
+        Args: { p_destination_venue_id: string; p_post_id: string };
+        Returns: Json;
+      };
       create_event: {
+        Args: { p_payload: Json; p_venue_id: string };
+        Returns: Json;
+      };
+      create_feed_post: {
         Args: { p_payload: Json; p_venue_id: string };
         Returns: Json;
       };
@@ -2408,22 +2648,45 @@ export type Database = {
         };
         Returns: Json;
       };
+      list_public_venue_feed: {
+        Args: {
+          p_cursor?: string;
+          p_limit?: number;
+          p_locale?: string;
+          p_venue_slug: string;
+        };
+        Returns: Json;
+      };
       onboard_platform_venue: {
         Args: { p_idempotency_key: string; p_payload: Json };
         Returns: Json;
       };
+      pin_feed_post: { Args: { p_post_id: string }; Returns: Json };
       publish_event_now: { Args: { p_event_id: string }; Returns: Json };
+      publish_feed_post_now: { Args: { p_post_id: string }; Returns: Json };
       reject_event: {
         Args: { p_event_id: string; p_reason: string };
         Returns: Json;
       };
+      reject_feed_post: {
+        Args: { p_post_id: string; p_reason: string };
+        Returns: Json;
+      };
       restore_event_to_draft: { Args: { p_event_id: string }; Returns: Json };
+      restore_feed_post_to_draft: {
+        Args: { p_post_id: string };
+        Returns: Json;
+      };
       restore_staff_member: {
         Args: { p_staff_member_id: string };
         Returns: Json;
       };
       schedule_event_publication: {
         Args: { p_event_id: string; p_publish_at: string };
+        Returns: Json;
+      };
+      schedule_feed_post_publication: {
+        Args: { p_post_id: string; p_scheduled_for: string };
         Returns: Json;
       };
       set_staff_presence: {
@@ -2442,6 +2705,12 @@ export type Database = {
         Args: { p_event_id: string };
         Returns: Json;
       };
+      submit_feed_post_for_approval: {
+        Args: { p_post_id: string };
+        Returns: Json;
+      };
+      unpin_feed_post: { Args: { p_post_id: string }; Returns: Json };
+      unpublish_feed_post: { Args: { p_post_id: string }; Returns: Json };
       update_atmosphere_module_settings: {
         Args: { p_payload: Json; p_venue_id: string };
         Returns: Json;
@@ -2452,6 +2721,14 @@ export type Database = {
       };
       update_events_module_settings: {
         Args: { p_payload: Json; p_venue_id: string };
+        Returns: Json;
+      };
+      update_feed_module_settings: {
+        Args: { p_payload: Json; p_venue_id: string };
+        Returns: Json;
+      };
+      update_feed_post_draft: {
+        Args: { p_payload: Json; p_post_id: string };
         Returns: Json;
       };
       update_staff_public_profile: {

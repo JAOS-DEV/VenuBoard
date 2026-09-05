@@ -18,6 +18,13 @@ const STAFF_SELF_ACTIONS = [
   "toggle_own_presence",
 ] as const;
 
+const FEED_ACTIONS = [
+  "create_content",
+  "submit_content_for_approval",
+  "approve_content",
+  "publish_content",
+] as const;
+
 const EVENT_ACTIONS = [
   "create_content",
   "submit_content_for_approval",
@@ -74,6 +81,16 @@ function hasStaffAccess(actor: AuthenticatedActor): boolean {
   return actor.businessMemberships.length > 0;
 }
 
+function hasFeedAccess(actor: AuthenticatedActor): boolean {
+  const scopes = venueScopes(actor);
+  for (const scope of scopes) {
+    if (FEED_ACTIONS.some((action) => can(actor, action, scope))) {
+      return true;
+    }
+  }
+  return actor.businessMemberships.length > 0;
+}
+
 function hasEventsAccess(actor: AuthenticatedActor): boolean {
   const scopes = venueScopes(actor);
   for (const scope of scopes) {
@@ -114,16 +131,24 @@ export function venueAdminNavAccess(actor: Actor): {
   home: boolean;
   staff: boolean;
   events: boolean;
+  feed: boolean;
   atmosphere: boolean;
 } {
   if (!isActiveAuthenticatedActor(actor)) {
-    return { home: false, staff: false, events: false, atmosphere: false };
+    return {
+      home: false,
+      staff: false,
+      events: false,
+      feed: false,
+      atmosphere: false,
+    };
   }
 
   return {
     home: true,
     staff: hasStaffAccess(actor),
     events: hasEventsAccess(actor),
+    feed: hasFeedAccess(actor),
     atmosphere: hasAtmosphereAccess(actor),
   };
 }

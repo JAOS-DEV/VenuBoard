@@ -1,10 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
 import { PublicAtmosphereCard } from "@/components/atmosphere/public-atmosphere-card";
+import { PublicFeedPreview } from "@/components/feed/public-feed-preview";
 import { StaffCarousel } from "@/components/staff-presence/staff-carousel";
 import { VenueBrandScope } from "@/components/patterns/venue-brand-scope";
 import { resolveRequestLocale } from "@/core/i18n/server";
 import { loadPublicVenueAtmosphere } from "@/core/atmosphere/queries";
+import { loadPublicVenueFeed } from "@/core/feed/queries";
 import { atmospherePublicCopyKey } from "@/core/atmosphere/labels";
 import {
   loadPublicVenueArchiveEvents,
@@ -30,9 +32,11 @@ export default async function PublicVenuePage({
   const t = await getTranslations("publicVenue");
   const tStaff = await getTranslations("staffPublic");
   const tAtmosphere = await getTranslations("atmospherePublic");
+  const tFeed = await getTranslations("feedPublic");
 
   const venue = await loadPublicVenueSnapshot(venueSlug);
   const atmosphere = await loadPublicVenueAtmosphere(venueSlug, locale);
+  const feed = await loadPublicVenueFeed(venueSlug, locale);
   const carousel = await loadPublicStaffCarousel(venueSlug, locale);
   const eventsUpcoming = await loadPublicVenueUpcomingEvents(venueSlug, locale);
   const eventsArchive = eventsUpcoming.showPastArchive
@@ -75,6 +79,20 @@ export default async function PublicVenuePage({
         headingFallback={tAtmosphere("headingFallback")}
         disclaimer={tAtmosphere("disclaimer")}
         freshnessLabel={tAtmosphere("freshness")}
+      />
+
+      <PublicFeedPreview
+        feed={feed}
+        locale={locale === "th" ? "th" : "en"}
+        headingFallback={tFeed("headingFallback")}
+        viewAllLabel={tFeed("viewAll")}
+        venueSlug={venueSlug}
+        typeLabels={{
+          update: tFeed("typeUpdate"),
+          announcement: tFeed("typeAnnouncement"),
+          notice: tFeed("typeNotice"),
+        }}
+        pinnedLabel={tFeed("pinned")}
       />
 
       <StaffCarousel

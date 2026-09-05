@@ -14,7 +14,7 @@ shadcn components are **source-owned by this repository**. Copies live under `sr
 2. **Patterns** — `src/components/patterns` and `src/components/shells`  
    Reusable VenuBoard composition: page chrome, empty/error/loading states, status badges, form sections, compact headers, admin navigation.
 
-3. **Features** — `src/components/{staff-presence,events,atmosphere,platform,auth,dev}` and route files.
+3. **Features** — `src/components/{staff-presence,events,atmosphere,feed,platform,auth,dev}` and route files.
    Domain UI. Consume primitives and patterns. Do not invent a third visual system with one-off colour classes.
 
 Anti-patterns: giant “god” components with dozens of booleans; repeating arbitrary Tailwind strings that already exist as a pattern; putting `not_entitled` or other database strings in class names or visible copy.
@@ -38,6 +38,7 @@ Public venue pages may overlay `--venue-accent` and `--venue-primary`. Core text
 - Interactive targets are at least **44×44px** (`h-11` / `size-11`).
 - Inputs are at least **16px** on small screens (`text-base md:text-sm`).
 - No horizontal page overflow (`document.documentElement.scrollWidth <= window.innerWidth`).
+- Admin filter rows wrap (`flex-wrap`) or use labelled native selects below `md`; they must not scroll sideways.
 - Honour `prefers-reduced-motion` (global CSS plus carousel pause).
 - Support safe-area insets on headers and bottom navigation.
 
@@ -46,7 +47,7 @@ Public venue pages may overlay `--venue-accent` and `--venue-primary`. Core text
 | Surface | Mobile | Larger screens |
 | --- | --- | --- |
 | Public venue | Compact customer header (identity, theme, language, account). No admin/platform/dev destinations. | Same information architecture |
-| Venue admin | Bottom nav: Home / Staff / Events / More (authorised destinations only). More opens a sheet. Sign-out is not in the tab bar. | Sidebar-equivalent compact nav in the header |
+| Venue admin | Bottom nav (`md:hidden`): Home / Staff / Events / Updates / Atmosphere / More, including only authorised destinations. More opens a sheet. Sign-out is not in the tab bar. | Compact header surface list (`hidden md:block`). CSS visibility is not authorisation; `venueAdminNavAccess` / `can()` still decide which items exist. |
 | Platform | Compact header + drawer | Header nav: overview, onboard (if allowed) |
 | Auth | Compact header, centred card | Same |
 | Developer hub | Local-only compact utility chrome | Tabs for accounts, services, commands |
@@ -81,7 +82,7 @@ Automated checks use `@axe-core/playwright` (locked in `package.json`) against r
 
 ## Public vs admin vs platform
 
-- **Public:** customers. Venue identity, staff, events. No slugs, fallback-route badges, or internal navigation.
+- **Public:** customers. Venue identity, staff, events, atmosphere, feed. No slugs, fallback-route badges, or internal navigation.
 - **Venue admin:** fast phone operation. Compact lists, presence toggles, progressive disclosure.
 - **Platform:** larger datasets, still usable on a phone. No implication that platform roles have tenant authority.
 

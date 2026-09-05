@@ -208,6 +208,24 @@ export function UiGallery(): React.ReactElement {
       </section>
 
       <section className="space-y-3">
+        <SectionHeader title={t("feed")} />
+        <article className="max-w-md rounded-lg border border-border bg-card p-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>Update</span>
+            <span aria-hidden="true">·</span>
+            <span>4 Sep 2026</span>
+            <span className="font-medium text-foreground">Pinned</span>
+          </div>
+          <h3 className="mt-1 text-base font-semibold tracking-tight">
+            Harbour kitchen hours
+          </h3>
+          <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-muted-foreground">
+            The kitchen stays open until midnight this weekend.
+          </p>
+        </article>
+      </section>
+
+      <section className="space-y-3">
         <SectionHeader title={t("atmosphere")} />
         <Card className="max-w-md">
           <CardHeader className="p-3">

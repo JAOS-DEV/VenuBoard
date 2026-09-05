@@ -20,6 +20,8 @@ describe("design-system messages", () => {
     );
     expect(keysOf(en.atmospherePublic)).toEqual(keysOf(th.atmospherePublic));
     expect(keysOf(en.atmosphereAdmin)).toEqual(keysOf(th.atmosphereAdmin));
+    expect(keysOf(en.feedPublic)).toEqual(keysOf(th.feedPublic));
+    expect(keysOf(en.feedAdmin)).toEqual(keysOf(th.feedAdmin));
   });
 
   it("does not use raw entitlement strings as user copy", () => {
@@ -27,5 +29,17 @@ describe("design-system messages", () => {
     expect(en.staffAdmin.stateNotEntitled).not.toBe("Not entitled");
     expect(en.eventsAdmin.stateNotEntitled).not.toContain("not_entitled");
     expect(en.atmosphereAdmin.stateNotEntitled).not.toContain("not_entitled");
+    expect(en.feedAdmin.stateNotEntitled).not.toContain("not_entitled");
+    expect(en.feedAdmin.title).not.toContain("pending_approval");
+    expect(en.feedAdmin.stateNotEntitledHelp).not.toBe(
+      en.feedAdmin.stateNotEntitled,
+    );
+    expect(en.feedAdmin.stateDisabledHelp).not.toBe(en.feedAdmin.stateDisabled);
+    expect(en.feedAdmin.filterStatus).toBe("Status");
+    expect(th.feedAdmin.filterStatus).toBe("สถานะ");
+    expect(en.feedAdmin.filterType).toBe("Content type");
+    expect(th.feedAdmin.filterType).toBe("ประเภทเนื้อหา");
+    expect(en.feedAdmin.viewPublic).toBe("View public updates");
+    expect(th.feedAdmin.viewPublic).toBe("ดูข่าวสารสาธารณะ");
   });
 });

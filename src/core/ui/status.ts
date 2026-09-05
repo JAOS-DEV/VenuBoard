@@ -46,6 +46,7 @@ export function isRawInternalState(value: string): boolean {
   return [
     "not_entitled",
     "entitled_disabled",
+    "pending_approval",
     "approval_status",
     "rejection_reason",
   ].includes(value);

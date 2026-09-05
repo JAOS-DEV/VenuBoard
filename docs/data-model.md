@@ -292,33 +292,36 @@ erDiagram
 
 ### 6.2 Feed
 
-**`feed_posts`** — `id`, `venue_id`, `state`, `scheduled_for`, `published_at`, `submitted_by`, `approved_by`, `approved_at`, `rejection_reason`, `created_by`, `updated_at`, `archived_at`
+> **Now implemented.** See [feed.md](./feed.md) for full documentation.
 
-- `state` is `text CHECK (state IN ('draft','pending_approval','scheduled','published','archived'))`.
-- Translated fields: **`post_translations`** (title and body).
+**`feed_posts`** — `id`, `venue_id`, `business_id` (composite FK to `venues (id, business_id)`), `post_type` (`text CHECK (... IN ('update','announcement','notice'))`), `state` (`text CHECK (... IN ('draft','pending_approval','scheduled','published','archived'))`), `scheduled_for`, `published_at`, `submitted_by`, `approved_by`, `approved_at` (cleared on a material draft/translation/type edit), `rejection_reason`, `is_pinned`, `pinned_at`, `archived_at`, optional venue-scoped `media_storage_path` (placeholder; remote URLs rejected), `source_post_id` / `source_venue_id`, quarantine columns, `created_by`, `updated_by`, `created_at`, `updated_at`.
 
-**`feed_post_media`** — `id`, `post_id`, `venue_id`, `media_asset_id`, `sort_order`. Translated fields: **`post_media_translations`** (caption).
+- Anonymous roles have **no** `SELECT` on this table. Public reads go through `list_public_venue_feed`.
+- Scheduled publication is evaluated at **query time** — no cron job. A `scheduled` row is public only when `scheduled_for <= now()`.
+- At most three pinned published posts per venue (transactional). Unpublished, archived or quarantined posts cannot remain publicly pinned.
+- Unpublish returns the post to `draft` and clears pin/schedule/publication timestamps.
+
+**`feed_post_translations`** — `id`, `post_id`, `venue_id` (composite FK to `feed_posts (id, venue_id)`), `locale` (`text CHECK (locale IN ('en','th'))`), `title` (1–120), `body` (1–2,000), `updated_by`, timestamps. Unique `(post_id, locale)`. EN required before submit/publication; TH optional with EN fallback. `ON DELETE RESTRICT` so audit history is not destroyed by a cascade.
+
+**`feed_post_events`** — append-only workflow audit. Identifiers and state transitions only; no post body or translation content.
+
+**Same-business copy** (C18): `copy_feed_post_to_venue` creates an independent draft. Media path, pin, approval, publication, schedule, archive and moderation state are **not** copied. Cross-business copy is denied.
+
+**`feed_post_media` / production media upload** remain deferred. The optional storage-path placeholder is venue-scoped and is not rendered as a remote URL.
+
+**Direct social publishing is not in MVP.**
 
 State machine:
 
-```mermaid
-stateDiagram-v2
-    [*] --> draft
-    draft --> pending_approval: submit (staff, or venue requires approval)
-    draft --> scheduled: schedule (publisher)
-    draft --> published: publish (publisher)
-    pending_approval --> draft: rejected with reason
-    pending_approval --> scheduled: approved + scheduled
-    pending_approval --> published: approved + published
-    scheduled --> published: scheduled time reached
-    scheduled --> draft: unscheduled
-    published --> archived: archive / unpublish
-    archived --> draft: restore
+```
+draft → pending_approval → draft (approved or rejected)
+draft → published | scheduled
+published | scheduled → draft (unpublish)
+* → archived → draft (restore)
 ```
 
-- Only `published` posts are publicly readable — enforced in RLS, not only in queries.
-- A post is publicly readable only if it has a translation row for the requested locale or a fallback locale; the fallback chain is in [Multilingual content](#12-multilingual-content).
-- **Direct social publishing is not in MVP.** The model stores share links and optional embed references; it never assumes API access to ingest from or publish to Facebook, Instagram or X.
+- Changing manager-approval never auto-exposes an existing draft.
+- Public cards work without media.
 
 ### 6.3 Events
 
@@ -519,7 +522,7 @@ Every tenant table falls into one of these classes. See [architecture.md](./arch
 
 | Class | Examples | Read | Write |
 | --- | --- | --- | --- |
-| **Public-readable content** | `feed_posts`, `events`, `offers`, `staff_public_profiles`, `current_staff_presence`, `venue_social_links`, `venue_branding`, `venue_text_blocks` | Anonymous role may read **only** rows where the venue is published, the module is entitled **and** enabled, the record is `published`, `platform_quarantined_at IS NULL` (and, for staff, consent is current). **`venue_atmosphere` is not anonymously selectable**; public atmosphere goes through `get_public_venue_atmosphere`. | Members with the relevant action, in that venue only — **excluding** the platform quarantine columns, which no tenant role may write ([section 6.9](#69-platform-moderation-and-quarantine)) |
+| **Public-readable content** | `events`, `offers`, `staff_public_profiles`, `current_staff_presence`, `venue_social_links`, `venue_branding`, `venue_text_blocks` | Anonymous role may read **only** rows where the venue is published, the module is entitled **and** enabled, the record is `published`, `platform_quarantined_at IS NULL` (and, for staff, consent is current). **`venue_atmosphere` and `feed_posts` are not anonymously selectable**; public atmosphere goes through `get_public_venue_atmosphere`, public feed through `list_public_venue_feed` (scheduled rows become visible at query time when `scheduled_for <= now()`). | Members with the relevant action, in that venue only — **excluding** the platform quarantine columns, which no tenant role may write ([section 6.9](#69-platform-moderation-and-quarantine)) |
 | **Public-readable translations** | `venue_translations`, `post_translations`, `event_translations`, `offer_translations` and the other `*_translations` tables of public entities | Anonymous role may read a translation row **only if it may read the parent row**. Policies test the parent's visibility, never just `venue_id` | Whoever may write the parent record |
 | **Tenant-private** | `staff_private_details`, `booking_requests`, `venue_booking_settings`, `invitations`, `notification_preferences` | Members with the relevant action, in that venue/business only. **No anonymous policy exists at all** | Same, action-gated |
 | **Platform-controlled** | `venue_module_entitlements`, `plans`, `plan_modules`, `modules`, `entitlement_sources`, `subscriptions`, `venue_billing_records`, `venue_storage_usage`, `platform_roles`, `trial_extensions` | Tenants may read their **own** subscription, entitlement and quota state (needed to render the admin panel). Reference tables are readable by authenticated users | **Platform only.** No tenant write policy exists |
@@ -592,7 +595,7 @@ Constraints:
 | `venue_social_link_translations` | `venue_social_links` | label |
 | `venue_booking_setting_translations` | `venue_booking_settings` | public notice, auto-reply message |
 | `staff_public_profile_translations` | `staff_public_profiles` | public bio |
-| `post_translations` | `feed_posts` | title, body |
+| `feed_post_translations` | `feed_posts` | title, body |
 | `post_media_translations` | `feed_post_media` | caption |
 | `event_translations` | `events` | title, description |
 | `offer_translations` | `offers` | title, description, terms |
