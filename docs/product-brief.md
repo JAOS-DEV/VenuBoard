@@ -144,13 +144,12 @@ Boundaries that must be respected:
 
 ### 6.3 Feed
 
-- Text posts, images, video
-- States: `draft`, `pending_approval`, `scheduled`, `published`, `archived` (the permitted transitions are in [data-model.md](./data-model.md#62-feed) — approval and scheduling are independent steps, not a fixed sequence)
-- English and Thai content
-- Staff submissions may require manager approval (per-venue setting)
+See [feed.md](./feed.md). Venue-authored plain-text updates, announcements and notices with drafts, approval, scheduled query-time publication, pinning (max three), EN/TH translations and bounded public pagination. **Not** a social network, structured offers, or automatic social-media publishing. Production media upload is deferred.
+
+- States: `draft`, `pending_approval`, `scheduled`, `published`, `archived`
+- English required; Thai optional with English fallback
+- Staff submissions may require manager approval (per-venue feed setting; SQL-authoritative C5)
 - **Direct social publishing is not part of the MVP.**
-- Social **profile links**, **share buttons** and **reliable embeds** may be supported where practical.
-- Do **not** assume Facebook, Instagram or X APIs permit unrestricted feed ingestion; no design may depend on that. See OPEN items in [decisions-and-open-questions.md](./decisions-and-open-questions.md).
 
 ### 6.4 Events and calendar
 

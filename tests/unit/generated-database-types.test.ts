@@ -32,5 +32,7 @@ describe("generated database types", () => {
     expect(source).toContain("staff_public_profiles:");
     expect(source).toContain("list_public_staff_presence");
     expect(source).toContain("create_staff_member_with_profile");
+    expect(source).toContain("feed_posts:");
+    expect(source).toContain("list_public_venue_feed");
   });
 });

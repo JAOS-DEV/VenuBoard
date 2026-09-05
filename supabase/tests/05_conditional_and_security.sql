@@ -156,7 +156,22 @@ SELECT ok(
         'set_venue_atmosphere',
         'clear_venue_atmosphere',
         'update_atmosphere_module_settings',
-        'get_public_venue_atmosphere'
+        'get_public_venue_atmosphere',
+        'create_feed_post',
+        'update_feed_post_draft',
+        'submit_feed_post_for_approval',
+        'approve_feed_post',
+        'reject_feed_post',
+        'publish_feed_post_now',
+        'schedule_feed_post_publication',
+        'unpublish_feed_post',
+        'pin_feed_post',
+        'unpin_feed_post',
+        'archive_feed_post',
+        'restore_feed_post_to_draft',
+        'copy_feed_post_to_venue',
+        'update_feed_module_settings',
+        'list_public_venue_feed'
       )
   ),
   'no SECURITY DEFINER helpers are exposed in public except invitation and permission RPCs'
