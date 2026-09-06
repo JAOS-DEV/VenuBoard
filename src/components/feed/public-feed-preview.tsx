@@ -1,5 +1,7 @@
+import { PublicModuleHeading } from "@/components/patterns/public-module-heading";
 import { Link } from "@/core/i18n/navigation";
 import type { PublicVenueFeedPayload } from "@/core/feed/public-types";
+import { publicVenueUpdatesPath } from "@/core/feed/public-path";
 import { PublicFeedCard } from "./public-feed-card";
 
 interface PublicFeedPreviewProps {
@@ -30,19 +32,20 @@ export function PublicFeedPreview({
   }
 
   const preview = feed.items.slice(0, feed.previewCount);
+  const href = publicVenueUpdatesPath(venueSlug);
 
   return (
     <section className="space-y-3" data-testid="public-feed-preview">
       <div className="flex items-end justify-between gap-3">
-        <h2 className="text-lg font-semibold tracking-tight">
-          {feed.heading ?? headingFallback}
-        </h2>
-        <Link
-          href={`/v/${venueSlug}/updates`}
-          className="min-h-11 text-sm font-medium underline-offset-4 hover:underline"
-        >
-          {viewAllLabel}
-        </Link>
+        <PublicModuleHeading label={headingFallback} heading={feed.heading} />
+        {href !== null ? (
+          <Link
+            href={href}
+            className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {viewAllLabel}
+          </Link>
+        ) : null}
       </div>
       <ul className="space-y-3">
         {preview.map((item) => (

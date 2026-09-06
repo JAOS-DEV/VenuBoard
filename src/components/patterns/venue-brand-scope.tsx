@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import { useTheme } from "@/core/theme/theme-provider";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
 
 import { safeVenueBrandStyle, type VenueBrandColors } from "@/core/ui/branding";

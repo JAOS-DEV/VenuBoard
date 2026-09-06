@@ -181,9 +181,13 @@ See [atmosphere.md](./atmosphere.md). Venue-controlled promotional statuses are 
 
 ### 6.7 Offers and promotions
 
-- Title, description, image, validity dates, terms
-- States: `draft`, `published`, `archived` ("expired" is derived from validity dates, not a stored state)
-- Optional, basic redemption tracking (a counter and simple redemption events) — deliberately simple in MVP
+See [offers.md](./offers.md). Venue-authored plain-text promotions with explicit validity, EN/TH translations, draft/approval/publication controls and query-time public expiry. **Not** checkout, vouchers, redemption tracking, inventory, or a pricing engine. Production media and recurrence are deferred. Publishing is not legal compliance.
+
+- Validity: start-inclusive, end-exclusive, finite `valid_until`
+- States: `draft`, `pending_approval`, `scheduled`, `published`, `archived` (“expired” is derived)
+- English required; Thai optional with English fallback
+- Staff and booking managers have no offer grants; C5 editor publish is SQL-authoritative on the offers approval setting
+- **C18 copy is not authorised for offers**
 
 ### 6.8 Social and contact links
 

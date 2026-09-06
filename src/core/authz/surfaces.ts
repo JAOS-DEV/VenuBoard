@@ -31,6 +31,14 @@ const FEED_ACTIONS = [
   "publish_content",
 ] as const;
 
+const OFFER_ACTIONS = [
+  "create_content",
+  "submit_content_for_approval",
+  "approve_content",
+  "publish_content",
+  "manage_offers",
+] as const;
+
 const EVENT_ACTIONS = [
   "create_content",
   "submit_content_for_approval",
@@ -107,6 +115,16 @@ function hasEventsAccess(actor: AuthenticatedActor): boolean {
   return actor.businessMemberships.length > 0;
 }
 
+function hasOffersAccess(actor: AuthenticatedActor): boolean {
+  const scopes = venueScopes(actor);
+  for (const scope of scopes) {
+    if (OFFER_ACTIONS.some((action) => can(actor, action, scope))) {
+      return true;
+    }
+  }
+  return actor.businessMemberships.length > 0;
+}
+
 function hasBookingsAccess(actor: AuthenticatedActor): boolean {
   const scopes = venueScopes(actor);
   for (const scope of scopes) {
@@ -149,6 +167,7 @@ export function venueAdminNavAccess(actor: Actor): {
   events: boolean;
   feed: boolean;
   bookings: boolean;
+  offers: boolean;
   atmosphere: boolean;
 } {
   if (!isActiveAuthenticatedActor(actor)) {
@@ -158,6 +177,7 @@ export function venueAdminNavAccess(actor: Actor): {
       events: false,
       feed: false,
       bookings: false,
+      offers: false,
       atmosphere: false,
     };
   }
@@ -168,6 +188,7 @@ export function venueAdminNavAccess(actor: Actor): {
     events: hasEventsAccess(actor),
     feed: hasFeedAccess(actor),
     bookings: hasBookingsAccess(actor),
+    offers: hasOffersAccess(actor),
     atmosphere: hasAtmosphereAccess(actor),
   };
 }

@@ -6,6 +6,7 @@ import {
   Inbox,
   MoreHorizontal,
   Newspaper,
+  Tag,
   Users,
   Wind,
 } from "lucide-react";
@@ -17,7 +18,8 @@ import { cn } from "@/lib/utils";
 
 export interface AdminNavItem {
   href: string;
-  key: "home" | "staff" | "events" | "feed" | "bookings" | "atmosphere";
+  key:
+    "home" | "staff" | "events" | "feed" | "bookings" | "offers" | "atmosphere";
 }
 
 interface MobileNavigationProps {
@@ -40,6 +42,7 @@ export function MobileNavigation({
     events: CalendarDays,
     feed: Newspaper,
     bookings: Inbox,
+    offers: Tag,
     atmosphere: Wind,
   } as const;
 

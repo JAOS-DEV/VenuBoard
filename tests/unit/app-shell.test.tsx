@@ -10,7 +10,7 @@ import messages from "../../messages/en.json";
  * not mounted in jsdom. Swapping them for plain anchors keeps this a test of the
  * shell rather than a test of Next.js routing.
  */
-vi.mock("next-themes", () => ({
+vi.mock("@/core/theme/theme-provider", () => ({
   useTheme: () => ({
     theme: "system",
     setTheme: vi.fn(),

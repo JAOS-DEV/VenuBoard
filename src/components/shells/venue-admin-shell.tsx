@@ -19,6 +19,7 @@ interface VenueAdminShellProps {
   showEvents: boolean;
   showFeed: boolean;
   showBookings: boolean;
+  showOffers: boolean;
   showAtmosphere: boolean;
   children: React.ReactNode;
 }
@@ -31,6 +32,7 @@ export function VenueAdminShell({
   showEvents,
   showFeed,
   showBookings,
+  showOffers,
   showAtmosphere,
   children,
 }: VenueAdminShellProps): React.ReactElement {
@@ -48,6 +50,7 @@ export function VenueAdminShell({
     ...(showBookings
       ? [{ href: "/admin/bookings", key: "bookings" as const }]
       : []),
+    ...(showOffers ? [{ href: "/admin/offers", key: "offers" as const }] : []),
     ...(showAtmosphere
       ? [{ href: "/admin/atmosphere", key: "atmosphere" as const }]
       : []),
@@ -61,6 +64,7 @@ export function VenueAdminShell({
     ...(showBookings
       ? [{ href: "/admin/bookings", label: tAdmin("bookings") }]
       : []),
+    ...(showOffers ? [{ href: "/admin/offers", label: tAdmin("offers") }] : []),
     ...(showAtmosphere
       ? [{ href: "/admin/atmosphere", label: tAdmin("atmosphere") }]
       : []),

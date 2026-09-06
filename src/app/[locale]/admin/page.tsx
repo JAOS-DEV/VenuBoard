@@ -111,6 +111,22 @@ export default async function AdminPage({
             variant="secondary"
             className="h-auto w-full justify-start px-4 py-3"
           >
+            <Link href="/admin/offers">
+              <span className="flex flex-col items-start gap-0.5 text-left">
+                <span>{t("offersModule")}</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  {t("offersModuleHelp")}
+                </span>
+              </span>
+            </Link>
+          </Button>
+        </li>
+        <li>
+          <Button
+            asChild
+            variant="secondary"
+            className="h-auto w-full justify-start px-4 py-3"
+          >
             <Link href="/admin/atmosphere">
               <span className="flex flex-col items-start gap-0.5 text-left">
                 <span>{t("atmosphereModule")}</span>

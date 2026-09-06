@@ -1,9 +1,11 @@
 import { getTranslations } from "next-intl/server";
 
 import { PublicBookingForm } from "@/components/booking-requests/public-booking-form";
+import { PublicVenueBackLink } from "@/components/patterns/public-venue-back-link";
 import { VenueBrandScope } from "@/components/patterns/venue-brand-scope";
 import { loadPublicBookingIntake } from "@/core/booking-requests/queries";
 import { resolveRequestLocale } from "@/core/i18n/server";
+import { publicVenueHomePath } from "@/core/public-venue/paths";
 import { loadPublicVenueSnapshot } from "@/core/staff-presence/queries";
 
 export const dynamic = "force-dynamic";
@@ -22,13 +24,19 @@ export default async function PublicEnquirePage({
   const venue = await loadPublicVenueSnapshot(venueSlug);
   const intake = await loadPublicBookingIntake(venueSlug, locale);
   const formLocale = locale === "th" ? "th" : "en";
+  const homeHref = publicVenueHomePath(venueSlug);
+  const venueName =
+    intake.venueName || (venue?.name ?? tVenue("unavailableTitle"));
 
   return (
     <VenueBrandScope branding={venue?.branding ?? null} className="space-y-6">
+      {homeHref !== null ? (
+        <PublicVenueBackLink
+          href={homeHref}
+          label={tVenue("backToVenue", { venueName })}
+        />
+      ) : null}
       <header className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {intake.venueName || (venue?.name ?? tVenue("unavailableTitle"))}
-        </p>
         <h1 className="text-2xl font-semibold tracking-tight">
           {intake.heading ?? t("headingFallback")}
         </h1>

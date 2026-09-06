@@ -1,9 +1,12 @@
 import { getTranslations } from "next-intl/server";
 
 import { PublicFeedList } from "@/components/feed/public-feed-list";
+import { PublicModuleHeading } from "@/components/patterns/public-module-heading";
+import { PublicVenueBackLink } from "@/components/patterns/public-venue-back-link";
 import { VenueBrandScope } from "@/components/patterns/venue-brand-scope";
 import { resolveRequestLocale } from "@/core/i18n/server";
 import { loadPublicVenueFeed } from "@/core/feed/queries";
+import { publicVenueHomePath } from "@/core/public-venue/paths";
 import { loadPublicVenueSnapshot } from "@/core/staff-presence/queries";
 
 export const dynamic = "force-dynamic";
@@ -18,15 +21,26 @@ export default async function PublicFeedPage({
   const { venueSlug } = await params;
   const locale = await resolveRequestLocale(params);
   const t = await getTranslations("feedPublic");
+  const tVenue = await getTranslations("publicVenue");
   const venue = await loadPublicVenueSnapshot(venueSlug);
   const feed = await loadPublicVenueFeed(venueSlug, locale);
+  const homeHref = publicVenueHomePath(venueSlug);
+  const venueName = venue?.name ?? tVenue("unavailableTitle");
 
   return (
     <VenueBrandScope branding={venue?.branding ?? null} className="space-y-6">
+      {homeHref !== null ? (
+        <PublicVenueBackLink
+          href={homeHref}
+          label={tVenue("backToVenue", { venueName })}
+        />
+      ) : null}
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {feed.heading ?? t("headingFallback")}
-        </h1>
+        <PublicModuleHeading
+          as="h1"
+          label={t("headingFallback")}
+          heading={feed.heading}
+        />
         <p className="text-sm text-muted-foreground">{t("intro")}</p>
       </header>
       {venue?.contentClassification === "nightlife_18_plus" ? (

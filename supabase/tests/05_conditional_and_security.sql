@@ -176,7 +176,19 @@ SELECT ok(
         'review_booking_enquiry',
         'close_booking_enquiry',
         'reopen_booking_enquiry',
-        'update_booking_module_settings'
+        'update_booking_module_settings',
+        'create_offer',
+        'update_offer_draft',
+        'submit_offer_for_approval',
+        'approve_offer',
+        'reject_offer',
+        'publish_offer_now',
+        'schedule_offer_publication',
+        'unpublish_offer',
+        'archive_offer',
+        'restore_offer_to_draft',
+        'update_offers_module_settings',
+        'list_public_venue_offers'
       )
   ),
   'no SECURITY DEFINER helpers are exposed in public except invitation and permission RPCs'

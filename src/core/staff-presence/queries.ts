@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { can } from "@/core/authz/can";
 import type { AuthenticatedActor } from "@/core/actors/types";
 import { getSupabaseConnection } from "@/core/db/connection";
@@ -82,55 +84,57 @@ export async function loadPublicStaffCarousel(
   return mapPublicStaffCarousel(data, locale);
 }
 
-export async function loadPublicVenueSnapshot(venueSlug: string): Promise<{
-  id: string;
-  name: string;
-  slug: string;
-  contentClassification: string;
-  branding: {
-    primaryColor: string;
-    backgroundColor: string;
-    textColor: string;
-    accentColor: string;
-  } | null;
-} | null> {
-  if (getSupabaseConnection() === null) {
-    return null;
-  }
+export const loadPublicVenueSnapshot = cache(
+  async function loadPublicVenueSnapshot(venueSlug: string): Promise<{
+    id: string;
+    name: string;
+    slug: string;
+    contentClassification: string;
+    branding: {
+      primaryColor: string;
+      backgroundColor: string;
+      textColor: string;
+      accentColor: string;
+    } | null;
+  } | null> {
+    if (getSupabaseConnection() === null) {
+      return null;
+    }
 
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase
-    .from("venues")
-    .select(
-      "id, name, slug, content_classification, venue_branding ( primary_color, background_color, text_color, accent_color )",
-    )
-    .eq("slug", venueSlug)
-    .maybeSingle();
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("venues")
+      .select(
+        "id, name, slug, content_classification, venue_branding ( primary_color, background_color, text_color, accent_color )",
+      )
+      .eq("slug", venueSlug)
+      .maybeSingle();
 
-  if (error || data === null) {
-    return null;
-  }
+    if (error || data === null) {
+      return null;
+    }
 
-  const branding = Array.isArray(data.venue_branding)
-    ? data.venue_branding[0]
-    : data.venue_branding;
+    const branding = Array.isArray(data.venue_branding)
+      ? data.venue_branding[0]
+      : data.venue_branding;
 
-  return {
-    id: data.id,
-    name: data.name,
-    slug: data.slug,
-    contentClassification: data.content_classification,
-    branding:
-      branding === null || branding === undefined
-        ? null
-        : {
-            primaryColor: branding.primary_color,
-            backgroundColor: branding.background_color,
-            textColor: branding.text_color,
-            accentColor: branding.accent_color,
-          },
-  };
-}
+    return {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      contentClassification: data.content_classification,
+      branding:
+        branding === null || branding === undefined
+          ? null
+          : {
+              primaryColor: branding.primary_color,
+              backgroundColor: branding.background_color,
+              textColor: branding.text_color,
+              accentColor: branding.accent_color,
+            },
+    };
+  },
+);
 
 export async function loadStaffDirectory(
   actor: AuthenticatedActor,

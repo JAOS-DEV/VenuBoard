@@ -1,6 +1,6 @@
 # Conditional permission enforcement (C1–C19)
 
-**Status:** Staff presence module on `feat/staff-presence-module` · **Last updated:** 2026-09-01
+**Status:** Staff presence, events, atmosphere, feed, booking enquiries and offers · **Last updated:** 2026-09-06
 
 This is the enforcement map for the conditional cells in [roles-and-permissions.md §5](../roles-and-permissions.md#5-conditional-rules). It records what the database already enforces, what a future product-module migration must add, and what the application `can(actor, action, scope)` layer will do for UX.
 
@@ -9,7 +9,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 - **The database is the final security boundary** for anyone who can call the Supabase Data API (`anon` / `authenticated`). Browser checks, hidden buttons and Server Action `can()` results must not be the only control for tenant isolation, private-data access, entitlements, platform authority, moderation quarantine, deactivation or privilege escalation.
 - Application `can()` **fails early and improves UX**. It must not replace RLS, `CHECK` constraints, composite foreign keys or invoker triggers.
 - A **conditional** matrix cell is **deny** at RLS until the condition can be evaluated against data that already exists. Treating `grant_kind = 'conditional'` as allow was rejected.
-- Conditions that belong to tables that do not exist yet are **mandatory requirements on those future migrations**. Bookings, offers, domain, analytics and notification tables are still future. Staff presence, events, atmosphere and feed tables exist.
+- Conditions that belong to tables that do not exist yet are **mandatory requirements on those future migrations**. Domain, analytics and notification tables are still future. Staff presence, events, atmosphere, feed, booking enquiries and offers tables exist.
 - Helper: `app_private.effective_tenant_grant`. Allow cells stay allow. Conditional cells call `app_private.conditional_tenant_grant_ok`, which currently returns true only for **C2** (`venue_manager` / `assign_roles`, with table WITH CHECK) and **C13** (`view_audit_log`, with SELECT filters). Every other conditional cell is false.
 
 `can()` tests live in `tests/permissions/can.test.ts`. They are not a substitute for the SQL tests named below.
@@ -54,7 +54,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | Staff may create drafts and submit them; live publishing is a different action. Approval-required is the venue default. |
 | **Tables / actions** | `feed_posts`, `feed_post_translations`; `create_content`, `submit_content_for_approval` |
-| **Enforced now** | Default **deny** for staff `create_content` in the grant helper. Feed RPCs may still allow staff drafts/submit where the events pattern already does; publication remains a different action. Tests: `11_feed.sql`. |
+| **Enforced now** | Default **deny** for staff `create_content` in the grant helper. Feed RPCs may still allow staff drafts/submit where the events pattern already does; publication remains a different action. **Offers do not inherit C4** — staff cannot read, create or submit offers. Tests: `11_feed.sql`, `13_offers.sql`. |
 | **Application `can()`** | Conservative: staff `create_content` stays false. Submit vs publish buttons follow proven actions. |
 | **Negative tests** | Helper is false. Staff cannot publish. `11_feed.sql`. |
 
@@ -63,10 +63,10 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | | |
 | --- | --- |
 | **Purpose** | Allowed by default unless the venue requires manager approval, in which case the editor cannot publish directly. |
-| **Tables / actions** | `events`, `event_translations`, `feed_posts`, `feed_post_translations`; `publish_content`, `manage_events` (offers deferred) |
-| **Enforced now** | **Now enforced for events and feed.** `app_private.may_publish_event` checks `events_require_manager_approval`. Feed publish/schedule RPCs derive `require_manager_approval` from stored **feed** module settings. If true, only manager/owner may publish; editors cannot approve their own post. A draft/translation/type edit clears `approved_at` / `approved_by`, so publication cannot reuse approval of earlier content. The browser cannot send `approvalRequired: false`. `can()` stays conservative for editor `publish_content`. Tests: `09_events.sql`, `11_feed.sql`. |
-| **Application `can()`** | Show/hide Publish from server-fetched `approvalRequired` plus `create_content` / `publish_content`. DB RPC is the final authority. |
-| **Negative tests** | Editor cannot publish at Night Orchid (approval required). Editor can create/submit. Manager/owner can publish. Harbor (approval off) allows editor publication in SQL. An edited approved feed post cannot publish or schedule until the current content is approved again. `09_events.sql`, `11_feed.sql`. |
+| **Tables / actions** | `events`, `event_translations`, `feed_posts`, `feed_post_translations`, `offers`, `offer_translations`; `publish_content`, `manage_events`, `manage_offers` |
+| **Enforced now** | **Now enforced for events, feed and offers.** `app_private.may_publish_event` checks `events_require_manager_approval`. Feed and offer publish/schedule RPCs derive `require_manager_approval` from stored **module-specific** settings. If true, only manager/owner may publish; editors cannot approve their own content. A material draft edit clears `approved_at` / `approved_by`, so publication cannot reuse approval of earlier content. The browser cannot send `approvalRequired: false`. `can()` stays conservative for editor `publish_content` and `manage_offers`. Tests: `09_events.sql`, `11_feed.sql`, `13_offers.sql`. |
+| **Application `can()`** | Show/hide Publish from server-fetched `approvalRequired` plus `create_content` / `publish_content` / `manage_offers`. DB RPC is the final authority. |
+| **Negative tests** | Editor cannot publish at Trial Garden (offers approval required). Editor can create/submit. Manager/owner can publish. Harbor (offers approval off) allows owner publication. An edited approved offer cannot publish or schedule until the current content is approved again. `09_events.sql`, `11_feed.sql`, `13_offers.sql`. |
 
 ### C6 — Atmosphere updates by editor / staff
 
@@ -192,9 +192,9 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | Module actions require entitlement. Visibility toggles cannot create an entitlement. |
 | **Tables / actions** | `venue_module_entitlements` (platform-write); `venue_module_settings`; `reject_unentitled_module_enable` |
-| **Enforced now** | Tenant INSERT on entitlements denied. Enabling a module without entitlement raises `23514`. Night Orchid has an offers **deny** override. Staff writes and `list_public_staff_presence` require `module_is_entitled('staff_presence')`. Booking queue/customer helpers AND `booking_module_entitled`; leftover PII after expiry is not readable. |
+| **Enforced now** | Tenant INSERT on entitlements denied. Enabling a module without entitlement raises `23514`. Night Orchid has an offers **deny** override. Staff writes and `list_public_staff_presence` require `module_is_entitled('staff_presence')`. Booking queue/customer helpers AND `booking_module_entitled`. Offer writes and `list_public_venue_offers` AND `offers_module_entitled`. Leftover PII after booking expiry is not readable. |
 | **Application `can()`** | Disable unentitled module switches. |
-| **Negative tests** | Present: settings INSERT for offers denied; entitlement INSERT denied (`03` and `05`). Staff: draft-room create denied (`08`). |
+| **Negative tests** | Present: settings INSERT for offers denied; entitlement INSERT denied (`03` and `05`). Staff: draft-room create denied (`08`). Offers: Night Orchid public list unavailable (`13_offers.sql`). |
 
 ### C18 — Cross-venue copy
 
@@ -202,7 +202,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | Copying a feed post or event requires authorisation in **both** venues, same business. |
 | **Tables / actions** | `events`, `event_translations`, `feed_posts`, `feed_post_translations`; `copy_event_to_venue`, `copy_feed_post_to_venue` |
-| **Enforced now** | **Now enforced for events and feed.** Source and destination must differ, share `business_id`, and the actor must have `create_content` on both. Destination module must be entitled and writable. Copy is a new private draft. Media/storage paths, pin, approval, publication, schedule, archive and moderation state are not copied. Cross-business copy is denied. **Booking enquiries are not copyable** (no C18 path). Tests: `09_events.sql`, `11_feed.sql`. |
+| **Enforced now** | **Now enforced for events and feed.** Source and destination must differ, share `business_id`, and the actor must have `create_content` on both. Destination module must be entitled and writable. Copy is a new private draft. Media/storage paths, pin, approval, publication, schedule, archive and moderation state are not copied. Cross-business copy is denied. **Booking enquiries and offers are not copyable** (no C18 path; do not generalise C18 to new entities). Tests: `09_events.sql`, `11_feed.sql`. |
 | **Application `can()`** | Destination picker limited to same-business venues where the actor has `create_content`. |
 | **Negative tests** | Same-business copy succeeds (Night Orchid → Trial Garden); cross-business denied. `09_events.sql`, `11_feed.sql`. |
 
