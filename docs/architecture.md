@@ -1,8 +1,8 @@
 # VenuBoard — Architecture
 
-**Status:** Accepted 2026-08-30 — nothing here blocks scaffolding · **Stage:** Authentication, invitations, platform-led onboarding, staff presence, events, atmosphere, feed, and the mobile-first UI foundation · **Last updated:** 2026-09-04
+**Status:** Accepted 2026-08-30 — nothing here blocks scaffolding · **Stage:** Authentication, invitations, platform-led onboarding, staff presence, events, atmosphere, feed, booking enquiries, and the mobile-first UI foundation · **Last updated:** 2026-09-05
 
-This document describes the technical architecture. The foundation schema, RLS, authentication, invitation acceptance, actor resolution, application `can()`, platform-led onboarding, staff presence, events, atmosphere and the **venue feed module** now exist. Remaining product modules (bookings, offers) are not built. Product scope is in [product-brief.md](./product-brief.md), the schema in [data-model.md](./data-model.md), authorisation in [roles-and-permissions.md](./roles-and-permissions.md), authentication in [authentication.md](./authentication.md), and the reasoning and unresolved questions in [decisions-and-open-questions.md](./decisions-and-open-questions.md).
+This document describes the technical architecture. The foundation schema, RLS, authentication, invitation acceptance, actor resolution, application `can()`, platform-led onboarding, staff presence, events, atmosphere, the venue feed and **booking enquiries** now exist. Remaining product modules (offers) are not built. Product scope is in [product-brief.md](./product-brief.md), the schema in [data-model.md](./data-model.md), authorisation in [roles-and-permissions.md](./roles-and-permissions.md), authentication in [authentication.md](./authentication.md), and the reasoning and unresolved questions in [decisions-and-open-questions.md](./decisions-and-open-questions.md).
 
 The foundational decisions — shared multi-tenancy, modular monolith, Next.js and Supabase, defence-in-depth isolation, direct tenant keys, action-based permissions, the entitlement split, staff data separation and the no-custom-code boundary — were **accepted on 2026-08-30** (ADR-001 to ADR-010), along with migrations, testing, routing, support access, deactivation, bookings and content classification (ADR-012, ADR-017, ADR-020, ADR-022 to ADR-025) and the newer records ADR-028 to ADR-038. **No decision in this document is outstanding**; the records still marked proposed are non-blocking preferences ([decisions-and-open-questions.md](./decisions-and-open-questions.md#4-decisions-needed-before-application-scaffolding)).
 
@@ -119,7 +119,7 @@ src/
     staff-presence/
     feed/
     events/
-    bookings/
+    booking-requests/
     atmosphere/
     offers/
     social-links/

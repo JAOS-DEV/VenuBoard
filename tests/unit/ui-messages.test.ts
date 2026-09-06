@@ -22,6 +22,8 @@ describe("design-system messages", () => {
     expect(keysOf(en.atmosphereAdmin)).toEqual(keysOf(th.atmosphereAdmin));
     expect(keysOf(en.feedPublic)).toEqual(keysOf(th.feedPublic));
     expect(keysOf(en.feedAdmin)).toEqual(keysOf(th.feedAdmin));
+    expect(keysOf(en.bookingPublic)).toEqual(keysOf(th.bookingPublic));
+    expect(keysOf(en.bookingAdmin)).toEqual(keysOf(th.bookingAdmin));
   });
 
   it("does not use raw entitlement strings as user copy", () => {

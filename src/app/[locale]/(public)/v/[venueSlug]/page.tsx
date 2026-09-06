@@ -1,11 +1,13 @@
 import { getTranslations } from "next-intl/server";
 
 import { PublicAtmosphereCard } from "@/components/atmosphere/public-atmosphere-card";
+import { PublicBookingCta } from "@/components/booking-requests/public-booking-cta";
 import { PublicFeedPreview } from "@/components/feed/public-feed-preview";
 import { StaffCarousel } from "@/components/staff-presence/staff-carousel";
 import { VenueBrandScope } from "@/components/patterns/venue-brand-scope";
 import { resolveRequestLocale } from "@/core/i18n/server";
 import { loadPublicVenueAtmosphere } from "@/core/atmosphere/queries";
+import { loadPublicBookingIntake } from "@/core/booking-requests/queries";
 import { loadPublicVenueFeed } from "@/core/feed/queries";
 import { atmospherePublicCopyKey } from "@/core/atmosphere/labels";
 import {
@@ -33,10 +35,12 @@ export default async function PublicVenuePage({
   const tStaff = await getTranslations("staffPublic");
   const tAtmosphere = await getTranslations("atmospherePublic");
   const tFeed = await getTranslations("feedPublic");
+  const tBooking = await getTranslations("bookingPublic");
 
   const venue = await loadPublicVenueSnapshot(venueSlug);
   const atmosphere = await loadPublicVenueAtmosphere(venueSlug, locale);
   const feed = await loadPublicVenueFeed(venueSlug, locale);
+  const booking = await loadPublicBookingIntake(venueSlug, locale);
   const carousel = await loadPublicStaffCarousel(venueSlug, locale);
   const eventsUpcoming = await loadPublicVenueUpcomingEvents(venueSlug, locale);
   const eventsArchive = eventsUpcoming.showPastArchive
@@ -93,6 +97,13 @@ export default async function PublicVenuePage({
           notice: tFeed("typeNotice"),
         }}
         pinnedLabel={tFeed("pinned")}
+      />
+
+      <PublicBookingCta
+        intake={booking}
+        headingFallback={tBooking("headingFallback")}
+        ctaLabel={tBooking("cta")}
+        intro={tBooking("intro")}
       />
 
       <StaffCarousel

@@ -127,9 +127,9 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | | |
 | --- | --- |
 | **Purpose** | Platform reads of private personal data only inside an active support session, with a reason, audited. Read-only unless write was granted separately. |
-| **Tables / actions** | `staff_members`; `view_private_staff_data`; future booking tables |
-| **Enforced now** | `staff_members` SELECT uses `may_view_private_staff` (`view_private_staff_data` or `platform_may_read_tenant`). No anonymous policy. Tests in `08_staff_presence.sql`. Booking customer details still future. |
-| **Application `can()`** | Masking-by-default UI (OQ-17 remains open). |
+| **Tables / actions** | `staff_members`; `view_private_staff_data`; `booking_request_contacts`; `view_booking_customer_details` |
+| **Enforced now** | `staff_members` SELECT uses `may_view_private_staff`. `booking_request_contacts` SELECT uses `may_read_booking_customer` (queue access AND tenant `view_booking_customer_details` or `platform_may_read_tenant`). No anonymous policy. Tests in `08_staff_presence.sql` and `12_booking_requests.sql`. |
+| **Application `can()`** | Admin detail passes `canViewCustomer` only; list pages never serialize contacts. Masking-by-default UI remains OQ-17. |
 | **Negative tests** | Admin without a session cannot read harbor `staff_members`. |
 
 ### C12 — Venue manager domain request
@@ -181,7 +181,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | `restricted`: block configuration writes, keep public site. `suspended`: block writes and take the public site down. Reads/exports remain for data retrieval. |
 | **Tables / actions** | `subscriptions.state`; venue writes; public SELECT |
-| **Enforced now** | `subscription_allows_tenant_writes` is trial/active/past_due. `venue_is_publicly_visible` excludes suspended (and worse). Restricted seed venue stays publicly readable. |
+| **Enforced now** | `subscription_allows_tenant_writes` is trial/active/past_due. `venue_is_publicly_visible` excludes suspended (and worse). Restricted seed venue stays publicly readable. Booking public intake ANDs that helper; tenant `manage_bookings` / settings still require writable subscription. |
 | **Future migration** | New tenant-write tables must AND `subscription_allows_tenant_writes`. Export path (C9) must still work in restricted/suspended. |
 | **Application `can()`** | Billing banners. |
 | **Negative tests** | Present: anon reads restricted-room, not silent-room; owner UPDATE of both is zero rows. |
@@ -192,7 +192,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | Module actions require entitlement. Visibility toggles cannot create an entitlement. |
 | **Tables / actions** | `venue_module_entitlements` (platform-write); `venue_module_settings`; `reject_unentitled_module_enable` |
-| **Enforced now** | Tenant INSERT on entitlements denied. Enabling a module without entitlement raises `23514`. Night Orchid has an offers **deny** override. Staff writes and `list_public_staff_presence` require `module_is_entitled('staff_presence')`. |
+| **Enforced now** | Tenant INSERT on entitlements denied. Enabling a module without entitlement raises `23514`. Night Orchid has an offers **deny** override. Staff writes and `list_public_staff_presence` require `module_is_entitled('staff_presence')`. Booking queue/customer helpers AND `booking_module_entitled`; leftover PII after expiry is not readable. |
 | **Application `can()`** | Disable unentitled module switches. |
 | **Negative tests** | Present: settings INSERT for offers denied; entitlement INSERT denied (`03` and `05`). Staff: draft-room create denied (`08`). |
 
@@ -202,7 +202,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | Copying a feed post or event requires authorisation in **both** venues, same business. |
 | **Tables / actions** | `events`, `event_translations`, `feed_posts`, `feed_post_translations`; `copy_event_to_venue`, `copy_feed_post_to_venue` |
-| **Enforced now** | **Now enforced for events and feed.** Source and destination must differ, share `business_id`, and the actor must have `create_content` on both. Destination module must be entitled and writable. Copy is a new private draft. Media/storage paths, pin, approval, publication, schedule, archive and moderation state are not copied. Cross-business copy is denied. Tests: `09_events.sql`, `11_feed.sql`. |
+| **Enforced now** | **Now enforced for events and feed.** Source and destination must differ, share `business_id`, and the actor must have `create_content` on both. Destination module must be entitled and writable. Copy is a new private draft. Media/storage paths, pin, approval, publication, schedule, archive and moderation state are not copied. Cross-business copy is denied. **Booking enquiries are not copyable** (no C18 path). Tests: `09_events.sql`, `11_feed.sql`. |
 | **Application `can()`** | Destination picker limited to same-business venues where the actor has `create_content`. |
 | **Negative tests** | Same-business copy succeeds (Night Orchid → Trial Garden); cross-business denied. `09_events.sql`, `11_feed.sql`. |
 
@@ -212,7 +212,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | Tenant-content writes (`manage_business`, `manage_venue`, branding, invite, assign_roles, public staff profiles) need an active support session with **write** access. Platform records (`manage_platform_tenants`, entitlements, platform users, domain verification) do not. `moderate_content` is excluded (ADR-036). |
 | **Tables / actions** | `venues`, `businesses`, `invitations`, `venue_memberships`, translations; `support_sessions` |
-| **Enforced now** | `protect_venue_platform_columns` and `protect_business_tenant_content` reject profile-field changes unless `platform_may_write_tenant`. Invitations INSERT and venue membership writes no longer accept `manage_platform_tenants` alone. Classification lock remains a platform record. First-owner business/venue **create** via `manage_platform_tenants` remains for operator onboarding. Staff profile writes use `may_manage_public_staff_profiles` (includes write session). Presence toggles are **not** a C19 tenant-write cell. |
+| **Enforced now** | `protect_venue_platform_columns` and `protect_business_tenant_content` reject profile-field changes unless `platform_may_write_tenant`. Invitations INSERT and venue membership writes no longer accept `manage_platform_tenants` alone. Classification lock remains a platform record. First-owner business/venue **create** via `manage_platform_tenants` remains for operator onboarding. Staff profile writes use `may_manage_public_staff_profiles` (includes write session). Presence toggles are **not** a C19 tenant-write cell. Booking workflow and module settings use `may_manage_bookings` / `may_configure_booking_module` (`platform_may_write_tenant`). `manage_bookings` is a tenant write action in `can()`. |
 | **Future migration** | Domain verification columns: content vs platform-record split must follow this same rule. |
 | **Application `can()`** | Support banner; disable tenant edits outside write mode. |
 | **Negative tests** | Present: admin cannot rename harbor venue/business, invite, or assign without a session; can lock classification; can edit city inside a live write session created in the test transaction. Staff: create without session forbidden; create with write session allowed; presence toggle still forbidden (`08`). |
@@ -229,6 +229,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | `subscription_allows_tenant_writes` / `venue_is_publicly_visible` | C16 |
 | `module_is_entitled` / `reject_unentitled_module_enable` | C17 |
 | `may_set_staff_presence` / `may_manage_public_staff_profiles` / `may_view_private_staff` | C3, C11, C14, C19 |
+| `may_read_booking_queue` / `may_read_booking_customer` / `may_manage_bookings` / `booking_public_intake_open` | C11, C16, C17, C19 |
 | `apply_venue_moderation` | ADR-036; `authenticated` only, not `anon` |
 
 ## What `can()` must never be trusted for

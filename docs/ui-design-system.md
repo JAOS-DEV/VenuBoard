@@ -47,7 +47,7 @@ Public venue pages may overlay `--venue-accent` and `--venue-primary`. Core text
 | Surface | Mobile | Larger screens |
 | --- | --- | --- |
 | Public venue | Compact customer header (identity, theme, language, account). No admin/platform/dev destinations. | Same information architecture |
-| Venue admin | Bottom nav (`md:hidden`): Home / Staff / Events / Updates / Atmosphere / More, including only authorised destinations. More opens a sheet. Sign-out is not in the tab bar. | Compact header surface list (`hidden md:block`). CSS visibility is not authorisation; `venueAdminNavAccess` / `can()` still decide which items exist. |
+| Venue admin | Bottom nav (`md:hidden`): Home / Staff / Events / Updates / Enquiries / Atmosphere / More, including only authorised destinations. More opens a sheet. Sign-out is not in the tab bar. | Compact header surface list (`hidden md:block`). CSS visibility is not authorisation; `venueAdminNavAccess` / `can()` still decide which items exist. |
 | Platform | Compact header + drawer | Header nav: overview, onboard (if allowed) |
 | Auth | Compact header, centred card | Same |
 | Developer hub | Local-only compact utility chrome | Tabs for accounts, services, commands |

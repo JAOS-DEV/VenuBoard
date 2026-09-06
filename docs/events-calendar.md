@@ -190,7 +190,7 @@ Poster image upload is deferred. The `poster_storage_path` column accepts a rela
 
 ## Ticketing / payments / bookings (deferred)
 
-Events have no ticket inventory, pricing, or payment logic in this version. The `view_bookings` and `manage_bookings` actions in the permission catalogue are for a future bookings module.
+Events have no ticket inventory, pricing, or payment logic in this version. Booking enquiries are a separate module (`booking_requests`); see [booking-enquiries.md](./booking-enquiries.md).
 
 ---
 

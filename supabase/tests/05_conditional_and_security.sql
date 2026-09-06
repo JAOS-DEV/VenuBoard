@@ -171,7 +171,12 @@ SELECT ok(
         'restore_feed_post_to_draft',
         'copy_feed_post_to_venue',
         'update_feed_module_settings',
-        'list_public_venue_feed'
+        'list_public_venue_feed',
+        'submit_booking_enquiry',
+        'review_booking_enquiry',
+        'close_booking_enquiry',
+        'reopen_booking_enquiry',
+        'update_booking_module_settings'
       )
   ),
   'no SECURITY DEFINER helpers are exposed in public except invitation and permission RPCs'

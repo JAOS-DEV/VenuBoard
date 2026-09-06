@@ -133,6 +133,229 @@ export type Database = {
           },
         ];
       };
+      booking_intake_idempotency: {
+        Row: {
+          created_at: string;
+          expires_at: string;
+          id: string;
+          key_hash: string;
+          payload_hash: string;
+          venue_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          expires_at: string;
+          id?: string;
+          key_hash: string;
+          payload_hash: string;
+          venue_id: string;
+        };
+        Update: {
+          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          key_hash?: string;
+          payload_hash?: string;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_intake_idempotency_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      booking_intake_windows: {
+        Row: {
+          submission_count: number;
+          venue_id: string;
+          window_start: string;
+        };
+        Insert: {
+          submission_count: number;
+          venue_id: string;
+          window_start: string;
+        };
+        Update: {
+          submission_count?: number;
+          venue_id?: string;
+          window_start?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_intake_windows_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      booking_request_contacts: {
+        Row: {
+          booking_request_id: string;
+          created_at: string;
+          customer_display_name: string;
+          customer_email: string;
+          customer_message: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          booking_request_id: string;
+          created_at?: string;
+          customer_display_name: string;
+          customer_email: string;
+          customer_message?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          booking_request_id?: string;
+          created_at?: string;
+          customer_display_name?: string;
+          customer_email?: string;
+          customer_message?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_request_contacts_parent_fkey";
+            columns: ["booking_request_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_requests";
+            referencedColumns: ["id", "venue_id"];
+          },
+        ];
+      };
+      booking_request_events: {
+        Row: {
+          action: string;
+          actor_user_id: string | null;
+          booking_request_id: string;
+          closure_outcome: string | null;
+          created_at: string;
+          from_state: string | null;
+          id: string;
+          to_state: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          action: string;
+          actor_user_id?: string | null;
+          booking_request_id: string;
+          closure_outcome?: string | null;
+          created_at?: string;
+          from_state?: string | null;
+          id?: string;
+          to_state?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          action?: string;
+          actor_user_id?: string | null;
+          booking_request_id?: string;
+          closure_outcome?: string | null;
+          created_at?: string;
+          from_state?: string | null;
+          id?: string;
+          to_state?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_request_events_parent_fkey";
+            columns: ["booking_request_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_requests";
+            referencedColumns: ["id", "venue_id"];
+          },
+        ];
+      };
+      booking_requests: {
+        Row: {
+          business_id: string;
+          closed_at: string | null;
+          closed_by: string | null;
+          closure_outcome: string | null;
+          created_at: string;
+          id: string;
+          locale: string;
+          party_size: number;
+          requested_for: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          row_version: number;
+          state: string;
+          updated_at: string;
+          venue_id: string;
+        };
+        Insert: {
+          business_id: string;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          closure_outcome?: string | null;
+          created_at?: string;
+          id?: string;
+          locale?: string;
+          party_size: number;
+          requested_for: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          row_version?: number;
+          state?: string;
+          updated_at?: string;
+          venue_id: string;
+        };
+        Update: {
+          business_id?: string;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          closure_outcome?: string | null;
+          created_at?: string;
+          id?: string;
+          locale?: string;
+          party_size?: number;
+          requested_for?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          row_version?: number;
+          state?: string;
+          updated_at?: string;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_requests_closed_by_fkey";
+            columns: ["closed_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "booking_requests_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "booking_requests_venue_business_fkey";
+            columns: ["venue_id", "business_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id", "business_id"];
+          },
+          {
+            foreignKeyName: "booking_requests_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       branding_fonts: {
         Row: {
           key: string;
@@ -2589,6 +2812,14 @@ export type Database = {
         Returns: Json;
       };
       clear_venue_atmosphere: { Args: { p_venue_id: string }; Returns: Json };
+      close_booking_enquiry: {
+        Args: {
+          p_enquiry_id: string;
+          p_expected_row_version: number;
+          p_outcome: string;
+        };
+        Returns: Json;
+      };
       copy_event_to_venue: {
         Args: { p_destination_venue_id: string; p_event_id: string };
         Returns: Json;
@@ -2672,6 +2903,10 @@ export type Database = {
         Args: { p_post_id: string; p_reason: string };
         Returns: Json;
       };
+      reopen_booking_enquiry: {
+        Args: { p_enquiry_id: string; p_expected_row_version: number };
+        Returns: Json;
+      };
       restore_event_to_draft: { Args: { p_event_id: string }; Returns: Json };
       restore_feed_post_to_draft: {
         Args: { p_post_id: string };
@@ -2679,6 +2914,10 @@ export type Database = {
       };
       restore_staff_member: {
         Args: { p_staff_member_id: string };
+        Returns: Json;
+      };
+      review_booking_enquiry: {
+        Args: { p_enquiry_id: string; p_expected_row_version: number };
         Returns: Json;
       };
       schedule_event_publication: {
@@ -2701,6 +2940,10 @@ export type Database = {
         Args: { p_expiry_minutes: number; p_state: string; p_venue_id: string };
         Returns: Json;
       };
+      submit_booking_enquiry: {
+        Args: { p_payload: Json; p_venue_slug: string };
+        Returns: Json;
+      };
       submit_event_for_approval: {
         Args: { p_event_id: string };
         Returns: Json;
@@ -2712,6 +2955,10 @@ export type Database = {
       unpin_feed_post: { Args: { p_post_id: string }; Returns: Json };
       unpublish_feed_post: { Args: { p_post_id: string }; Returns: Json };
       update_atmosphere_module_settings: {
+        Args: { p_payload: Json; p_venue_id: string };
+        Returns: Json;
+      };
+      update_booking_module_settings: {
         Args: { p_payload: Json; p_venue_id: string };
         Returns: Json;
       };

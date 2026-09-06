@@ -34,5 +34,9 @@ describe("generated database types", () => {
     expect(source).toContain("create_staff_member_with_profile");
     expect(source).toContain("feed_posts:");
     expect(source).toContain("list_public_venue_feed");
+    expect(source).toContain("booking_requests:");
+    expect(source).toContain("booking_request_contacts:");
+    expect(source).toContain("submit_booking_enquiry");
+    expect(source).toContain("review_booking_enquiry");
   });
 });

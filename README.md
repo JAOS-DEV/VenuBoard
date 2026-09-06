@@ -2,7 +2,7 @@
 
 **A modular, multi-tenant, white-label website and management platform for venues.**
 
-> **Repository status: application scaffold plus foundation schema, authentication, invitations, platform-led onboarding, staff presence, events, live atmosphere, and the venue feed/content module.** The Next.js App Router shell, locale routing, environment validation, local Supabase, PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS, staff presence, events, atmosphere, feed), invitation acceptance, actor resolution, `can()`, the platform onboarding wizard/RPC, venue-admin staff/events/atmosphere/feed management, public venue modules, and pgTAP tests exist. **Remaining product modules are not implemented** — no bookings, offers, analytics UI, notifications, media uploads or support-session UI.
+> **Repository status: application scaffold plus foundation schema, authentication, invitations, platform-led onboarding, staff presence, events, live atmosphere, the venue feed, and booking enquiries.** The Next.js App Router shell, locale routing, environment validation, local Supabase, PostgreSQL migrations (tenants, memberships, permissions, entitlements, RLS, staff presence, events, atmosphere, feed, booking enquiries), invitation acceptance, actor resolution, `can()`, the platform onboarding wizard/RPC, venue-admin staff/events/atmosphere/feed/enquiry management, public venue modules, and pgTAP tests exist. **Remaining product modules are not implemented** — no offers, analytics UI, notifications, media uploads or support-session UI.
 >
 > **Decision status (2026-08-30):** all scaffolding ADRs are accepted. Remaining work is split into [launch blockers](./docs/decisions-and-open-questions.md#42-launch-blockers--required-before-production-not-before-code) and [feature-specific decisions](./docs/decisions-and-open-questions.md#43-feature-specific-decisions--required-before-the-feature-not-before-the-scaffold). The first-schema obligations are in [section 4.1](./docs/decisions-and-open-questions.md#41-obligations-on-the-first-implementation).
 
@@ -153,15 +153,19 @@ Reproduce the RLS performance baseline with `npm run db:perf:seed` then `npm run
 
 ## Testing
 
+During implementation, run **targeted** Vitest files, Playwright specs, and the relevant pgTAP file. Do not run every suite or a production build after each minor edit. At feature completion, run **one** full verification pass (`format:check`, lint, typecheck, `test:ci`, `build`, `db:test` / types check as applicable, and the relevant Playwright projects). If that pass finds a bug, rerun affected checks; broaden only when the fix touches shared authz, database security, environment handling, or cross-application infrastructure. Report current totals separately from earlier runs. Never weaken assertions to go green. Tests must not assume shared local data still equals the original seed.
+
 - **Unit:** Vitest + React Testing Library. Environment validation, the production destructive-operation guard, the application shell, and a check that generated database types are not the scaffold placeholder.
 - **SQL (local Docker and GitHub Actions):** `npm run db:test`. pgTAP: structural integrity, composite tenant keys, RLS denied behaviour, permission catalogue, C1–C19 foundation enforcement. `.github/workflows/database.yml` starts repository-local Supabase, resets, tests, and checks generated types. No hosted project. The large performance fixture is not part of CI.
-- **End-to-end:** Playwright, Chromium only. Smoke-tests the public placeholder. Not in CI until the preview and test-database strategy is accepted (OQ-38).
-- **Isolation and permissions (application):** still to be written in `tests/isolation` and `tests/permissions` once `can()` and auth exist. Those checks fail early; they do not replace `supabase/tests/`.
+- **End-to-end:** Playwright, Chromium only. Smoke-tests the public placeholder. Not in CI until the preview and test-database strategy is accepted (OQ-38). Playwright starts its own Next.js servers; leave the ordinary `local:start` app running for manual testing.
+- **Isolation and permissions (application):** `can()` coverage lives in `tests/permissions`. Tenant isolation still belongs in `supabase/tests/` first. Those checks fail early; they do not replace SQL tests.
 
 ```bash
 npm run test:ci
 npm run test:e2e          # after `npm run test:e2e:install` if Chromium is missing
 ```
+
+Do not reset or reseed the shared local database without explicit permission. CI still starts, resets, and stops its own stack.
 
 ## Formatting
 

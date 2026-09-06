@@ -3,6 +3,7 @@
 import {
   CalendarDays,
   House,
+  Inbox,
   MoreHorizontal,
   Newspaper,
   Users,
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 export interface AdminNavItem {
   href: string;
-  key: "home" | "staff" | "events" | "feed" | "atmosphere";
+  key: "home" | "staff" | "events" | "feed" | "bookings" | "atmosphere";
 }
 
 interface MobileNavigationProps {
@@ -38,6 +39,7 @@ export function MobileNavigation({
     staff: Users,
     events: CalendarDays,
     feed: Newspaper,
+    bookings: Inbox,
     atmosphere: Wind,
   } as const;
 

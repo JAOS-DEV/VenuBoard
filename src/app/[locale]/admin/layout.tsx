@@ -46,6 +46,7 @@ export default async function AdminLayout({
       showStaff={nav.staff}
       showEvents={nav.events}
       showFeed={nav.feed}
+      showBookings={nav.bookings}
       showAtmosphere={nav.atmosphere}
     >
       {children}

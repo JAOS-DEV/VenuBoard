@@ -1,10 +1,10 @@
 # VenuBoard — Data Model
 
-**Status:** Reflects the decisions accepted on 2026-08-30 · **Stage:** Foundation schema plus platform-led onboarding · **Last updated:** 2026-09-01
+**Status:** Reflects the decisions accepted on 2026-08-30 · **Stage:** Foundation schema plus implemented modules · **Last updated:** 2026-09-05
 
 This document describes the conceptual data model: the tenant hierarchy, the entities each module needs, how multilingual content is stored, how public and private data are separated, and how Row Level Security is expected to scope every tenant-owned record.
 
-This is a **design document, not a schema dump**. Column lists are indicative. Staff presence, events, and atmosphere are implemented; see [staff-presence.md](./staff-presence.md), [events-calendar.md](./events-calendar.md), and [atmosphere.md](./atmosphere.md).
+This is a **design document, not a schema dump**. Column lists are indicative. Staff presence, events, atmosphere, feed and booking enquiries are implemented; see [staff-presence.md](./staff-presence.md), [events-calendar.md](./events-calendar.md), [atmosphere.md](./atmosphere.md), [feed.md](./feed.md) and [booking-enquiries.md](./booking-enquiries.md).
 
 Related: [product-brief.md](./product-brief.md) · [architecture.md](./architecture.md) · [roles-and-permissions.md](./roles-and-permissions.md) · [staff-presence.md](./staff-presence.md) · [atmosphere.md](./atmosphere.md)
 
@@ -349,23 +349,31 @@ published | scheduled → draft (unpublish)
 
 ### 6.4 Booking requests
 
-**`booking_requests`** — `id`, `venue_id`, `reference`, `customer_name`, `customer_phone`, `customer_email`, `customer_line_id`, `party_size`, `requested_for` (timestamp), `requested_duration_minutes`, `customer_message`, `state`, `assigned_to_user_id`, `internal_notes`, `decline_reason`, `source` (`text CHECK (source IN ('public_site','admin_entered'))`), `created_at`, `updated_at`
+> **Now implemented as an enquiry queue, narrower than the earlier sketch.** See [booking-enquiries.md](./booking-enquiries.md). This is not a reservation engine (ADR-024).
 
-- `state` is `text CHECK (state IN ('new','in_review','accepted','declined','cancelled_by_customer','no_show','completed'))`.
+**`booking_requests`** — queue row: `id`, `venue_id`, `business_id` (composite FK to `venues`, ADR-037), `locale` (`en`/`th`), `party_size`, `requested_for` (timestamptz), `state`, `closure_outcome`, `row_version`, `reviewed_at`, `reviewed_by`, `closed_at`, `closed_by`, timestamps. **No customer PII columns.**
 
-**`booking_request_events`** (append-only) — `id`, `booking_request_id`, `venue_id`, `from_state`, `to_state`, `changed_by`, `changed_at`, `note`, `assignment_change`
+- `state` is `text CHECK (state IN ('new','in_review','closed'))`.
+- `closure_outcome` is null unless `closed`, then `handled`, `declined`, `duplicate`, `spam` or `withdrawn`.
+- `handled` means the venue recorded handling. It is not a confirmed booking.
 
-**`venue_booking_settings`** — `venue_id`, `is_accepting_requests`, `lead_time_minutes`, `max_party_size`, `required_fields`, `response_target_minutes`. Translated fields: **`venue_booking_setting_translations`** (public notice and auto-reply message).
+**`booking_request_contacts`** — `booking_request_id`, `venue_id`, `customer_display_name`, `customer_email`, `customer_message`. SELECT only with `view_booking_customer_details` (C11 for platform). No phone or LINE in this milestone.
+
+**`booking_request_events`** — append-only: `action` (`created`,`reviewed`,`closed`,`reopened`), `from_state`, `to_state`, `closure_outcome`, `actor_user_id`. Identifiers and state only. `ON DELETE RESTRICT`.
+
+**`booking_intake_idempotency`** — `venue_id`, `key_hash`, `payload_hash` (64 hex), 24h expiry. Unique `(venue_id, key_hash)`.
+
+**`booking_intake_windows`** — atomic hourly counts, max 30 submissions per venue per hour.
+
+Settings live in **`venue_module_settings`** (`module_key = 'booking_requests'`) plus **`venue_module_setting_translations.public_heading`**. JSON: `accepting_enquiries`, `min_party_size`, `max_party_size`, `horizon_days`, `lead_time_minutes`, `instructions_en`, `instructions_th`.
 
 Rules reflected in the model:
 
-- **No real-time table inventory and no deposits in MVP.** There is no inventory, table, or payment entity. A request is an enquiry that a human accepts or declines.
-- `customer_*` fields and `customer_message` are **restricted**: readable only with `view_booking_customer_details` (see [roles-and-permissions.md](./roles-and-permissions.md#8-public-and-private-data-access)).
-- Customer-supplied text is **never translated**; it is stored as submitted.
-- `internal_notes` is never publicly readable.
-- **Reassignment is required** when an assigned employee is deactivated; deactivation is blocked until open bookings are reassigned.
-- Full status history is retained in `booking_request_events`, including who changed what and when.
-- Retention of customer contact data after a booking concludes is undecided (OQ-22).
+- **No inventory, tables, deposits, assignment, internal notes or C18 copy.**
+- Customer text is stored as submitted and never translated.
+- History never stores names, emails or messages.
+- After entitlement expiry, queue and contact reads stay denied (C17). Retention after close is OQ-22.
+- Public intake is `submit_booking_enquiry` (service_role only). Hosted production/staging application intake is fail-closed until an abuse-control provider is accepted.
 
 ### 6.5 Atmosphere
 
@@ -496,7 +504,7 @@ These change only through a reviewed migration that alters one constraint.
 | Feed post state | `feed_posts.state` | `draft`, `pending_approval`, `scheduled`, `published`, `archived` |
 | Event state | `events.state` | `draft`, `scheduled`, `published`, `cancelled`, `archived` |
 | Offer state | `offers.state` | `draft`, `published`, `archived` |
-| Booking state | `booking_requests.state` | `new`, `in_review`, `accepted`, `declined`, `cancelled_by_customer`, `no_show`, `completed` |
+| Booking state | `booking_requests.state` | `new`, `in_review`, `closed` |
 | Invitation state | `invitations.state` | `pending`, `accepted`, `expired`, `revoked` |
 | Presence state | `current_staff_presence.state` | `present`, `not_present` |
 | Atmosphere state | `venue_atmosphere.atmosphere_state` | `calm`, `social`, `lively`, `high_energy` |
@@ -524,7 +532,7 @@ Every tenant table falls into one of these classes. See [architecture.md](./arch
 | --- | --- | --- | --- |
 | **Public-readable content** | `events`, `offers`, `staff_public_profiles`, `current_staff_presence`, `venue_social_links`, `venue_branding`, `venue_text_blocks` | Anonymous role may read **only** rows where the venue is published, the module is entitled **and** enabled, the record is `published`, `platform_quarantined_at IS NULL` (and, for staff, consent is current). **`venue_atmosphere` and `feed_posts` are not anonymously selectable**; public atmosphere goes through `get_public_venue_atmosphere`, public feed through `list_public_venue_feed` (scheduled rows become visible at query time when `scheduled_for <= now()`). | Members with the relevant action, in that venue only — **excluding** the platform quarantine columns, which no tenant role may write ([section 6.9](#69-platform-moderation-and-quarantine)) |
 | **Public-readable translations** | `venue_translations`, `post_translations`, `event_translations`, `offer_translations` and the other `*_translations` tables of public entities | Anonymous role may read a translation row **only if it may read the parent row**. Policies test the parent's visibility, never just `venue_id` | Whoever may write the parent record |
-| **Tenant-private** | `staff_private_details`, `booking_requests`, `venue_booking_settings`, `invitations`, `notification_preferences` | Members with the relevant action, in that venue/business only. **No anonymous policy exists at all** | Same, action-gated |
+| **Tenant-private** | `staff_private_details`, `booking_requests`, `booking_request_contacts`, `booking_request_events`, `invitations`, `notification_preferences` | Members with the relevant action, in that venue/business only. **No anonymous policy exists at all** | Same, action-gated |
 | **Platform-controlled** | `venue_module_entitlements`, `plans`, `plan_modules`, `modules`, `entitlement_sources`, `subscriptions`, `venue_billing_records`, `venue_storage_usage`, `platform_roles`, `trial_extensions` | Tenants may read their **own** subscription, entitlement and quota state (needed to render the admin panel). Reference tables are readable by authenticated users | **Platform only.** No tenant write policy exists |
 | **Append-only records** | `audit_log`, `booking_request_events`, `staff_presence_events`, `analytics_events`, `consent_log` | Scoped read per action; audit read is narrow | Insert only; no update or delete policy for any role |
 | **Platform append-only** | `moderation_actions` | Platform roles read all; a venue may read the entries affecting its own records (subject to OQ-15) | **Insert only, `platform_admin` only.** No tenant write policy, no update or delete policy for anyone |

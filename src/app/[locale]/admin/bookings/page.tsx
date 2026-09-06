@@ -1,0 +1,285 @@
+import { Eye } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+
+import { BookingSettingsForm } from "@/components/booking-requests/booking-settings-form";
+import { FilterBar } from "@/components/patterns/filter-bar";
+import { ModuleUnavailableState } from "@/components/patterns/module-unavailable-state";
+import { PageHeader } from "@/components/patterns/page-header";
+import { ResponsiveFilterControls } from "@/components/patterns/responsive-filter-controls";
+import { StatusBadge } from "@/components/patterns/status-badge";
+import { VenueScopeForm } from "@/components/staff-presence/venue-scope-form";
+import { Button } from "@/components/ui/button";
+import { resolveRequestActor } from "@/core/actors/resolve";
+import { isActiveAuthenticatedActor } from "@/core/actors/types";
+import { can } from "@/core/authz/can";
+import {
+  bookingOutcomeCopyKey,
+  bookingStateBadgeVariant,
+  bookingStateCopyKey,
+  formatVenueLocalDateTime,
+} from "@/core/booking-requests/labels";
+import { publicVenueEnquirePath } from "@/core/booking-requests/public-path";
+import { loadAdminBookings } from "@/core/booking-requests/queries";
+import { Link } from "@/core/i18n/navigation";
+import { resolveRequestLocale } from "@/core/i18n/server";
+import { listAdminVenues } from "@/core/staff-presence/queries";
+import { moduleAvailabilityCopyKey } from "@/core/ui/status";
+
+export const dynamic = "force-dynamic";
+
+interface AdminBookingsPageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ filter?: string }>;
+}
+
+export default async function AdminBookingsPage({
+  params,
+  searchParams,
+}: AdminBookingsPageProps): Promise<React.ReactElement> {
+  const locale = await resolveRequestLocale(params);
+  const { filter } = await searchParams;
+  const actor = await resolveRequestActor({ memberships: "own" });
+  const t = await getTranslations("bookingAdmin");
+  const tStatus = await getTranslations("status");
+  const displayLocale = locale === "th" ? "th" : "en";
+
+  if (!isActiveAuthenticatedActor(actor)) {
+    return <p>{t("unavailable")}</p>;
+  }
+
+  const venues = await listAdminVenues(actor);
+  const current =
+    venues.find((row) => row.id === actor.currentVenueId) ?? venues[0];
+
+  if (current === undefined) {
+    return <p>{t("noVenue")}</p>;
+  }
+
+  const scope = {
+    type: "venue" as const,
+    venueId: current.id,
+    businessId: current.businessId,
+  };
+  const canView = can(actor, "view_bookings", scope);
+  const canManage = can(actor, "manage_bookings", scope);
+  const canViewCustomer = can(actor, "view_booking_customer_details", scope);
+  const canConfigure = can(actor, "manage_venue_module_visibility", scope);
+  const hasAnyAccess = canView || canManage || canViewCustomer || canConfigure;
+
+  if (!hasAnyAccess) {
+    return <p>{t("noAccess")}</p>;
+  }
+
+  const data = await loadAdminBookings(current.id, filter);
+  const moduleOk =
+    data.moduleState === "enabled" ||
+    data.moduleState === "trial" ||
+    data.moduleState === "paused";
+  const writesBlocked =
+    data.moduleState === "restricted" || data.moduleState === "suspended";
+  const availabilityKey = moduleAvailabilityCopyKey(
+    data.moduleState === "paused" ? "entitled_disabled" : data.moduleState,
+  );
+  const availabilityLabel =
+    data.moduleState === "paused"
+      ? t("statePaused")
+      : availabilityKey === "notEntitled"
+        ? t("stateNotEntitled")
+        : availabilityKey === "moduleDisabled"
+          ? t("stateDisabled")
+          : availabilityKey === "trialExpired"
+            ? t("stateExpired")
+            : availabilityKey === "temporarilyUnavailable"
+              ? t("stateUnavailable")
+              : availabilityKey === "trial"
+                ? t("stateTrial")
+                : tStatus("enabled");
+
+  const stateHref = (nextFilter: string): string => {
+    if (nextFilter === "all") {
+      return "/admin/bookings";
+    }
+    return `/admin/bookings?filter=${nextFilter}`;
+  };
+
+  const statusValue =
+    filter === "new" || filter === "in_review" || filter === "closed"
+      ? filter
+      : "all";
+  const publicEnquireHref = publicVenueEnquirePath(current.slug);
+  const canOpenDetail = canView || canManage || canViewCustomer;
+
+  return (
+    <div
+      className="space-y-5"
+      data-testid="booking-admin"
+      data-venue-id={current.id}
+    >
+      <PageHeader
+        title={t("title")}
+        description={t("intro")}
+        actions={
+          publicEnquireHref !== null ? (
+            <Button
+              asChild
+              variant="outline"
+              className="min-h-11 w-full sm:w-auto"
+            >
+              <Link href={publicEnquireHref}>{t("viewPublic")}</Link>
+            </Button>
+          ) : null
+        }
+      />
+      {venues.length > 1 ? (
+        <VenueScopeForm
+          venues={venues}
+          currentVenueId={current.id}
+          label={t("venueSelector")}
+          submitLabel={t("useVenue")}
+        />
+      ) : null}
+      {!moduleOk ? (
+        <ModuleUnavailableState
+          title={availabilityLabel}
+          description={
+            data.moduleState === "not_entitled"
+              ? t("stateNotEntitledHelp")
+              : data.moduleState === "entitled_disabled"
+                ? t("stateDisabledHelp")
+                : writesBlocked
+                  ? t("readOnly")
+                  : t("stateUnavailable")
+          }
+        />
+      ) : (
+        <>
+          {data.moduleState === "paused" ? (
+            <p className="text-sm text-muted-foreground">
+              {t("statePausedHelp")}
+            </p>
+          ) : null}
+          <ResponsiveFilterControls
+            fields={[
+              {
+                id: "booking-status-filter",
+                label: t("filterStatus"),
+                value: statusValue,
+                options: [
+                  {
+                    value: "all",
+                    label: t("filterAll"),
+                    href: stateHref("all"),
+                  },
+                  {
+                    value: "new",
+                    label: t("filterNew"),
+                    href: stateHref("new"),
+                  },
+                  {
+                    value: "in_review",
+                    label: t("filterInReview"),
+                    href: stateHref("in_review"),
+                  },
+                  {
+                    value: "closed",
+                    label: t("filterClosed"),
+                    href: stateHref("closed"),
+                  },
+                ],
+              },
+            ]}
+            chips={
+              <FilterBar label={t("filterStatus")}>
+                <Button
+                  asChild
+                  variant={statusValue === "all" ? "default" : "secondary"}
+                >
+                  <Link href={stateHref("all")}>{t("filterAll")}</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant={statusValue === "new" ? "default" : "secondary"}
+                >
+                  <Link href={stateHref("new")}>{t("filterNew")}</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant={
+                    statusValue === "in_review" ? "default" : "secondary"
+                  }
+                >
+                  <Link href={stateHref("in_review")}>
+                    {t("filterInReview")}
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant={statusValue === "closed" ? "default" : "secondary"}
+                >
+                  <Link href={stateHref("closed")}>{t("filterClosed")}</Link>
+                </Button>
+              </FilterBar>
+            }
+          />
+          {data.rows.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("empty")}</p>
+          ) : (
+            <ul className="space-y-3">
+              {data.rows.map((row) => {
+                const when = formatVenueLocalDateTime(
+                  row.requestedFor,
+                  data.timezone,
+                  displayLocale,
+                );
+                return (
+                  <li
+                    key={row.id}
+                    className="rounded-lg border border-border p-3"
+                    data-testid="booking-admin-card"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge
+                        variant={bookingStateBadgeVariant(row.state)}
+                        label={t(bookingStateCopyKey(row.state))}
+                      />
+                      {row.closureOutcome !== null ? (
+                        <span className="text-xs text-muted-foreground">
+                          {t(bookingOutcomeCopyKey(row.closureOutcome))}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 font-medium">
+                      {t("partySummary", { count: row.partySize })} · {when}
+                    </p>
+                    {canOpenDetail ? (
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="mt-3 min-h-11 w-full sm:w-auto"
+                      >
+                        <Link
+                          href={`/admin/bookings/${row.id}`}
+                          aria-label={`${t("view")}: ${when}`}
+                        >
+                          <Eye aria-hidden="true" />
+                          {t("view")}
+                        </Link>
+                      </Button>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </>
+      )}
+      {canConfigure && data.moduleState !== "not_entitled" ? (
+        <BookingSettingsForm
+          venueId={current.id}
+          data={data}
+          writesBlocked={writesBlocked}
+        />
+      ) : null}
+    </div>
+  );
+}

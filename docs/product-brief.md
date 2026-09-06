@@ -163,6 +163,8 @@ See [feed.md](./feed.md). Venue-authored plain-text updates, announcements and n
 
 ### 6.5 Booking requests
 
+The shipped enquiry queue is documented in [booking-enquiries.md](./booking-enquiries.md). It is narrower than this product-brief sketch: no phone/LINE, assignment, internal notes, or reservation-like states. Remaining bullets are longer-term intent, not this milestone.
+
 - Customer submits a request from the public site (no account required)
 - **No real-time table inventory in the MVP** — a request is an enquiry, not a confirmed reservation
 - **No deposits or payments in the MVP**
