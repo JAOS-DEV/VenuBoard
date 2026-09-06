@@ -84,6 +84,61 @@ const GRANTS: RoleActionGrant[] = [
     grantKind: "conditional",
   },
   {
+    roleKey: "business_owner",
+    actionKey: "view_bookings",
+    grantKind: "allow",
+  },
+  {
+    roleKey: "business_owner",
+    actionKey: "manage_bookings",
+    grantKind: "allow",
+  },
+  {
+    roleKey: "business_owner",
+    actionKey: "view_booking_customer_details",
+    grantKind: "allow",
+  },
+  {
+    roleKey: "venue_manager",
+    actionKey: "view_bookings",
+    grantKind: "allow",
+  },
+  {
+    roleKey: "booking_manager",
+    actionKey: "view_bookings",
+    grantKind: "allow",
+  },
+  {
+    roleKey: "booking_manager",
+    actionKey: "manage_bookings",
+    grantKind: "allow",
+  },
+  {
+    roleKey: "booking_manager",
+    actionKey: "view_booking_customer_details",
+    grantKind: "allow",
+  },
+  {
+    roleKey: "platform_admin",
+    actionKey: "view_bookings",
+    grantKind: "conditional",
+  },
+  {
+    roleKey: "platform_admin",
+    actionKey: "view_booking_customer_details",
+    grantKind: "conditional",
+  },
+  {
+    roleKey: "platform_admin",
+    actionKey: "manage_bookings",
+    grantKind: "conditional",
+  },
+  {
+    roleKey: "platform_support",
+    actionKey: "view_booking_customer_details",
+    grantKind: "conditional",
+  },
+  {
     roleKey: "platform_support",
     actionKey: "start_support_session",
     grantKind: "allow",
@@ -501,5 +556,144 @@ describe("can()", () => {
         businessId: ATLAS_BIZ,
       }),
     ).toBe(false);
+  });
+
+  it("maps booking enquiry actions without inventing extra capabilities", () => {
+    const scope = {
+      type: "venue" as const,
+      venueId: NIGHT_ORCHID,
+      businessId: ATLAS_BIZ,
+    };
+    const owner = actor({
+      businessMemberships: [
+        { businessId: ATLAS_BIZ, role: "business_owner", status: "active" },
+      ],
+      venueMemberships: [],
+      currentBusinessId: ATLAS_BIZ,
+      currentVenueId: NIGHT_ORCHID,
+    });
+    expect(can(owner, "view_bookings", scope)).toBe(true);
+    expect(can(owner, "manage_bookings", scope)).toBe(true);
+    expect(can(owner, "view_booking_customer_details", scope)).toBe(true);
+
+    const bookingManager = actor({
+      businessMemberships: [],
+      venueMemberships: [
+        {
+          venueId: NIGHT_ORCHID,
+          businessId: ATLAS_BIZ,
+          role: "booking_manager",
+          status: "active",
+        },
+      ],
+      currentBusinessId: ATLAS_BIZ,
+      currentVenueId: NIGHT_ORCHID,
+    });
+    expect(can(bookingManager, "view_bookings", scope)).toBe(true);
+    expect(can(bookingManager, "manage_bookings", scope)).toBe(true);
+    expect(can(bookingManager, "view_booking_customer_details", scope)).toBe(
+      true,
+    );
+    expect(can(bookingManager, "create_content", scope)).toBe(false);
+
+    const editor = actor({
+      businessMemberships: [],
+      venueMemberships: [
+        {
+          venueId: NIGHT_ORCHID,
+          businessId: ATLAS_BIZ,
+          role: "content_editor",
+          status: "active",
+        },
+      ],
+      currentBusinessId: ATLAS_BIZ,
+      currentVenueId: NIGHT_ORCHID,
+    });
+    expect(can(editor, "view_bookings", scope)).toBe(false);
+    expect(can(editor, "manage_bookings", scope)).toBe(false);
+    expect(can(editor, "view_booking_customer_details", scope)).toBe(false);
+
+    const staff = actor({
+      businessMemberships: [],
+      venueMemberships: [
+        {
+          venueId: NIGHT_ORCHID,
+          businessId: ATLAS_BIZ,
+          role: "staff",
+          status: "active",
+        },
+      ],
+      currentBusinessId: ATLAS_BIZ,
+      currentVenueId: NIGHT_ORCHID,
+    });
+    expect(can(staff, "view_bookings", scope)).toBe(false);
+
+    const support = actor({
+      platformRole: "platform_support",
+      businessMemberships: [],
+      venueMemberships: [],
+      supportSessions: [],
+    });
+    expect(can(support, "view_booking_customer_details", scope)).toBe(false);
+    expect(
+      can(
+        actor({
+          platformRole: "platform_support",
+          businessMemberships: [],
+          venueMemberships: [],
+          supportSessions: [
+            {
+              id: "session-1",
+              targetBusinessId: ATLAS_BIZ,
+              targetVenueId: NIGHT_ORCHID,
+              mode: "read_only",
+              writeActive: false,
+            },
+          ],
+        }),
+        "view_booking_customer_details",
+        scope,
+      ),
+    ).toBe(true);
+    expect(
+      can(
+        actor({
+          platformRole: "platform_admin",
+          businessMemberships: [],
+          venueMemberships: [],
+          supportSessions: [
+            {
+              id: "session-2",
+              targetBusinessId: ATLAS_BIZ,
+              targetVenueId: NIGHT_ORCHID,
+              mode: "read_only",
+              writeActive: false,
+            },
+          ],
+        }),
+        "manage_bookings",
+        scope,
+      ),
+    ).toBe(false);
+    expect(
+      can(
+        actor({
+          platformRole: "platform_admin",
+          businessMemberships: [],
+          venueMemberships: [],
+          supportSessions: [
+            {
+              id: "session-3",
+              targetBusinessId: ATLAS_BIZ,
+              targetVenueId: NIGHT_ORCHID,
+              mode: "write",
+              writeActive: true,
+            },
+          ],
+        }),
+        "manage_bookings",
+        scope,
+      ),
+    ).toBe(true);
   });
 });

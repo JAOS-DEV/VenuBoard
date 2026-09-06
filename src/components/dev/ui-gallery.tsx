@@ -226,6 +226,19 @@ export function UiGallery(): React.ReactElement {
       </section>
 
       <section className="space-y-3">
+        <SectionHeader title={t("bookings")} />
+        <article className="max-w-md rounded-lg border border-border bg-card p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge variant="pending" label="New" />
+          </div>
+          <p className="mt-1 font-medium">4 guests · 12 Sep 19:00</p>
+          <Button variant="outline" className="mt-3 min-h-11">
+            View enquiry
+          </Button>
+        </article>
+      </section>
+
+      <section className="space-y-3">
         <SectionHeader title={t("atmosphere")} />
         <Card className="max-w-md">
           <CardHeader className="p-3">

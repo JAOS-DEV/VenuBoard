@@ -1,0 +1,17 @@
+---
+description: Leave ordinary local Next.js and Supabase running; clean up only task-owned servers
+alwaysApply: true
+---
+
+# Local-service lifecycle
+
+- Leave the ordinary local Next.js server and Supabase running for manual testing at handoff.
+- Never stop a service merely because the task finished.
+- Preserve services the user already had running.
+- Clean up temporary test servers started by this task, including separate Playwright servers.
+- Do not kill unrelated processes or use broad Node/Docker termination commands.
+- If a restart is necessary, explain it, restart only the relevant service, and restore the ordinary development setup afterward where possible.
+- Do not reset or reseed a user’s existing local database without explicit permission for that destructive operation.
+- If clean-reset verification is needed, use an existing approved isolated test stack; otherwise pause for permission before resetting the shared stack.
+- Report running services, app URLs, and any startup blocker at handoff.
+- CI still cleans up its own services.
