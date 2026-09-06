@@ -4,7 +4,7 @@
 
 This document describes the conceptual data model: the tenant hierarchy, the entities each module needs, how multilingual content is stored, how public and private data are separated, and how Row Level Security is expected to scope every tenant-owned record.
 
-This is a **design document, not a schema dump**. Column lists are indicative. Staff presence, events, atmosphere, feed and booking enquiries are implemented; see [staff-presence.md](./staff-presence.md), [events-calendar.md](./events-calendar.md), [atmosphere.md](./atmosphere.md), [feed.md](./feed.md) and [booking-enquiries.md](./booking-enquiries.md).
+This is a **design document, not a schema dump**. Column lists are indicative. Staff presence, events, atmosphere, feed, booking enquiries and offers are implemented; see [staff-presence.md](./staff-presence.md), [events-calendar.md](./events-calendar.md), [atmosphere.md](./atmosphere.md), [feed.md](./feed.md), [booking-enquiries.md](./booking-enquiries.md) and [offers.md](./offers.md).
 
 Related: [product-brief.md](./product-brief.md) · [architecture.md](./architecture.md) · [roles-and-permissions.md](./roles-and-permissions.md) · [staff-presence.md](./staff-presence.md) · [atmosphere.md](./atmosphere.md)
 
@@ -389,14 +389,16 @@ Rules reflected in the model:
 
 ### 6.6 Offers and promotions
 
-**`offers`** — `id`, `venue_id`, `image_media_id`, `valid_from`, `valid_to`, `state` (`text CHECK (state IN ('draft','published','archived'))`), `redemption_tracking_enabled`, `redemption_count`, `published_at`, `created_by`, `updated_at`, `archived_at`
+> **Now implemented as informational promotions, narrower than the earlier sketch.** See [offers.md](./offers.md). This milestone does not process payment, issue vouchers, or track redemption.
 
-- Translated fields: **`offer_translations`** (title, description and terms).
+**`offers`** — `id`, `venue_id`, `business_id`, `state` (`text CHECK` `draft` / `pending_approval` / `scheduled` / `published` / `archived`), `valid_from`, `valid_until` (start-inclusive, end-exclusive `timestamptz`; `valid_until > valid_from`), `scheduled_for`, `published_at`, `submitted_by`, `approved_by`, `approved_at`, `rejection_reason`, optional `media_storage_path` (venue-scoped `venues/<venue_id>/offers/...` only), quarantine columns, `archived_at`, `created_by`, `updated_by`, timestamps.
 
-**`offer_redemptions`** — `id`, `offer_id`, `venue_id`, `redeemed_at`, `recorded_by`, `channel` (`text CHECK (channel IN ('staff_recorded','public_code'))`), `note`
+- Translated fields: **`offer_translations`** (title 1–120, description 1–2000, terms 1–4000). English is required to publish; Thai is optional with English fallback.
+- Upcoming / Active / Expired admin labels are **derived** from `valid_from` / `valid_until` at read time. There is no stored expired flag and no expiry job.
+- Public reads go through `list_public_venue_offers`. Anonymous roles have **no** `SELECT` on `offers` or translations.
+- **`offer_events`** is append-only workflow history (action and state only). No titles, descriptions, terms or rejection text.
 
-- "Expired" is **derived** from `valid_to`, not stored as a state.
-- Redemption tracking is deliberately basic in MVP: a counter plus optional simple events. No coupon engine, no per-customer identity, no loyalty accounts.
+**`offer_redemptions`** is **not** implemented in this milestone.
 
 ### 6.7 Social and contact links
 
@@ -503,7 +505,7 @@ These change only through a reviewed migration that alters one constraint.
 | Entitlement grant type | `venue_module_entitlements.grant_type` | `allow`, `deny` |
 | Feed post state | `feed_posts.state` | `draft`, `pending_approval`, `scheduled`, `published`, `archived` |
 | Event state | `events.state` | `draft`, `scheduled`, `published`, `cancelled`, `archived` |
-| Offer state | `offers.state` | `draft`, `published`, `archived` |
+| Offer state | `offers.state` | `draft`, `pending_approval`, `scheduled`, `published`, `archived` |
 | Booking state | `booking_requests.state` | `new`, `in_review`, `closed` |
 | Invitation state | `invitations.state` | `pending`, `accepted`, `expired`, `revoked` |
 | Presence state | `current_staff_presence.state` | `present`, `not_present` |
@@ -530,7 +532,7 @@ Every tenant table falls into one of these classes. See [architecture.md](./arch
 
 | Class | Examples | Read | Write |
 | --- | --- | --- | --- |
-| **Public-readable content** | `events`, `offers`, `staff_public_profiles`, `current_staff_presence`, `venue_social_links`, `venue_branding`, `venue_text_blocks` | Anonymous role may read **only** rows where the venue is published, the module is entitled **and** enabled, the record is `published`, `platform_quarantined_at IS NULL` (and, for staff, consent is current). **`venue_atmosphere` and `feed_posts` are not anonymously selectable**; public atmosphere goes through `get_public_venue_atmosphere`, public feed through `list_public_venue_feed` (scheduled rows become visible at query time when `scheduled_for <= now()`). | Members with the relevant action, in that venue only — **excluding** the platform quarantine columns, which no tenant role may write ([section 6.9](#69-platform-moderation-and-quarantine)) |
+| **Public-readable content** | `events`, `staff_public_profiles`, `current_staff_presence`, `venue_social_links`, `venue_branding`, `venue_text_blocks` | Anonymous role may read **only** rows where the venue is published, the module is entitled **and** enabled, the record is `published`, `platform_quarantined_at IS NULL` (and, for staff, consent is current). **`venue_atmosphere`, `feed_posts` and `offers` are not anonymously selectable**; public atmosphere goes through `get_public_venue_atmosphere`, public feed through `list_public_venue_feed`, public offers through `list_public_venue_offers` (scheduled rows become visible at query time when `scheduled_for <= now()`, and offers additionally require `valid_from <= now() < valid_until`). | Members with the relevant action, in that venue only — **excluding** the platform quarantine columns, which no tenant role may write ([section 6.9](#69-platform-moderation-and-quarantine)) |
 | **Public-readable translations** | `venue_translations`, `post_translations`, `event_translations`, `offer_translations` and the other `*_translations` tables of public entities | Anonymous role may read a translation row **only if it may read the parent row**. Policies test the parent's visibility, never just `venue_id` | Whoever may write the parent record |
 | **Tenant-private** | `staff_private_details`, `booking_requests`, `booking_request_contacts`, `booking_request_events`, `invitations`, `notification_preferences` | Members with the relevant action, in that venue/business only. **No anonymous policy exists at all** | Same, action-gated |
 | **Platform-controlled** | `venue_module_entitlements`, `plans`, `plan_modules`, `modules`, `entitlement_sources`, `subscriptions`, `venue_billing_records`, `venue_storage_usage`, `platform_roles`, `trial_extensions` | Tenants may read their **own** subscription, entitlement and quota state (needed to render the admin panel). Reference tables are readable by authenticated users | **Platform only.** No tenant write policy exists |

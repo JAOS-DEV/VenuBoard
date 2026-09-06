@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 export interface ShellLink {
   href: string;
   label: string;
+  scroll?: boolean;
 }
 
 interface CompactChromeProps {
@@ -40,6 +41,7 @@ interface CompactChromeProps {
   footer?: boolean;
   bottomNav?: ReactNode;
   hideMenuButton?: boolean;
+  identityScroll?: boolean;
   menuOpen?: boolean;
   onMenuOpenChange?: (open: boolean) => void;
   contentClassName?: string;
@@ -61,6 +63,7 @@ export function CompactChrome({
   footer = false,
   bottomNav = null,
   hideMenuButton = false,
+  identityScroll = true,
   menuOpen: menuOpenProp,
   onMenuOpenChange,
   contentClassName,
@@ -90,7 +93,11 @@ export function CompactChrome({
 
       <header className="sticky top-0 z-30 border-b border-border bg-background/95 pt-[env(safe-area-inset-top)] backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-2 px-4 sm:px-6">
-          <Link href={identityHref} className="min-w-0 truncate font-semibold">
+          <Link
+            href={identityHref}
+            scroll={identityScroll}
+            className="inline-flex min-h-11 min-w-0 max-w-full items-center truncate rounded-md font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             {identityLabel}
             {identityDescription ? (
               <span className="sr-only"> — {identityDescription}</span>
@@ -152,6 +159,7 @@ export function CompactChrome({
                 <li key={surface.href}>
                   <Link
                     href={surface.href}
+                    scroll={surface.scroll}
                     className="inline-flex h-11 items-center rounded-md px-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   >
                     {surface.label}
@@ -210,7 +218,8 @@ export function CompactChrome({
                 <Link
                   key={surface.href}
                   href={surface.href}
-                  className="inline-flex min-h-11 items-center rounded-md px-3 text-sm hover:bg-accent"
+                  scroll={surface.scroll}
+                  className="inline-flex min-h-11 items-center rounded-md px-3 text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={() => {
                     setMenuOpen(false);
                   }}
@@ -226,7 +235,8 @@ export function CompactChrome({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="inline-flex min-h-11 items-center rounded-md px-3 text-sm hover:bg-accent"
+                  scroll={link.scroll}
+                  className="inline-flex min-h-11 items-center rounded-md px-3 text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={() => {
                     setMenuOpen(false);
                   }}

@@ -6,7 +6,7 @@ This document is the authoritative definition of **who may do what** in VenuBoar
 
 The action-based model and the **complete 33-action catalogue** were accepted on 2026-08-30 ([ADR-007](./decisions-and-open-questions.md#adr-007--action-based-permissions-with-fixed-mvp-roles)), the last of them — `moderate_content` — by [ADR-036](./decisions-and-open-questions.md#adr-036--moderate_content-as-a-platform-action). The support-access model this document depends on is also accepted ([ADR-022](./decisions-and-open-questions.md#adr-022--support-access-is-read-only-by-default-and-session-gated)). **Nothing in this document is pending approval**, so the permission test suite can be generated from it directly.
 
-Related: [product-brief.md](./product-brief.md) · [data-model.md](./data-model.md) · [decisions-and-open-questions.md](./decisions-and-open-questions.md) · [booking-enquiries.md](./booking-enquiries.md)
+Related: [product-brief.md](./product-brief.md) · [data-model.md](./data-model.md) · [decisions-and-open-questions.md](./decisions-and-open-questions.md) · [booking-enquiries.md](./booking-enquiries.md) · [offers.md](./offers.md)
 
 ---
 

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 
 import { ThemeProvider } from "@/core/theme/theme-provider";
+import { THEME_INIT_SCRIPT } from "@/core/theme/init-script";
 import { routing } from "@/core/i18n/routing";
 import { resolveRequestLocale } from "@/core/i18n/server";
 
@@ -41,6 +42,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className="antialiased">
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <ThemeProvider>
           <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </ThemeProvider>

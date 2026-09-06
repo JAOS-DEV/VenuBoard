@@ -192,9 +192,15 @@ export function VenueEventsCalendar(props: {
   };
 
   useEffect(() => {
+    if (
+      selectedDateISO === initialSelectedDateISO &&
+      monthKey === initialMonthKey
+    ) {
+      return;
+    }
     const btn = dayButtonRefs.current.get(selectedDateISO);
-    btn?.focus();
-  }, [selectedDateISO, monthKey]);
+    btn?.focus({ preventScroll: true });
+  }, [selectedDateISO, monthKey, initialSelectedDateISO, initialMonthKey]);
 
   const canGoPrev = monthKey > bounds.minMonthKey;
   const canGoNext = monthKey < bounds.maxMonthKey;

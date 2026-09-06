@@ -2,7 +2,7 @@
 
 Deterministic fictional dataset ([ADR-035](../../docs/decisions-and-open-questions.md#adr-035--deterministic-repeatable-seed-data-and-fixed-test-identities)).
 
-`supabase/config.toml` points `[db.seed].sql_paths` at `./seed/01_foundation.sql`, `./seed/02_staff_presence.sql`, `./seed/03_events.sql`, `./seed/04_atmosphere.sql`, `./seed/05_feed.sql`, then `./seed/06_booking_requests.sql`.
+`supabase/config.toml` points `[db.seed].sql_paths` at `./seed/01_foundation.sql`, `./seed/02_staff_presence.sql`, `./seed/03_events.sql`, `./seed/04_atmosphere.sql`, `./seed/05_feed.sql`, `./seed/06_booking_requests.sql`, then `./seed/07_offers.sql`.
 
 The large RLS performance fixture is **not** seed data. It lives in `supabase/perf/` and is loaded only by `npm run db:perf:seed`.
 

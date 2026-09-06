@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import type { AuthenticatedActor } from "@/core/actors/types";
 import { getSupabaseConnection } from "@/core/db/connection";
 import { createSupabaseServerClient } from "@/core/db/server-client";
@@ -36,7 +38,7 @@ function asType(value: string): FeedPostType {
   return "update";
 }
 
-export async function loadPublicVenueFeed(
+export const loadPublicVenueFeed = cache(async function loadPublicVenueFeed(
   venueSlug: string,
   locale: AppLocale,
   opts?: { limit?: number; cursor?: string | null },
@@ -70,7 +72,7 @@ export async function loadPublicVenueFeed(
   }
 
   return mapPublicVenueFeed(data, fallbackLocale);
-}
+});
 
 export async function loadAdminFeed(
   actor: AuthenticatedActor,

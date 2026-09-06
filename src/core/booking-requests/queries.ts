@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { getSupabaseConnection } from "@/core/db/connection";
 import { createSupabaseServerClient } from "@/core/db/server-client";
 import type { AppLocale } from "@/core/i18n/routing";
@@ -164,88 +166,90 @@ async function loadModuleAvailability(venueId: string): Promise<{
   };
 }
 
-export async function loadPublicBookingIntake(
-  venueSlug: string,
-  locale: AppLocale,
-): Promise<PublicBookingIntakePayload> {
-  const hidden = hiddenPublicIntake(venueSlug);
-  if (getSupabaseConnection() === null) {
-    return hidden;
-  }
+export const loadPublicBookingIntake = cache(
+  async function loadPublicBookingIntake(
+    venueSlug: string,
+    locale: AppLocale,
+  ): Promise<PublicBookingIntakePayload> {
+    const hidden = hiddenPublicIntake(venueSlug);
+    if (getSupabaseConnection() === null) {
+      return hidden;
+    }
 
-  const supabase = await createSupabaseServerClient();
-  const { data: venue } = await supabase
-    .from("venues")
-    .select("id, name, slug, timezone, content_classification")
-    .eq("slug", venueSlug)
-    .maybeSingle();
+    const supabase = await createSupabaseServerClient();
+    const { data: venue } = await supabase
+      .from("venues")
+      .select("id, name, slug, timezone, content_classification")
+      .eq("slug", venueSlug)
+      .maybeSingle();
 
-  if (venue === null) {
-    return hidden;
-  }
+    if (venue === null) {
+      return hidden;
+    }
 
-  const { data: settingsRow } = await supabase
-    .from("venue_module_settings")
-    .select(
-      "is_enabled, is_publicly_visible, settings, venue_module_setting_translations ( locale, public_heading )",
+    const { data: settingsRow } = await supabase
+      .from("venue_module_settings")
+      .select(
+        "is_enabled, is_publicly_visible, settings, venue_module_setting_translations ( locale, public_heading )",
+      )
+      .eq("venue_id", venue.id)
+      .eq("module_key", BOOKING_MODULE_KEY)
+      .maybeSingle();
+
+    if (
+      settingsRow === null ||
+      settingsRow.is_enabled !== true ||
+      settingsRow.is_publicly_visible !== true
+    ) {
+      return hidden;
+    }
+
+    const settings = asSettingsObject(settingsRow.settings);
+    const accepting = settings.accepting_enquiries !== false;
+    const translations = Array.isArray(
+      settingsRow.venue_module_setting_translations,
     )
-    .eq("venue_id", venue.id)
-    .eq("module_key", BOOKING_MODULE_KEY)
-    .maybeSingle();
+      ? settingsRow.venue_module_setting_translations
+      : [];
+    const headingEn =
+      translations.find((row) => row.locale === "en")?.public_heading ?? null;
+    const headingTh =
+      translations.find((row) => row.locale === "th")?.public_heading ?? null;
+    const heading = locale === "th" ? headingTh : headingEn;
+    const instructionsRaw =
+      locale === "th"
+        ? String(settings.instructions_th ?? "")
+        : String(settings.instructions_en ?? "");
 
-  if (
-    settingsRow === null ||
-    settingsRow.is_enabled !== true ||
-    settingsRow.is_publicly_visible !== true
-  ) {
-    return hidden;
-  }
+    const leadTimeMinutes = asNonNegInt(settings.lead_time_minutes, 60);
+    const horizonDays = asPositiveInt(settings.horizon_days, 90);
+    const now = new Date();
+    const minInstant = new Date(now.getTime() + leadTimeMinutes * 60_000);
+    const maxInstant = new Date(now.getTime() + horizonDays * 86_400_000);
+    const defaultInstant = new Date(
+      Math.min(minInstant.getTime() + 86_400_000, maxInstant.getTime()),
+    );
 
-  const settings = asSettingsObject(settingsRow.settings);
-  const accepting = settings.accepting_enquiries !== false;
-  const translations = Array.isArray(
-    settingsRow.venue_module_setting_translations,
-  )
-    ? settingsRow.venue_module_setting_translations
-    : [];
-  const headingEn =
-    translations.find((row) => row.locale === "en")?.public_heading ?? null;
-  const headingTh =
-    translations.find((row) => row.locale === "th")?.public_heading ?? null;
-  const heading = locale === "th" ? headingTh : headingEn;
-  const instructionsRaw =
-    locale === "th"
-      ? String(settings.instructions_th ?? "")
-      : String(settings.instructions_en ?? "");
-
-  const leadTimeMinutes = asNonNegInt(settings.lead_time_minutes, 60);
-  const horizonDays = asPositiveInt(settings.horizon_days, 90);
-  const now = new Date();
-  const minInstant = new Date(now.getTime() + leadTimeMinutes * 60_000);
-  const maxInstant = new Date(now.getTime() + horizonDays * 86_400_000);
-  const defaultInstant = new Date(
-    Math.min(minInstant.getTime() + 86_400_000, maxInstant.getTime()),
-  );
-
-  return {
-    available: true,
-    accepting,
-    heading: heading && heading.length > 0 ? heading : null,
-    instructions: instructionsRaw.length > 0 ? instructionsRaw : null,
-    timezone: venue.timezone,
-    venueName: venue.name,
-    venueSlug: venue.slug,
-    minPartySize: asPositiveInt(settings.min_party_size, 1),
-    maxPartySize: asPositiveInt(settings.max_party_size, 12),
-    horizonDays,
-    leadTimeMinutes,
-    minLocal: venueInstantToLocalInput(minInstant, venue.timezone),
-    maxLocal: venueInstantToLocalInput(maxInstant, venue.timezone),
-    defaultLocal: venueInstantToLocalInput(defaultInstant, venue.timezone),
-    contentClassification: venue.content_classification,
-    availability: accepting ? "enabled" : "paused",
-  };
-}
+    return {
+      available: true,
+      accepting,
+      heading: heading && heading.length > 0 ? heading : null,
+      instructions: instructionsRaw.length > 0 ? instructionsRaw : null,
+      timezone: venue.timezone,
+      venueName: venue.name,
+      venueSlug: venue.slug,
+      minPartySize: asPositiveInt(settings.min_party_size, 1),
+      maxPartySize: asPositiveInt(settings.max_party_size, 12),
+      horizonDays,
+      leadTimeMinutes,
+      minLocal: venueInstantToLocalInput(minInstant, venue.timezone),
+      maxLocal: venueInstantToLocalInput(maxInstant, venue.timezone),
+      defaultLocal: venueInstantToLocalInput(defaultInstant, venue.timezone),
+      contentClassification: venue.content_classification,
+      availability: accepting ? "enabled" : "paused",
+    };
+  },
+);
 
 export async function loadAdminBookings(
   venueId: string,
