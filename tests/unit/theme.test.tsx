@@ -31,8 +31,11 @@ function mockMatchMedia(matches: boolean): {
   setMatches: (next: boolean) => void;
 } {
   const listeners = new Set<(event: MediaQueryListEvent) => void>();
+  let currentMatches = matches;
   const media: MediaQueryList = {
-    matches,
+    get matches(): boolean {
+      return currentMatches;
+    },
     media: "(prefers-color-scheme: dark)",
     onchange: null,
     addEventListener(
@@ -68,7 +71,7 @@ function mockMatchMedia(matches: boolean): {
   });
   return {
     setMatches(next: boolean): void {
-      media.matches = next;
+      currentMatches = next;
       const event = { matches: next } as MediaQueryListEvent;
       act(() => {
         for (const listener of listeners) {
