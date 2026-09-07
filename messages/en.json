@@ -819,6 +819,9 @@
     "deactivated": "Deactivated",
     "uiGallery": "UI component gallery",
     "uiGalleryHelp": "Local visual reference for primitives, patterns and themes.",
+    "isolatedTests": "Isolated automated tests",
+    "isolatedTestsHelp": "These commands use project venuboard-test. They do not reset ordinary local development data. test:verify runs database fixtures, generated types, and Playwright only — not format, lint, typecheck, Vitest, or production build (use npm run verify).",
+    "isolatedTestsCommands": "npm run test:stack:start\nnpm run test:db -- supabase/tests/01_structure.sql\nnpm run test:e2e -- tests/e2e/public-venue-placeholder.spec.ts\nnpm run test:verify\nnpm run test:stack:stop",
     "serviceLabels": {
       "application": "VenuBoard application",
       "studio": "Supabase Studio",

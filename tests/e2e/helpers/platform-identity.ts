@@ -1,8 +1,9 @@
 import { randomBytes } from "node:crypto";
 
-import { loadEnvConfig } from "@next/env";
 import { createClient } from "@supabase/supabase-js";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
+
+import { requireIsolatedTestEnv } from "./isolated-env.ts";
 
 const PLATFORM_ADMIN_ID = "00000000-0000-4000-8000-000000000001";
 const PLATFORM_ADMIN_EMAIL = "platform.admin@example.com";
@@ -41,21 +42,11 @@ export async function signInSeedUser(
   userId: string,
   email: string,
 ): Promise<PlatformAdminSignIn> {
-  loadEnvConfig(process.cwd());
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const secret = process.env.SUPABASE_SECRET_KEY?.trim();
+  const { apiUrl, secretKey } = requireIsolatedTestEnv();
   const failed: PlatformAdminSignIn = { ok: false, email, password: "" };
-  if (
-    url === undefined ||
-    url.length === 0 ||
-    secret === undefined ||
-    secret.length === 0
-  ) {
-    return failed;
-  }
 
   const password = `E2e-${randomBytes(12).toString("base64url")}`;
-  const admin = createClient(url, secret, {
+  const admin = createClient(apiUrl, secretKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { error } = await admin.auth.admin.updateUserById(userId, { password });

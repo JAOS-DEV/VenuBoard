@@ -15,4 +15,4 @@ Rules:
 - The pending Night Orchid invitation uses token `local-invite-atlas-editor-v1` (SHA-256 stored in `token_hash`). That string is an invitation token for local inspection, not a login password.
 - Reference data (`modules`, `plans`, `plan_modules`, `entitlement_sources`, the 33 actions) is **not** seed data — it ships in migrations.
 
-SQL tests: `npm run db:test` (`supabase test db`, pgTAP under `supabase/tests/`). Database CI locally: `npx supabase start && npm run db:reset && npm run db:test && npm run db:types:check && npx supabase stop`.
+SQL tests: `npm run test:db` against isolated project `venuboard-test` (pgTAP under `supabase/tests/`). `npm run db:test` is the same isolated runner. Database CI: `npm run test:stack:start && npm run test:stack:reset && npm run test:db && npm run test:types:check && npm run test:stack:stop`. Ordinary development reset remains `npm run db:reset` / `local:reset` and is not used by automated tests.

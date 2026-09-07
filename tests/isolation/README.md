@@ -3,7 +3,7 @@
 Foundation isolation is asserted in SQL (pgTAP), not in this directory:
 
 ```bash
-npm run db:test
+npm run test:db
 ```
 
 Files: `supabase/tests/02_tenant_integrity.sql` (composite FKs reject mismatches) and `supabase/tests/03_rls_isolation.sql` (denied behaviour as `anon` and authenticated seed identities).

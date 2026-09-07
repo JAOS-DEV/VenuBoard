@@ -54,8 +54,9 @@ jobs:
       - name: Production build
         run: npm run build
 
-# End-to-end tests deliberately stay out of CI until the preview and
-# test-database strategy is accepted (OQ-38). Database security tests
-# (migrations, seed, pgTAP, generated types) run in
-# `.github/workflows/database.yml` against repository-local Docker Supabase.
-# That workflow never logs into or links a hosted project.
+# End-to-end tests deliberately stay out of CI until the preview strategy
+# is accepted (OQ-38). Database security tests run in
+# `.github/workflows/database.yml` against an isolated local Docker
+# project (`venuboard-test`) generated from repository migrations and seed.
+# That workflow never logs into or links a hosted project. Locally, the
+# same commands leave ordinary `venuboard` development running.

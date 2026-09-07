@@ -3,7 +3,7 @@
 The 33-action catalogue and role mapping are asserted in SQL and in Vitest:
 
 ```bash
-npm run db:test
+npm run test:db
 npm run test:ci
 ```
 

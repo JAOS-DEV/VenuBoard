@@ -6,8 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
-  useState,
+  useSyncExternalStore,
   type ReactElement,
   type ReactNode,
 } from "react";
@@ -31,21 +30,72 @@ interface ThemeProviderProps {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-function systemTheme(): ResolvedTheme {
-  if (typeof window === "undefined") {
-    return "light";
+const themeListeners = new Set<() => void>();
+let sessionTheme: ThemeName | null = null;
+
+function notifyThemeListeners(): void {
+  for (const listener of themeListeners) {
+    listener();
   }
+}
+
+function readStoredTheme(): ThemeName {
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (isThemeName(stored)) {
+      return stored;
+    }
+    return "system";
+  } catch {
+    return sessionTheme ?? "system";
+  }
+}
+
+function subscribeStoredTheme(onStoreChange: () => void): () => void {
+  themeListeners.add(onStoreChange);
+  function onStorage(event: StorageEvent): void {
+    if (event.key !== THEME_STORAGE_KEY && event.key !== null) {
+      return;
+    }
+    onStoreChange();
+  }
+  window.addEventListener("storage", onStorage);
+  return () => {
+    themeListeners.delete(onStoreChange);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function writeStoredTheme(next: ThemeName): void {
+  sessionTheme = next;
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, next);
+  } catch {
+    // Private mode can refuse localStorage; the in-memory theme still applies.
+  }
+  notifyThemeListeners();
+}
+
+function subscribeSystemTheme(onStoreChange: () => void): () => void {
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  media.addEventListener("change", onStoreChange);
+  return () => media.removeEventListener("change", onStoreChange);
+}
+
+function readSystemTheme(): ResolvedTheme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 }
 
-function resolveTheme(theme: ThemeName): ResolvedTheme {
-  return theme === "system" ? systemTheme() : theme;
+function resolveTheme(
+  theme: ThemeName,
+  systemPreference: ResolvedTheme,
+): ResolvedTheme {
+  return theme === "system" ? systemPreference : theme;
 }
 
-function applyDocumentTheme(theme: ThemeName): ResolvedTheme {
-  const resolved = resolveTheme(theme);
+function applyDocumentTheme(resolved: ResolvedTheme): void {
   const root = document.documentElement;
   const style = document.createElement("style");
   style.appendChild(
@@ -61,54 +111,27 @@ function applyDocumentTheme(theme: ThemeName): ResolvedTheme {
   window.setTimeout(() => {
     style.remove();
   }, 1);
-  return resolved;
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps): ReactElement {
-  const [theme, setThemeState] = useState<ThemeName>("system");
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
-  const themeRef = useRef(theme);
-  themeRef.current = theme;
+  const theme = useSyncExternalStore(
+    subscribeStoredTheme,
+    readStoredTheme,
+    (): ThemeName => "system",
+  );
+  const systemPreference = useSyncExternalStore(
+    subscribeSystemTheme,
+    readSystemTheme,
+    (): ResolvedTheme => "light",
+  );
+  const resolvedTheme = resolveTheme(theme, systemPreference);
 
   useEffect(() => {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    const initial = isThemeName(stored) ? stored : "system";
-    setThemeState(initial);
-    setResolvedTheme(applyDocumentTheme(initial));
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    function onMediaChange(): void {
-      if (themeRef.current === "system") {
-        setResolvedTheme(applyDocumentTheme("system"));
-      }
-    }
-    media.addEventListener("change", onMediaChange);
-
-    function onStorage(event: StorageEvent): void {
-      if (event.key !== THEME_STORAGE_KEY) {
-        return;
-      }
-      const next = isThemeName(event.newValue) ? event.newValue : "system";
-      setThemeState(next);
-      setResolvedTheme(applyDocumentTheme(next));
-    }
-    window.addEventListener("storage", onStorage);
-
-    return () => {
-      media.removeEventListener("change", onMediaChange);
-      window.removeEventListener("storage", onStorage);
-    };
-  }, []);
+    applyDocumentTheme(resolvedTheme);
+  }, [resolvedTheme]);
 
   const setTheme = useCallback((value: string): void => {
-    const next = isThemeName(value) ? value : "system";
-    setThemeState(next);
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, next);
-    } catch {
-      // Private mode can refuse localStorage; the in-memory theme still applies.
-    }
-    setResolvedTheme(applyDocumentTheme(next));
+    writeStoredTheme(isThemeName(value) ? value : "system");
   }, []);
 
   const value = useMemo(

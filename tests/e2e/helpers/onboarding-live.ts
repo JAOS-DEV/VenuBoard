@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 
-import { loadEnvConfig } from "@next/env";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { DEFAULT_BRANDING } from "../../../src/core/onboarding/constants";
@@ -8,6 +7,7 @@ import {
   onboardingWizardSchema,
   toOnboardingPayload,
 } from "../../../src/core/onboarding/schema";
+import { requireIsolatedTestEnv } from "./isolated-env.ts";
 
 export const LIVE_BUSINESS_NAME = "E2E Lotus Holdings";
 export const LIVE_LEGAL_NAME = "E2E Lotus Holdings Co.";
@@ -95,32 +95,19 @@ const EMPTY_FACTS: LiveOnboardingFacts = {
   auditHasToken: false,
 };
 
-function loadLocalKeys(): {
+function loadIsolatedKeys(): {
   url: string;
   publishable: string;
-} | null {
-  loadEnvConfig(process.cwd());
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const publishable = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
-  if (
-    url === undefined ||
-    url.length === 0 ||
-    publishable === undefined ||
-    publishable.length === 0
-  ) {
-    return null;
-  }
-  return { url, publishable };
+} {
+  const keys = requireIsolatedTestEnv();
+  return { url: keys.apiUrl, publishable: keys.publishableKey };
 }
 
 async function signedInAdminClient(
   email: string,
   password: string,
 ): Promise<SupabaseClient | null> {
-  const keys = loadLocalKeys();
-  if (keys === null) {
-    return null;
-  }
+  const keys = loadIsolatedKeys();
   const client = createClient(keys.url, keys.publishable, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -353,10 +340,7 @@ export async function retryLiveOnboarding(input: {
   idempotencyKey: string;
   identity: LiveOnboardingIdentity;
 }): Promise<LiveOnboardingRetryResult | null> {
-  const keys = loadLocalKeys();
-  if (keys === null) {
-    return null;
-  }
+  const keys = loadIsolatedKeys();
 
   const client = createClient(keys.url, keys.publishable, {
     auth: { persistSession: false, autoRefreshToken: false },

@@ -123,12 +123,13 @@ A valid venue slug in a URL never grants `/admin`. Platform administrators are n
 Canonical local workflow, including Studio, the local inbox and fictional personas: `npm run local:start` then http://localhost:3000/en/dev. Magic-link callbacks return to `http://localhost:3000/{locale}/auth/callback` so the session stays on the same origin as the app. Supabase API, Studio and the mailbox remain on `127.0.0.1` ports 54321–54324. That hub is a real 404 outside ordinary local development. It does not create sessions or bypass actor resolution. See the README local-development section.
 
 ```bash
-npm run supabase:start    # Docker
-npm run db:reset
-npm run db:test           # includes supabase/tests/07_platform_onboarding.sql
+npm run test:stack:start
+npm run test:db -- supabase/tests/07_platform_onboarding.sql
 npm run test:ci
 npm run test:e2e
 ```
+
+Automated SQL and Playwright tests use isolated project `venuboard-test`. They do not reset ordinary development data. `npm run db:reset` remains the manual development reset.
 
 Interactive password sign-in against seed users is not possible: hashes are random. Create a user through a pending invitation, or use the Auth admin API locally. Magic links appear in the local mail catcher (http://127.0.0.1:54324). The Playwright `vb_test_identity` cookie remains available only when `VENUBOARD_ENV=test`, `NODE_ENV` is not `production`, and the explicit enable flag is set.
 

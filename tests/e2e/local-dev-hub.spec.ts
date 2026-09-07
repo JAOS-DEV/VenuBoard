@@ -49,8 +49,14 @@ test.describe("local developer hub", () => {
         .getByRole("link", { name: "Open local tool" }),
     ).toHaveAttribute("href", "http://127.0.0.1:54321/auth/v1/health");
 
-    await page.getByRole("tab", { name: "Accounts" }).click();
+    await page.getByRole("tab", { name: "Commands" }).click();
+    await expect(page.getByText("npm run test:stack:start")).toBeVisible();
+    await expect(page.getByText("npm run test:stack:stop")).toBeVisible();
+    await expect(
+      page.getByText("They do not reset ordinary local development data."),
+    ).toBeVisible();
 
+    await page.getByRole("tab", { name: "Accounts" }).click();
     await expect(
       page.getByRole("heading", { name: "Platform administrator" }),
     ).toBeVisible();

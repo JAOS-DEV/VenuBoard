@@ -1,24 +1,29 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const TEST_PORT = 3100;
-const LOCAL_DEV_PORT = 3101;
-const TEST_URL = `http://127.0.0.1:${String(TEST_PORT)}`;
-const LOCAL_DEV_URL = `http://127.0.0.1:${String(LOCAL_DEV_PORT)}`;
+import {
+  TEST_APP_PORTS,
+  TEST_PLAYWRIGHT_LOCAL_DEV_ORIGIN,
+  TEST_PLAYWRIGHT_ORIGIN,
+} from "./src/core/test-stack/identity.ts";
+import { requireIsolatedTestEnv } from "./tests/e2e/helpers/isolated-env.ts";
+
+const TEST_URL = TEST_PLAYWRIGHT_ORIGIN;
+const LOCAL_DEV_URL = TEST_PLAYWRIGHT_LOCAL_DEV_ORIGIN;
+const isolated = requireIsolatedTestEnv();
 
 /**
  * End-to-end configuration.
  *
- * Chromium only: a second browser engine costs CI minutes and download size
- * without telling us anything new about a placeholder page. Add engines when
- * there is a public site worth testing cross-browser.
+ * Chromium only. Run through `npm run test:e2e`, which injects isolated
+ * venuboard-test credentials and refuses `.env.local` / port-3000 reuse.
  *
  * The default project stays on `VENUBOARD_ENV=test` so the Playwright
  * test-identity cookie remains triple-gated. A second project boots ordinary
  * local development on another port so the developer hub can be exercised
- * without weakening that gate.
+ * without weakening that gate. That hub server may use isolated test
+ * credentials; `VENUBOARD_ENABLE_TEST_IDENTITY` stays unset there.
  *
- * Not wired into CI yet — the preview and test-database strategy is still open
- * (OQ-38). Run locally with `npm run test:e2e`.
+ * Not wired into CI yet — the preview strategy is still open (OQ-38).
  */
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -45,30 +50,36 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `npx next dev --hostname 127.0.0.1 --port ${String(TEST_PORT)}`,
+      command: `npx next dev --hostname 127.0.0.1 --port ${String(TEST_APP_PORTS.playwright)}`,
       url: TEST_URL,
       reuseExistingServer: false,
       timeout: 120_000,
       env: {
         ...process.env,
+        NEXT_PUBLIC_SUPABASE_URL: isolated.apiUrl,
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: isolated.publishableKey,
+        SUPABASE_SECRET_KEY: isolated.secretKey,
         VENUBOARD_ENV: "test",
         VENUBOARD_ENABLE_TEST_IDENTITY: "1",
         VENUBOARD_PLAYWRIGHT_DIST_DIR: ".next-playwright",
-        PORT: String(TEST_PORT),
+        PORT: String(TEST_APP_PORTS.playwright),
         NEXT_PUBLIC_APP_ORIGIN: TEST_URL,
       },
     },
     {
-      command: `npx next dev --hostname 127.0.0.1 --port ${String(LOCAL_DEV_PORT)}`,
+      command: `npx next dev --hostname 127.0.0.1 --port ${String(TEST_APP_PORTS.playwrightLocalDev)}`,
       url: LOCAL_DEV_URL,
       reuseExistingServer: false,
       timeout: 120_000,
       env: {
         ...process.env,
+        NEXT_PUBLIC_SUPABASE_URL: isolated.apiUrl,
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: isolated.publishableKey,
+        SUPABASE_SECRET_KEY: isolated.secretKey,
         VENUBOARD_ENV: "local",
         VENUBOARD_ENABLE_TEST_IDENTITY: "",
         VENUBOARD_PLAYWRIGHT_DIST_DIR: ".next-playwright-local",
-        PORT: String(LOCAL_DEV_PORT),
+        PORT: String(TEST_APP_PORTS.playwrightLocalDev),
         NEXT_PUBLIC_APP_ORIGIN: LOCAL_DEV_URL,
       },
     },

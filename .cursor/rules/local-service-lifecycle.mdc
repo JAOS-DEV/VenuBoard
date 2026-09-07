@@ -8,10 +8,12 @@ alwaysApply: true
 - Leave the ordinary local Next.js server and Supabase running for manual testing at handoff.
 - Never stop a service merely because the task finished.
 - Preserve services the user already had running.
-- Clean up temporary test servers started by this task, including separate Playwright servers.
-- Do not kill unrelated processes or use broad Node/Docker termination commands.
+- Use isolated tooling (`npm run test:stack:*`, `test:db`, `test:e2e`, `test:verify`) for automated database and browser verification. `test:verify` is not the format/lint/typecheck/unit/build gate (`npm run verify`).
+- Do not automatically run the full suite from `local:start`, file watchers, ordinary startup, or every task completion.
+- Clean up temporary test servers started by this task, including separate Playwright servers on ports 3100/3101.
+- Do not kill unrelated processes or use broad Node/Docker termination commands (`docker prune`, `supabase stop --all`).
 - If a restart is necessary, explain it, restart only the relevant service, and restore the ordinary development setup afterward where possible.
-- Do not reset or reseed a user’s existing local database without explicit permission for that destructive operation.
-- If clean-reset verification is needed, use an existing approved isolated test stack; otherwise pause for permission before resetting the shared stack.
-- Report running services, app URLs, and any startup blocker at handoff.
+- Do not reset or reseed the ordinary `venuboard` development database without explicit permission.
+- Isolated `venuboard-test` resets are allowed through verified dedicated tooling (`npm run test:stack:reset` or `npm run test:verify`).
+- Report whether ordinary development (app at http://localhost:3000, project `venuboard`) is running, and whether the isolated test stack is running or stopped.
 - CI still cleans up its own services.

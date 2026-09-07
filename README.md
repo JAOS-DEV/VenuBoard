@@ -110,19 +110,19 @@ npm run local:start       # local Supabase, then Next.js; no database reset
 npm run supabase:start    # requires Docker; also used by local:start
 npm run supabase:status
 npm run local:reset       # same guarded local reset-and-seed as db:reset
-npm run db:reset          # refused when VENUBOARD_ENV=production; local Docker only
-npm run db:test           # pgTAP against the local database
-npm run db:types          # regenerate src/core/db/types.ts from the local schema
-npm run db:types:check    # generate, format, fail if types.ts would change
+npm run db:reset          # manual ordinary development reset only; not for automated tests
+npm run db:test           # same isolated pgTAP runner as test:db (venuboard-test)
+npm run db:types          # regenerate src/core/db/types.ts from the ordinary local schema
+npm run db:types:check    # generate from ordinary local schema, fail if types.ts would change
 npm run db:seed           # same production guard; does not re-apply seed files
 npm run db:perf:seed      # large local-only fixture; not part of reset or CI
 npm run db:perf           # EXPLAIN (ANALYZE, BUFFERS) baseline; not production
 npm run supabase:stop
 ```
 
-`db:reset` runs the production guard, refuses a linked hosted project, drops the **local** database, replays `supabase/migrations/`, then loads `supabase/seed/01_foundation.sql`. That erases local data only. Staging reset is not implemented — there is no staging environment yet. The performance fixture is not loaded.
+`db:reset` / `local:reset` is the **manual ordinary-development** reset (project `venuboard`, app at http://localhost:3000). It still runs the production guard and refuses a linked hosted project. It erases ordinary local development data. Automated tests must not use it; they reset isolated project `venuboard-test` with `npm run test:stack:reset`. Staging reset is not implemented — there is no staging environment yet. The performance fixture is not loaded.
 
-`db:seed` does not run the SQL a second time (the UUIDs would collide). Use `db:reset` to reseed.
+`db:seed` does not run the SQL a second time (the UUIDs would collide). Use `db:reset` (development) or `test:stack:reset` (isolated tests) to reseed.
 
 SQL tests impersonate seed users via JWT `sub` claims. They do not sign in and do not use committed passwords (auth hashes are random and unusable).
 
@@ -134,38 +134,66 @@ Reproduce the RLS performance baseline with `npm run db:perf:seed` then `npm run
 
 ## Available scripts
 
-| Script                            | What it does                                                                                                            |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`                     | Next.js development server                                                                                              |
-| `npm run build`                   | Production build                                                                                                        |
-| `npm run start`                   | Serve the production build                                                                                              |
-| `npm run lint`                    | ESLint                                                                                                                  |
-| `npm run typecheck`               | Strict TypeScript check                                                                                                 |
-| `npm run format` / `format:check` | Prettier write / check (see Formatting)                                                                                 |
-| `npm test` / `test:ci`            | Vitest watch / single run                                                                                               |
-| `npm run test:e2e`                | Playwright Chromium smoke tests                                                                                         |
-| `npm run test:e2e:install`        | Install Chromium only (not every browser)                                                                               |
-| `npm run verify`                  | Format, lint, typecheck, unit tests, production build                                                                   |
-| `npm run local:start`             | Load `.env.local`, start local Supabase, then Next.js. No database reset, no hosted link                                |
-| `npm run local:reset`             | Guarded local Docker reset-and-seed (same as `db:reset`)                                                                |
-| `npm run local:status`            | Print local URLs and commands. No keys or passwords                                                                     |
-| `npm run supabase:*` / `db:*`     | Local Supabase: start/stop/status, guarded reset, seed notice, typegen, `db:test`, `db:types:check`, local perf fixture |
+| Script                            | What it does                                                                                                                     |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                     | Next.js development server                                                                                                       |
+| `npm run build`                   | Production build                                                                                                                 |
+| `npm run start`                   | Serve the production build                                                                                                       |
+| `npm run lint`                    | ESLint                                                                                                                           |
+| `npm run typecheck`               | Strict TypeScript check                                                                                                          |
+| `npm run format` / `format:check` | Prettier write / check (see Formatting)                                                                                          |
+| `npm test` / `test:ci`            | Vitest watch / single run                                                                                                        |
+| `npm run test:e2e`                | Playwright against isolated `venuboard-test` (test-owned servers on 3100/3101)                                                   |
+| `npm run test:e2e:install`        | Install Chromium only (not every browser)                                                                                        |
+| `npm run test:stack:start`        | Start or reuse isolated Docker project `venuboard-test`. No database reset                                                       |
+| `npm run test:stack:status`       | Isolated identity, ports and URLs. No keys                                                                                       |
+| `npm run test:stack:reset`        | Reset only `venuboard-test` (erases isolated automated-test data)                                                                |
+| `npm run test:stack:stop`         | Stop only `venuboard-test`. Keeps volumes. Leaves ordinary development running                                                   |
+| `npm run test:db`                 | pgTAP against isolated `venuboard-test`. No implicit reset                                                                       |
+| `npm run test:types:check`        | Generate types from the isolated schema and compare with `src/core/db/types.ts`                                                  |
+| `npm run test:verify`             | Isolated `venuboard-test` fixtures, then pgTAP, generated types, and Playwright. Not lint/Vitest/build (`npm run verify`)        |
+| `npm run verify`                  | Format, lint, typecheck, unit tests, production build                                                                            |
+| `npm run local:start`             | Load `.env.local`, start local Supabase, then Next.js. No database reset, no hosted link                                         |
+| `npm run local:reset`             | Guarded local Docker reset-and-seed (same as `db:reset`)                                                                         |
+| `npm run local:status`            | Print local URLs and commands. No keys or passwords                                                                              |
+| `npm run supabase:*` / `db:*`     | Ordinary development Supabase start/stop/status, manual `db:reset`, seed notice, typegen, isolated `db:test`, local perf fixture |
 
 ## Testing
 
-During implementation, run **targeted** Vitest files, Playwright specs, and the relevant pgTAP file. Do not run every suite or a production build after each minor edit. At feature completion, run **one** full verification pass (`format:check`, lint, typecheck, `test:ci`, `build`, `db:test` / types check as applicable, and the relevant Playwright projects). If that pass finds a bug, rerun affected checks; broaden only when the fix touches shared authz, database security, environment handling, or cross-application infrastructure. Report current totals separately from earlier runs. Never weaken assertions to go green. Tests must not assume shared local data still equals the original seed.
+Ordinary development (`npm run local:start`, project `venuboard`, http://localhost:3000, ports 54321–54324) stays untouched. Automated database and browser tests use isolated project `venuboard-test` on ports 55320–55327 (edge inspector 8183) and Playwright servers on 3100/3101.
 
-- **Unit:** Vitest + React Testing Library. Environment validation, the production destructive-operation guard, the application shell, and a check that generated database types are not the scaffold placeholder.
-- **SQL (local Docker and GitHub Actions):** `npm run db:test`. pgTAP: structural integrity, composite tenant keys, RLS denied behaviour, permission catalogue, C1–C19 foundation enforcement. `.github/workflows/database.yml` starts repository-local Supabase, resets, tests, and checks generated types. No hosted project. The large performance fixture is not part of CI.
-- **End-to-end:** Playwright, Chromium only. Smoke-tests the public placeholder. Not in CI until the preview and test-database strategy is accepted (OQ-38). Playwright starts its own Next.js servers; leave the ordinary `local:start` app running for manual testing.
+During implementation, run **targeted** Vitest files, Playwright specs, and the relevant pgTAP file. Do not run every suite or a production build after each minor edit. At feature completion, run **`npm run test:verify`** (isolated database fixtures, generated types, Playwright) **and** **`npm run verify`** when format, lint, typecheck, unit tests, or production build are in scope. `test:verify` is not a substitute for `verify`. If that pass finds a bug, rerun affected checks; broaden only when the fix touches shared authz, database security, environment handling, or cross-application infrastructure. Report current totals separately from earlier runs. Never weaken assertions to go green. Tests must not assume shared local development data still equals the original seed.
+
+- **Unit:** Vitest + React Testing Library. Environment validation, the production destructive-operation guard, isolated-test tooling, the application shell, and a check that generated database types are not the scaffold placeholder.
+- **SQL:** `npm run test:db` against isolated `venuboard-test`. `npm run db:test` is the same runner so it cannot silently hit the shared development database. pgTAP: structural integrity, composite tenant keys, RLS denied behaviour, permission catalogue, C1–C19 foundation enforcement. GitHub Actions `.github/workflows/database.yml` starts, resets, tests and stops that isolated stack only. No hosted project. The large performance fixture is not part of CI. CI has no ordinary development stack to preserve; locally these commands leave `venuboard` running.
+- **End-to-end:** Playwright, Chromium only, via `npm run test:e2e`. Not in CI until the preview strategy is accepted (OQ-38). Playwright starts its own Next.js servers on 3100/3101 with isolated credentials; it will not reuse http://localhost:3000. Leave ordinary `local:start` running for manual testing.
 - **Isolation and permissions (application):** `can()` coverage lives in `tests/permissions`. Tenant isolation still belongs in `supabase/tests/` first. Those checks fail early; they do not replace SQL tests.
 
 ```bash
-npm run test:ci
-npm run test:e2e          # after `npm run test:e2e:install` if Chromium is missing
+npm run test:stack:start
+npm run test:db -- supabase/tests/01_structure.sql
+npm run test:e2e -- tests/e2e/public-venue-placeholder.spec.ts
+npm run test:verify
+npm run test:stack:stop
 ```
 
-Do not reset or reseed the shared local database without explicit permission. CI still starts, resets, and stops its own stack.
+`test:stack:start`, `test:db` and `test:e2e` do **not** reset data. `test:stack:reset` and `test:verify` reset only isolated `venuboard-test`. `test:verify` resets again after pgTAP so concurrency-test rows cannot leak into browser fixtures. `test:verify` does **not** run format, lint, typecheck, Vitest, or production build — that gate is `npm run verify`. Do not reset ordinary development without explicit permission.
+
+## Isolated test ports
+
+| Service           | Development | Isolated tests |
+| ----------------- | ----------- | -------------- |
+| API               | 54321       | 55321          |
+| Postgres          | 54322       | 55322          |
+| Shadow DB         | 54320       | 55320          |
+| Studio            | 54323       | 55323          |
+| Mailbox           | 54324       | 55324          |
+| Analytics         | 54327       | 55327          |
+| Edge inspector    | 8083        | 8183           |
+| Pooler (disabled) | 54329       | 55329          |
+| Next.js app       | 3000        | 3100 / 3101    |
+
+The generated workspace is `.tmp/venuboard-test/` (gitignored). It is rebuilt from repository `supabase/migrations`, `supabase/seed`, `supabase/tests` and `supabase/config.toml` before use. There is no second hand-maintained migration tree.
 
 ## Formatting
 
@@ -186,7 +214,8 @@ supabase/migrations        foundation schema, RLS, security hardening
 supabase/seed              deterministic fictional dataset (small)
 supabase/perf              optional local RLS volume fixture (not in reset or CI)
 supabase/tests             pgTAP structural, isolation, permission and C1–C19 tests
-scripts/                   guarded local start/status, db:reset, db:seed, db:perf and types-check wrappers
+src/core/test-stack/       isolated venuboard-test identity, config overrides and guards
+scripts/                   guarded local start/status, isolated test-stack commands, db wrappers
 tests/unit  tests/e2e      scaffold tests plus generated-types check
 tests/isolation            TODO — application-level suite once can() exists
 tests/permissions          TODO — application-level suite once can() exists

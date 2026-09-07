@@ -819,6 +819,9 @@
     "deactivated": "ปิดใช้งานแล้ว",
     "uiGallery": "แกลเลอรีส่วนต่อประสาน",
     "uiGalleryHelp": "เอกสารภาพในเครื่องสำหรับชิ้นส่วนพื้นฐาน รูปแบบ และธีม",
+    "isolatedTests": "การทดสอบอัตโนมัติแบบแยกชุด",
+    "isolatedTestsHelp": "คำสั่งเหล่านี้ใช้โปรเจกต์ venuboard-test และไม่ล้างข้อมูลพัฒนาในเครื่องของ venuboard test:verify รันเฉพาะชุดข้อมูลฐานข้อมูล ประเภทที่สร้าง และ Playwright ไม่รวม format, lint, typecheck, Vitest หรือ production build (ใช้ npm run verify)",
+    "isolatedTestsCommands": "npm run test:stack:start\nnpm run test:db -- supabase/tests/01_structure.sql\nnpm run test:e2e -- tests/e2e/public-venue-placeholder.spec.ts\nnpm run test:verify\nnpm run test:stack:stop",
     "serviceLabels": {
       "application": "แอปพลิเคชัน VenuBoard",
       "studio": "Supabase Studio",
