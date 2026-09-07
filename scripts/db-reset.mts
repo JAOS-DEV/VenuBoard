@@ -5,6 +5,8 @@ import {
   runSupabase,
 } from "./lib/local-supabase.mts";
 import { applyRootEnvLocalToProcess } from "./lib/local-runtime.mts";
+import { assertOrdinaryDevelopmentResetTarget } from "./lib/test-stack/commands.mts";
+import { repoRootFromScript } from "./lib/test-stack/paths.mts";
 
 /**
  * Guarded wrapper around `supabase db reset`.
@@ -21,17 +23,21 @@ import { applyRootEnvLocalToProcess } from "./lib/local-runtime.mts";
  * repository migrations and loads `supabase/seed/01_foundation.sql`. It does not
  * target a linked hosted project. Staging reset is not implemented — there is no
  * staging environment yet. The large performance fixture is not loaded.
+ * Manual ordinary-development reset only. Automated tests must use
+ * `npm run test:stack:reset` against isolated project venuboard-test.
  */
 const OPERATION = "db:reset";
+const repoRoot = repoRootFromScript();
 
 applyRootEnvLocalToProcess({ required: false });
 
 const environment = guardDestructiveOperation(OPERATION);
 refuseLinkedHostedProject(OPERATION);
+assertOrdinaryDevelopmentResetTarget(OPERATION, repoRoot);
 
 console.log(`[${OPERATION}] environment: ${environment}`);
 console.log(
-  `[${OPERATION}] resetting the local Docker database (migrations + deterministic seed). This erases local data only.`,
+  `[${OPERATION}] resetting ordinary local development project venuboard (migrations + deterministic seed). This erases ordinary local development data. It does not touch isolated project venuboard-test. For automated tests use npm run test:stack:reset.`,
 );
 
 process.exit(runSupabase(["db", "reset"]));

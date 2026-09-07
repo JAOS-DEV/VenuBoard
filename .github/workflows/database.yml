@@ -8,8 +8,12 @@ on:
       - "supabase/tests/**"
       - "supabase/config.toml"
       - "src/core/db/types.ts"
+      - "src/core/test-stack/**"
       - "scripts/db-*.mts"
+      - "scripts/test-*.mts"
       - "scripts/lib/local-supabase.mts"
+      - "scripts/lib/run-bin.mts"
+      - "scripts/lib/test-stack/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/database.yml"
@@ -24,13 +28,14 @@ concurrency:
 
 jobs:
   database-security:
-    name: Local Supabase migrations, seed, pgTAP, types
+    name: Isolated Supabase migrations, seed, pgTAP, types
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
     env:
       # CI is local-class (ADR-034). No hosted project, no login, no link.
-      VENUBOARD_ENV: local
+      # Isolated tooling sets test identity for the throwaway runner stack.
+      VENUBOARD_ENV: test
 
     steps:
       - name: Check out repository
@@ -47,18 +52,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Start local Supabase
-        run: npx supabase start
+      - name: Start isolated test Supabase
+        run: npm run test:stack:start
 
-      - name: Reset from a clean database (migrations + seed)
-        run: npm run db:reset
+      - name: Reset isolated test database (migrations + seed)
+        run: npm run test:stack:reset
 
       - name: Run pgTAP / database tests
-        run: npm run db:test
+        run: npm run test:db
 
       - name: Generated types must match the committed file
-        run: npm run db:types:check
+        run: npm run test:types:check
 
-      - name: Stop local Supabase
+      - name: Stop isolated test Supabase
         if: always()
-        run: npx supabase stop
+        run: npm run test:stack:stop

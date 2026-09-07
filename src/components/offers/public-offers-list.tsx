@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -29,15 +29,19 @@ export function PublicOffersList({
   const [cursor, setCursor] = useState<string | null>(initial.nextCursor);
   const [loading, setLoading] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [seenInitial, setSeenInitial] = useState(initial);
   const onTick = useCallback(() => {
     setNowMs(Date.now());
   }, []);
 
-  useEffect(() => {
+  if (
+    initial.items !== seenInitial.items ||
+    initial.nextCursor !== seenInitial.nextCursor
+  ) {
+    setSeenInitial(initial);
     setItems(initial.items);
     setCursor(initial.nextCursor);
-    setNowMs(Date.now());
-  }, [initial.items, initial.nextCursor]);
+  }
 
   async function loadMore(): Promise<void> {
     if (cursor === null || loading) {

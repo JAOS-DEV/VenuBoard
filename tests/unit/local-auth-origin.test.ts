@@ -85,8 +85,8 @@ describe("local Auth origin", () => {
 
   it("keeps Playwright callback origins on ports 3100 and 3101", () => {
     const playwrightConfig = readFileSync(PLAYWRIGHT_CONFIG_PATH, "utf8");
-    expect(playwrightConfig).toContain("const TEST_PORT = 3100");
-    expect(playwrightConfig).toContain("const LOCAL_DEV_PORT = 3101");
+    expect(playwrightConfig).toContain("TEST_APP_PORTS");
+    expect(playwrightConfig).toContain("reuseExistingServer: false");
 
     for (const origin of ["http://127.0.0.1:3100", "http://127.0.0.1:3101"]) {
       expect(redirects).toContain(`${origin}/en/auth/callback`);

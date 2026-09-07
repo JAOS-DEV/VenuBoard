@@ -7,15 +7,17 @@ alwaysApply: true
 
 ## During implementation
 
+- Use isolated tooling for automated database and browser verification (`npm run test:stack:start`, then `test:db` / `test:e2e`).
 - Run tests directly affected by the change.
-- Prefer targeted Vitest files and Playwright specs.
-- For SQL/RLS work, run the relevant `supabase/tests` files during iteration.
+- Prefer targeted Vitest files, Playwright specs (`npm run test:e2e -- <spec>`), and the relevant pgTAP file (`npm run test:db -- supabase/tests/<file>.sql`).
 - Batch related edits before rerunning expensive checks.
 - Do not run every test or a production build after each minor edit.
+- Do not reset the isolated stack on every targeted rerun.
 
 ## At feature completion
 
-- Run one complete verification pass when implementation and focused security review are ready.
+- Run the isolated database/browser pass with `npm run test:verify` (pgTAP, generated types, Playwright). That command does **not** run format, lint, typecheck, Vitest, or production build.
+- Run `npm run verify` when format/lint/typecheck/unit/build are in scope.
 - If that pass finds a bug, fix it and rerun affected checks.
 - Broaden reruns when the fix touches shared authentication, authorization, database security, environment handling, or cross-application infrastructure.
 - Small post-verification UI changes normally need focused regressions, not another complete suite.
@@ -27,4 +29,5 @@ alwaysApply: true
 - Explain briefly why broader testing is needed before starting it.
 - Never weaken assertions or skip tests merely to make results green.
 - Keep required CI verification and cleanup intact.
-- Tests must not assume shared local data still equals its original seed state.
+- Tests must not assume shared local development data still equals its original seed state.
+- Ordinary `local:start` must not run the full suite.

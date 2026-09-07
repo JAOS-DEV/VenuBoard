@@ -183,6 +183,21 @@ export function DeveloperHubClient({
                 </CardContent>
               </Card>
             </li>
+            <li className="sm:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    {t("isolatedTests")}
+                  </CardTitle>
+                  <CardDescription>{t("isolatedTestsHelp")}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-xs">
+                    {t("isolatedTestsCommands")}
+                  </pre>
+                </CardContent>
+              </Card>
+            </li>
           </ul>
         </TabsContent>
       </Tabs>

@@ -5,6 +5,7 @@ test-results
 playwright-report
 package-lock.json
 supabase/.temp
+.tmp
 
 # Product and architecture Markdown. Prettier wrapping would rewrite accepted
 # wording and break heading anchors. Source, config, tests, scripts and README
