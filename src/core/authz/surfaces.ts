@@ -157,6 +157,19 @@ function hasAtmosphereAccess(actor: AuthenticatedActor): boolean {
   return actor.businessMemberships.length > 0;
 }
 
+function hasProfileAccess(actor: AuthenticatedActor): boolean {
+  const scopes = venueScopes(actor);
+  for (const scope of scopes) {
+    if (
+      can(actor, "manage_venue", scope) ||
+      can(actor, "manage_branding", scope)
+    ) {
+      return true;
+    }
+  }
+  return actor.businessMemberships.length > 0;
+}
+
 /**
  * UX-only navigation flags. Pages still enforce `can()` and the database
  * remains the security boundary.
@@ -169,6 +182,7 @@ export function venueAdminNavAccess(actor: Actor): {
   bookings: boolean;
   offers: boolean;
   atmosphere: boolean;
+  profile: boolean;
 } {
   if (!isActiveAuthenticatedActor(actor)) {
     return {
@@ -179,6 +193,7 @@ export function venueAdminNavAccess(actor: Actor): {
       bookings: false,
       offers: false,
       atmosphere: false,
+      profile: false,
     };
   }
 
@@ -190,5 +205,6 @@ export function venueAdminNavAccess(actor: Actor): {
     bookings: hasBookingsAccess(actor),
     offers: hasOffersAccess(actor),
     atmosphere: hasAtmosphereAccess(actor),
+    profile: hasProfileAccess(actor),
   };
 }

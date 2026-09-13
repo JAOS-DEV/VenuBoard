@@ -17,10 +17,12 @@ import {
   loadPublicVenueUpcomingEvents,
 } from "@/core/events/queries";
 import { VenueEventsSection } from "@/components/events/venue-events-section";
+import { PublicVenueProfileBlock } from "@/components/venue-profile/public-venue-profile-block";
 import {
   loadPublicStaffCarousel,
   loadPublicVenueSnapshot,
 } from "@/core/staff-presence/queries";
+import { loadPublicVenueProfile } from "@/core/venue-profile/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,7 @@ export default async function PublicVenuePage({
   const tBooking = await getTranslations("bookingPublic");
 
   const venue = await loadPublicVenueSnapshot(venueSlug);
+  const profile = await loadPublicVenueProfile(venueSlug, locale);
   const atmosphere = await loadPublicVenueAtmosphere(venueSlug, locale);
   const feed = await loadPublicVenueFeed(venueSlug, locale);
   const offers = await loadPublicVenueOffers(venueSlug, locale);
@@ -58,16 +61,51 @@ export default async function PublicVenuePage({
           {t("title")}
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {venue?.name ?? t("unavailableTitle")}
+          {profile.available
+            ? profile.name
+            : (venue?.name ?? t("unavailableTitle"))}
         </h1>
-        {venue === null ? (
+        {venue === null && !profile.available ? (
           <p className="text-sm text-muted-foreground">
             {t("unavailableBody")}
           </p>
         ) : null}
       </header>
 
-      {venue?.contentClassification === "nightlife_18_plus" ? (
+      <PublicVenueProfileBlock
+        profile={profile}
+        copy={{
+          preview: t("previewBanner"),
+          about: t("about"),
+          contact: t("contact"),
+          hours: t("hours"),
+          timezone: t("timezone"),
+          getDirections: t("getDirections"),
+          email: t("email"),
+          phone: t("phone"),
+          website: t("website"),
+          hoursUnknown: t("hoursUnknown"),
+          hoursOpenListed: t("hoursOpenListed"),
+          hoursClosedListed: t("hoursClosedListed"),
+          closed: t("closed"),
+          nextDay: t("nextDay"),
+          weekdays: {
+            monday: t("monday"),
+            tuesday: t("tuesday"),
+            wednesday: t("wednesday"),
+            thursday: t("thursday"),
+            friday: t("friday"),
+            saturday: t("saturday"),
+            sunday: t("sunday"),
+          },
+          listedHoursDisclaimer: t("listedHoursDisclaimer"),
+          exceptions: t("hoursExceptions"),
+        }}
+      />
+
+      {(profile.available
+        ? profile.contentClassification
+        : venue?.contentClassification) === "nightlife_18_plus" ? (
         <aside
           className="rounded-lg border border-border bg-secondary/60 p-3 text-sm"
           data-testid="adult-notice"

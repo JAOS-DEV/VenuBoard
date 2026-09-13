@@ -1,6 +1,6 @@
 # Conditional permission enforcement (C1–C19)
 
-**Status:** Staff presence, events, atmosphere, feed, booking enquiries and offers · **Last updated:** 2026-09-06
+**Status:** Staff presence, events, atmosphere, feed, booking enquiries, offers and venue public profile · **Last updated:** 2026-09-07
 
 This is the enforcement map for the conditional cells in [roles-and-permissions.md §5](../roles-and-permissions.md#5-conditional-rules). It records what the database already enforces, what a future product-module migration must add, and what the application `can(actor, action, scope)` layer will do for UX.
 
@@ -181,7 +181,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | `restricted`: block configuration writes, keep public site. `suspended`: block writes and take the public site down. Reads/exports remain for data retrieval. |
 | **Tables / actions** | `subscriptions.state`; venue writes; public SELECT |
-| **Enforced now** | `subscription_allows_tenant_writes` is trial/active/past_due. `venue_is_publicly_visible` excludes suspended (and worse). Restricted seed venue stays publicly readable. Booking public intake ANDs that helper; tenant `manage_bookings` / settings still require writable subscription. |
+| **Enforced now** | `subscription_allows_tenant_writes` is trial/active/past_due. `venue_is_publicly_visible` excludes suspended (and worse). Restricted seed venue stays publicly readable. Booking public intake ANDs that helper; tenant `manage_bookings` / settings still require writable subscription. Venue profile writes (`save_venue_public_profile`, hours, branding, publication) AND `may_manage_venue_profile` / `may_manage_venue_branding`, which include the same subscription write helper. Tests: `14_venue_profile.sql`. |
 | **Future migration** | New tenant-write tables must AND `subscription_allows_tenant_writes`. Export path (C9) must still work in restricted/suspended. |
 | **Application `can()`** | Billing banners. |
 | **Negative tests** | Present: anon reads restricted-room, not silent-room; owner UPDATE of both is zero rows. |
@@ -192,7 +192,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | Module actions require entitlement. Visibility toggles cannot create an entitlement. |
 | **Tables / actions** | `venue_module_entitlements` (platform-write); `venue_module_settings`; `reject_unentitled_module_enable` |
-| **Enforced now** | Tenant INSERT on entitlements denied. Enabling a module without entitlement raises `23514`. Night Orchid has an offers **deny** override. Staff writes and `list_public_staff_presence` require `module_is_entitled('staff_presence')`. Booking queue/customer helpers AND `booking_module_entitled`. Offer writes and `list_public_venue_offers` AND `offers_module_entitled`. Leftover PII after booking expiry is not readable. |
+| **Enforced now** | Tenant INSERT on entitlements denied. Enabling a module without entitlement raises `23514`. Night Orchid has an offers **deny** override. Staff writes and `list_public_staff_presence` require `module_is_entitled('staff_presence')`. Booking queue/customer helpers AND `booking_module_entitled`. Offer writes and `list_public_venue_offers` AND `offers_module_entitled`. Leftover PII after booking expiry is not readable. Venue profile/hours/contacts are `core_profile` and remain entitled while the venue exists (`14_venue_profile.sql`). |
 | **Application `can()`** | Disable unentitled module switches. |
 | **Negative tests** | Present: settings INSERT for offers denied; entitlement INSERT denied (`03` and `05`). Staff: draft-room create denied (`08`). Offers: Night Orchid public list unavailable (`13_offers.sql`). |
 
@@ -212,7 +212,7 @@ This is the enforcement map for the conditional cells in [roles-and-permissions.
 | --- | --- |
 | **Purpose** | Tenant-content writes (`manage_business`, `manage_venue`, branding, invite, assign_roles, public staff profiles) need an active support session with **write** access. Platform records (`manage_platform_tenants`, entitlements, platform users, domain verification) do not. `moderate_content` is excluded (ADR-036). |
 | **Tables / actions** | `venues`, `businesses`, `invitations`, `venue_memberships`, translations; `support_sessions` |
-| **Enforced now** | `protect_venue_platform_columns` and `protect_business_tenant_content` reject profile-field changes unless `platform_may_write_tenant`. Invitations INSERT and venue membership writes no longer accept `manage_platform_tenants` alone. Classification lock remains a platform record. First-owner business/venue **create** via `manage_platform_tenants` remains for operator onboarding. Staff profile writes use `may_manage_public_staff_profiles` (includes write session). Presence toggles are **not** a C19 tenant-write cell. Booking workflow and module settings use `may_manage_bookings` / `may_configure_booking_module` (`platform_may_write_tenant`). `manage_bookings` is a tenant write action in `can()`. |
+| **Enforced now** | `protect_venue_platform_columns` and `protect_business_tenant_content` reject profile-field changes unless `platform_may_write_tenant`. Invitations INSERT and venue membership writes no longer accept `manage_platform_tenants` alone. Classification lock remains a platform record. First-owner business/venue **create** via `manage_platform_tenants` remains for operator onboarding. Staff profile writes use `may_manage_public_staff_profiles` (includes write session). Presence toggles are **not** a C19 tenant-write cell. Booking workflow and module settings use `may_manage_bookings` / `may_configure_booking_module` (`platform_may_write_tenant`). `manage_bookings` is a tenant write action in `can()`. Venue profile RPCs use `may_manage_venue_profile` / `may_manage_venue_branding` (includes write session) and do not write classification, slug, timezone or quarantine. Tests: `14_venue_profile.sql`. |
 | **Future migration** | Domain verification columns: content vs platform-record split must follow this same rule. |
 | **Application `can()`** | Support banner; disable tenant edits outside write mode. |
 | **Negative tests** | Present: admin cannot rename harbor venue/business, invite, or assign without a session; can lock classification; can edit city inside a live write session created in the test transaction. Staff: create without session forbidden; create with write session allowed; presence toggle still forbidden (`08`). |

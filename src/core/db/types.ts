@@ -2552,6 +2552,172 @@ export type Database = {
           },
         ];
       };
+      venue_closed_weekdays: {
+        Row: {
+          created_at: string;
+          day_of_week: number;
+          venue_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          day_of_week: number;
+          venue_id: string;
+        };
+        Update: {
+          created_at?: string;
+          day_of_week?: number;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "venue_closed_weekdays_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      venue_contacts: {
+        Row: {
+          contact_type: string;
+          created_at: string;
+          id: string;
+          is_public: boolean;
+          sort_order: number;
+          updated_at: string;
+          updated_by: string | null;
+          value: string;
+          venue_id: string;
+        };
+        Insert: {
+          contact_type: string;
+          created_at?: string;
+          id?: string;
+          is_public?: boolean;
+          sort_order?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          value: string;
+          venue_id: string;
+        };
+        Update: {
+          contact_type?: string;
+          created_at?: string;
+          id?: string;
+          is_public?: boolean;
+          sort_order?: number;
+          updated_at?: string;
+          updated_by?: string | null;
+          value?: string;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "venue_contacts_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "venue_contacts_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      venue_hours_exception_intervals: {
+        Row: {
+          closes_local: string;
+          closes_next_day: boolean;
+          created_at: string;
+          exception_id: string;
+          id: string;
+          opens_local: string;
+          sort_order: number;
+          venue_id: string;
+        };
+        Insert: {
+          closes_local: string;
+          closes_next_day?: boolean;
+          created_at?: string;
+          exception_id: string;
+          id?: string;
+          opens_local: string;
+          sort_order: number;
+          venue_id: string;
+        };
+        Update: {
+          closes_local?: string;
+          closes_next_day?: boolean;
+          created_at?: string;
+          exception_id?: string;
+          id?: string;
+          opens_local?: string;
+          sort_order?: number;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "venue_hours_exception_intervals_parent_venue_fkey";
+            columns: ["exception_id", "venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venue_hours_exceptions";
+            referencedColumns: ["id", "venue_id"];
+          },
+        ];
+      };
+      venue_hours_exceptions: {
+        Row: {
+          created_at: string;
+          exception_date: string;
+          id: string;
+          internal_note: string | null;
+          is_closed: boolean;
+          updated_at: string;
+          updated_by: string | null;
+          venue_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          exception_date: string;
+          id?: string;
+          internal_note?: string | null;
+          is_closed: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id: string;
+        };
+        Update: {
+          created_at?: string;
+          exception_date?: string;
+          id?: string;
+          internal_note?: string | null;
+          is_closed?: boolean;
+          updated_at?: string;
+          updated_by?: string | null;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "venue_hours_exceptions_updated_by_fkey";
+            columns: ["updated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "venue_hours_exceptions_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       venue_memberships: {
         Row: {
           accepted_at: string | null;
@@ -2793,6 +2959,50 @@ export type Database = {
           },
         ];
       };
+      venue_opening_hours: {
+        Row: {
+          closes_local: string;
+          closes_next_day: boolean;
+          created_at: string;
+          day_of_week: number;
+          id: string;
+          opens_local: string;
+          sort_order: number;
+          updated_at: string;
+          venue_id: string;
+        };
+        Insert: {
+          closes_local: string;
+          closes_next_day?: boolean;
+          created_at?: string;
+          day_of_week: number;
+          id?: string;
+          opens_local: string;
+          sort_order: number;
+          updated_at?: string;
+          venue_id: string;
+        };
+        Update: {
+          closes_local?: string;
+          closes_next_day?: boolean;
+          created_at?: string;
+          day_of_week?: number;
+          id?: string;
+          opens_local?: string;
+          sort_order?: number;
+          updated_at?: string;
+          venue_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "venue_opening_hours_venue_id_fkey";
+            columns: ["venue_id"];
+            isOneToOne: false;
+            referencedRelation: "venues";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       venue_storage_usage: {
         Row: {
           last_recalculated_at: string | null;
@@ -2832,6 +3042,7 @@ export type Database = {
         Row: {
           created_at: string;
           description: string | null;
+          directions: string | null;
           id: string;
           locale: string;
           name: string | null;
@@ -2843,6 +3054,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           description?: string | null;
+          directions?: string | null;
           id?: string;
           locale: string;
           name?: string | null;
@@ -2854,6 +3066,7 @@ export type Database = {
         Update: {
           created_at?: string;
           description?: string | null;
+          directions?: string | null;
           id?: string;
           locale?: string;
           name?: string | null;
@@ -2896,6 +3109,7 @@ export type Database = {
           latitude: number | null;
           longitude: number | null;
           name: string;
+          opening_hours_mode: string;
           platform_quarantine_reason: string | null;
           platform_quarantined_at: string | null;
           platform_quarantined_by: string | null;
@@ -2923,6 +3137,7 @@ export type Database = {
           latitude?: number | null;
           longitude?: number | null;
           name: string;
+          opening_hours_mode?: string;
           platform_quarantine_reason?: string | null;
           platform_quarantined_at?: string | null;
           platform_quarantined_by?: string | null;
@@ -2950,6 +3165,7 @@ export type Database = {
           latitude?: number | null;
           longitude?: number | null;
           name?: string;
+          opening_hours_mode?: string;
           platform_quarantine_reason?: string | null;
           platform_quarantined_at?: string | null;
           platform_quarantined_by?: string | null;
@@ -3120,6 +3336,10 @@ export type Database = {
         };
         Returns: Json;
       };
+      list_public_venue_profile: {
+        Args: { p_locale: string; p_venue_slug: string };
+        Returns: Json;
+      };
       onboard_platform_venue: {
         Args: { p_idempotency_key: string; p_payload: Json };
         Returns: Json;
@@ -3158,6 +3378,18 @@ export type Database = {
         Args: { p_enquiry_id: string; p_expected_row_version: number };
         Returns: Json;
       };
+      save_venue_branding: {
+        Args: { p_payload: Json; p_venue_id: string };
+        Returns: Json;
+      };
+      save_venue_opening_hours: {
+        Args: { p_payload: Json; p_venue_id: string };
+        Returns: Json;
+      };
+      save_venue_public_profile: {
+        Args: { p_payload: Json; p_venue_id: string };
+        Returns: Json;
+      };
       schedule_event_publication: {
         Args: { p_event_id: string; p_publish_at: string };
         Returns: Json;
@@ -3180,6 +3412,10 @@ export type Database = {
       };
       set_venue_atmosphere: {
         Args: { p_expiry_minutes: number; p_state: string; p_venue_id: string };
+        Returns: Json;
+      };
+      set_venue_publication: {
+        Args: { p_payload: Json; p_venue_id: string };
         Returns: Json;
       };
       submit_booking_enquiry: {

@@ -188,7 +188,12 @@ SELECT ok(
         'archive_offer',
         'restore_offer_to_draft',
         'update_offers_module_settings',
-        'list_public_venue_offers'
+        'list_public_venue_offers',
+        'save_venue_public_profile',
+        'save_venue_opening_hours',
+        'set_venue_publication',
+        'save_venue_branding',
+        'list_public_venue_profile'
       )
   ),
   'no SECURITY DEFINER helpers are exposed in public except invitation and permission RPCs'

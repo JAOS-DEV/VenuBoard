@@ -80,7 +80,7 @@ This catalogue is **accepted and final for the MVP at 33 actions**. Every entry 
 | Action | Scope | Meaning |
 | --- | --- | --- |
 | `manage_business` | business | Create/edit business details, create venues, archive venues |
-| `manage_venue` | venue | Edit venue profile: details, address, hours, contact, navigation and homepage order, custom text, timezone |
+| `manage_venue` | venue | Edit venue profile: details, address, hours, contact, navigation and homepage order, custom text, and **publish/unpublish the venue site**. Timezone is stored here but is read-only in the current profile editor. |
 | `manage_branding` | venue | Logo, brand colours, approved fonts, background image, theme |
 | `invite_users` | business / venue | Send invitations into a scope |
 | `assign_roles` | business / venue | Grant, change or remove memberships and roles |
@@ -89,7 +89,7 @@ This catalogue is **accepted and final for the MVP at 33 actions**. Every entry 
 | `toggle_staff_presence` | venue | Set "in today" / "not in" for staff at the venue |
 | `create_content` | venue | Create/edit drafts: feed posts, events, offers, including their translation rows |
 | `approve_content` | venue | Approve or reject submissions awaiting approval |
-| `publish_content` | venue | Move content to published, unpublish, archive |
+| `publish_content` | venue | Move **feed posts, events and offers** to published, unpublish, archive. This does **not** publish the venue site; that is `manage_venue`. |
 | `manage_events` | venue | Full event management including scheduling, cancellation and cross-venue promotion/copy |
 | `view_bookings` | venue | See booking requests **excluding** restricted customer contact details unless also permitted by `view_booking_customer_details` |
 | `manage_bookings` | venue | Accept, decline, note, assign, reassign booking requests |

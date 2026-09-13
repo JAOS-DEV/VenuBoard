@@ -13,6 +13,7 @@ import {
   publicVenueUpdatesPath,
 } from "@/core/public-venue/paths";
 import { loadShellSession } from "@/core/shell/session";
+import { loadPublicVenueProfile } from "@/core/venue-profile/queries";
 import { loadPublicVenueSnapshot } from "@/core/staff-presence/queries";
 
 interface PublicVenueLayoutProps {
@@ -30,6 +31,7 @@ export default async function PublicVenueLayout({
   const t = await getTranslations("publicVenue");
   const tBooking = await getTranslations("bookingPublic");
   const venue = await loadPublicVenueSnapshot(venueSlug);
+  const profile = await loadPublicVenueProfile(venueSlug, locale);
   const offers = await loadPublicVenueOffers(venueSlug, locale);
   const feed = await loadPublicVenueFeed(venueSlug, locale);
   const booking = await loadPublicBookingIntake(venueSlug, locale);
@@ -55,7 +57,11 @@ export default async function PublicVenueLayout({
       signedIn={session.signedIn}
       developerHubEnabled={session.developerHubEnabled}
       identityHref={homeHref}
-      identityLabel={venue?.name ?? t("unavailableTitle")}
+      identityLabel={
+        profile.available
+          ? profile.name
+          : (venue?.name ?? t("unavailableTitle"))
+      }
       surfaces={surfaces}
       surfacesLabel={t("navLabel")}
       venueSlug={venueSlug}
