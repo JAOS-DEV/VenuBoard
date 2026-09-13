@@ -49,6 +49,7 @@ export default async function AdminLayout({
       showBookings={nav.bookings}
       showOffers={nav.offers}
       showAtmosphere={nav.atmosphere}
+      showProfile={nav.profile}
     >
       {children}
     </VenueAdminShell>

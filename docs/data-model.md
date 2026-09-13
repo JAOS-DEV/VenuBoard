@@ -64,18 +64,19 @@ A user may belong to **multiple businesses and multiple venues with a different 
 
 **`venues`**
 
-`id`, `business_id`, `name`, `slug` (globally unique — used for the `venuboard.com` subdomain), `timezone`, `default_locale`, address fields, `latitude`, `longitude`, `directions_url`, `content_classification`, `classification_locked_by_platform` (boolean), `publication_state`, `status`, `created_at`, `updated_at`, `archived_at`
+`id`, `business_id`, `name`, `slug` (globally unique — used for the `venuboard.com` subdomain), `timezone`, `default_locale`, address fields, `latitude`, `longitude`, `directions_url` (cleared by the public-profile save; public directions use generated OpenStreetMap links), `opening_hours_mode` (`unknown` \| `scheduled`), `content_classification`, `classification_locked_by_platform` (boolean), `publication_state`, `status`, `created_at`, `updated_at`, `archived_at`
 
-- Translated fields: **`venue_translations`** (optional localized `name`, description and tagline). The English operational name also lives on `venues.name`.
+- Translated fields: **`venue_translations`** (optional localized `name`, `tagline`, `description` and `directions`). The English operational name also lives on `venues.name`.
 - `content_classification` is `text CHECK (... IN ('general','nightlife_18_plus'))`; `publication_state` is `text CHECK (... IN ('draft','published','unpublished_by_platform'))`.
 - `slug` uniqueness is platform-wide because it maps to a public subdomain; a reserved-word list prevents collisions with platform routes.
 - `classification_locked_by_platform` is how the operator **forces** an 18+ notice that the venue cannot lower.
+- Timezone is read-only in the venue-profile editor because events and offers already depend on it. See [venue-profile.md](./venue-profile.md).
 
-**`venue_opening_hours`** — `id`, `venue_id`, `day_of_week`, `opens_at`, `closes_at`, `closes_next_day` (boolean), `is_closed`, plus dated exceptions in **`venue_hours_exceptions`** (`venue_id`, `date`, `opens_at`, `closes_at`, `is_closed`, `internal_note`).
+**`venue_opening_hours`** — `id`, `venue_id`, `day_of_week` (ISO Monday=1 … Sunday=7), `sort_order` (1–4), `opens_local`, `closes_local`, `closes_next_day`. Explicitly closed weekdays live in **`venue_closed_weekdays`**. Date replacements live in **`venue_hours_exceptions`** (`exception_date`, `is_closed`, `internal_note`) with child **`venue_hours_exception_intervals`**. Intervals are start-inclusive / end-exclusive wall-clock times. `internal_note` is never returned by the public RPC.
 
-> Nightlife hours routinely cross midnight; `closes_next_day` exists so "20:00–02:00" is representable without lying about the date.
+> Nightlife hours routinely cross midnight; `closes_next_day` exists so "18:00–02:00" is representable without lying about the date. Unknown (`opening_hours_mode = 'unknown'`) is distinct from an all-closed scheduled week.
 
-**`venue_contacts`** — `id`, `venue_id`, `type` (`text CHECK (... IN ('phone','email','line','whatsapp','website'))`), `value`, `is_public`, `sort_order`. Translated fields: **`venue_contact_translations`** (label).
+**`venue_contacts`** — `id`, `venue_id`, `contact_type` (`text CHECK (... IN ('phone','email','website'))`), `value`, `is_public`, `sort_order`. Line/WhatsApp remain deferred. These rows are optional public business contacts and are never copied from a private owner account. There is no `venue_contact_translations` table in this milestone.
 
 ## 3. Identity, membership and invitations
 
@@ -532,7 +533,7 @@ Every tenant table falls into one of these classes. See [architecture.md](./arch
 
 | Class | Examples | Read | Write |
 | --- | --- | --- | --- |
-| **Public-readable content** | `events`, `staff_public_profiles`, `current_staff_presence`, `venue_social_links`, `venue_branding`, `venue_text_blocks` | Anonymous role may read **only** rows where the venue is published, the module is entitled **and** enabled, the record is `published`, `platform_quarantined_at IS NULL` (and, for staff, consent is current). **`venue_atmosphere`, `feed_posts` and `offers` are not anonymously selectable**; public atmosphere goes through `get_public_venue_atmosphere`, public feed through `list_public_venue_feed`, public offers through `list_public_venue_offers` (scheduled rows become visible at query time when `scheduled_for <= now()`, and offers additionally require `valid_from <= now() < valid_until`). | Members with the relevant action, in that venue only — **excluding** the platform quarantine columns, which no tenant role may write ([section 6.9](#69-platform-moderation-and-quarantine)) |
+| **Public-readable content** | `events`, `staff_public_profiles`, `current_staff_presence`, `venue_social_links`, `venue_branding`, `venue_text_blocks` | Anonymous role may read **only** rows where the venue is published, the module is entitled **and** enabled, the record is `published`, `platform_quarantined_at IS NULL` (and, for staff, consent is current). **`venue_atmosphere`, `feed_posts`, `offers`, `venue_contacts`, `venue_opening_hours`, `venue_closed_weekdays` and `venue_hours_exceptions` are not anonymously selectable**; public atmosphere goes through `get_public_venue_atmosphere`, public feed through `list_public_venue_feed`, public offers through `list_public_venue_offers` (scheduled rows become visible at query time when `scheduled_for <= now()`, and offers additionally require `valid_from <= now() < valid_until`), and public profile/hours/contacts through `list_public_venue_profile` (which omits exception notes). | Members with the relevant action, in that venue only — **excluding** the platform quarantine columns, which no tenant role may write ([section 6.9](#69-platform-moderation-and-quarantine)) |
 | **Public-readable translations** | `venue_translations`, `post_translations`, `event_translations`, `offer_translations` and the other `*_translations` tables of public entities | Anonymous role may read a translation row **only if it may read the parent row**. Policies test the parent's visibility, never just `venue_id` | Whoever may write the parent record |
 | **Tenant-private** | `staff_private_details`, `booking_requests`, `booking_request_contacts`, `booking_request_events`, `invitations`, `notification_preferences` | Members with the relevant action, in that venue/business only. **No anonymous policy exists at all** | Same, action-gated |
 | **Platform-controlled** | `venue_module_entitlements`, `plans`, `plan_modules`, `modules`, `entitlement_sources`, `subscriptions`, `venue_billing_records`, `venue_storage_usage`, `platform_roles`, `trial_extensions` | Tenants may read their **own** subscription, entitlement and quota state (needed to render the admin panel). Reference tables are readable by authenticated users | **Platform only.** No tenant write policy exists |
@@ -597,8 +598,8 @@ Constraints:
 
 | Table | Parent | Translated fields |
 | --- | --- | --- |
-| `venue_translations` | `venues` | name, description, tagline |
-| `venue_contact_translations` | `venue_contacts` | label |
+| `venue_translations` | `venues` | name, description, tagline, directions |
+| `venue_contact_translations` | deferred | Line/WhatsApp labels remain with social links; current public contacts are unlabelled phone/email/website |
 | `venue_navigation_translations` | `venue_navigation` | label |
 | `venue_text_block_translations` | `venue_text_blocks` | title, body |
 | `venue_module_setting_translations` | `venue_module_settings` | public heading |
@@ -661,6 +662,7 @@ The application ships a **deterministic, repeatable seed dataset** for local and
 | Translations | Fully bilingual content, English-only content, Thai-only content, and deliberately partial translations so the fallback chain and coverage view are exercised |
 | Bookings | Requests in every state, assigned and unassigned, with internal notes and restricted customer details |
 | Atmosphere | A current unexpired atmosphere value, a deliberately expired one, disabled/not-entitled/restricted/draft/18+ fixtures |
+| Venue profile | Fictional public contacts, split/overnight/unknown hours, reset-relative date exceptions, published/draft/restricted/quarantine fixtures. Coordinates are invented. See `supabase/seed/08_venue_profile.sql` and [venue-profile.md](./venue-profile.md) |
 | Support and audit | Completed read-only and write support sessions with matching `audit_log` entries, plus an expired session |
 | Moderation | A quarantined post and a quarantined media asset, each with a recorded reason and `moderation_actions` entries, so the republication block and the restore path are testable |
 | Negative scenarios | Fixtures whose only purpose is to be inaccessible or rejected: a second tenant's records for cross-tenant tests, role/action pairs expected to be denied, and the write attempts that must fail — a cross-venue parent/translation mismatch ([section 11.1](#111-tenant-key-integrity-constraints)) and a venue republishing quarantined content ([section 6.9](#69-platform-moderation-and-quarantine)) |

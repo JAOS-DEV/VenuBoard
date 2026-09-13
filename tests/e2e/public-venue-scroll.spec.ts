@@ -153,7 +153,7 @@ test.describe("public venue homepage scroll restoration", () => {
 
     await page.goto("/th/v/harbor-light/offers");
     await page.getByTestId("public-venue-back").click();
-    await waitForHomepage(page, "Harbor Light");
+    await waitForHomepage(page, "ฮาร์เบอร์ไลต์");
     await expectNearTop(page);
   });
 

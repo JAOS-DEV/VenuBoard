@@ -99,5 +99,5 @@ Admin pages are `force-dynamic`. Public staff is queried per request with venue 
 
 - OQ-03 / OQ-04: PDPA/GDPR consent wording and lawful basis
 - OQ-17: masking private staff data by default
-- OQ-21: later replace hour expiry with opening-hours-based reset
+- OQ-21: listed opening hours now exist on the venue; automatically resetting staff presence from those hours remains deferred
 - OQ-24: per-person profile metrics (not implemented; aggregate-only remains the default)

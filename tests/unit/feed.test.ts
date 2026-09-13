@@ -352,6 +352,7 @@ describe("venue-admin navigation breakpoint", () => {
     expect(surfaces).toContain("UX-only navigation flags");
     expect(surfaces).toContain("venueAdminNavAccess");
     expect(surfaces).toContain("hasFeedAccess");
+    expect(surfaces).toContain("hasProfileAccess");
   });
 });
 

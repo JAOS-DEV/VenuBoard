@@ -105,6 +105,7 @@ describe("isolated test config generation", () => {
     }
     expect(generated.contents).toContain("auto_expose_new_tables = false");
     expect(generated.contents).toContain("./seed/07_offers.sql");
+    expect(generated.contents).toContain("./seed/08_venue_profile.sql");
     expect(
       assertGeneratedConfigMatchesTestIdentity(generated.contents),
     ).toEqual([]);

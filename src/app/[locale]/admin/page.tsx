@@ -47,6 +47,18 @@ export default async function AdminPage({
       <ul className="grid gap-3 sm:grid-cols-2">
         <li>
           <Button asChild className="h-auto w-full justify-start px-4 py-3">
+            <Link href="/admin/profile">
+              <span className="flex flex-col items-start gap-0.5 text-left">
+                <span>{t("profileModule")}</span>
+                <span className="text-xs font-normal text-primary-foreground/80">
+                  {t("profileModuleHelp")}
+                </span>
+              </span>
+            </Link>
+          </Button>
+        </li>
+        <li>
+          <Button asChild className="h-auto w-full justify-start px-4 py-3">
             <Link href="/admin/staff">
               <span className="flex flex-col items-start gap-0.5 text-left">
                 <span>{t("staffModule")}</span>
